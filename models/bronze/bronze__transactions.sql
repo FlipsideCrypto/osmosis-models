@@ -2,18 +2,20 @@
     materialized = 'view'
 ) }}
 
-SELECT 
+SELECT
   record_id, 
-  offset_id,
-  block_id,
+  tx_id, 
+  tx_block_index, 
+  offset_id AS block_id, 
+  block_id AS offset_id, 
   block_timestamp, 
   network, 
   chain_id, 
-  tx_count, 
-  header, 
+  tx, 
   ingested_at
 FROM 
   {{ source(
     'prod',
-    'osmosis_blocks'
+    'osmosis_txs'
   ) }} 
+    
