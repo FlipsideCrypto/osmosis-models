@@ -1,6 +1,7 @@
 version: 2
 models:
   - name: silver__blocks
+    description: Records of all blocks that have occurred on Osmosis, dating back to the genesis block. 
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
