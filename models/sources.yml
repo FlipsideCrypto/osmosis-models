@@ -6,7 +6,7 @@ sources:
     schema: prod
     tables:
       - name: osmosis_blocks
-      - name: osmosis_txs
+      - name: osmosis_txs 
   - name: osmosis_external
     schema: bronze
     loader: S3
