@@ -24,10 +24,6 @@ clean-targets: # directories to be removed by `dbt clean`
   - "dbt_modules"
   - "dbt_packages"
 
-on-run-start:
-  - '{{create_sps()}}'
-  - '{{create_tasks()}}'
-
 # Configuring models
 # Full documentation: https://docs.getdbt.com/docs/configuring-models
 
@@ -42,3 +38,4 @@ models:
 
 vars:
   "dbt_date:time_zone": America/Los_Angeles
+
