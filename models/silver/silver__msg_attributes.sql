@@ -5,58 +5,30 @@
   cluster_by = ['ingested_at::DATE'],
 ) }}
 
-WITH base AS (
-
-  SELECT
-    block_id,
-    block_timestamp,
-    blockchain,
-    chain_id,
-    tx_id,
-    msg_index,
-    msg_type,
-    SUBSTRING(path, POSITION('[', path) + 1, POSITION(']', path) - POSITION('[', path) -1) AS attribute_index,
-    key AS decode_key,
-    TRY_BASE64_DECODE_STRING(
-      VALUE :: STRING
-    ) AS decode_value,
-    ingested_at
-  FROM
-    {{ ref('silver__msgs') }} A,
-    LATERAL FLATTEN(
-      input => A.msg,
-      recursive => TRUE
-    )
-  WHERE
-    key IN ('key', 'value')
-
-{% if is_incremental() %}
-AND ingested_at :: DATE >= getdate() - INTERVAL '2 days'
-{% endif %}
-)
 SELECT
-  p.block_id,
-  p.block_timestamp,
-  p.blockchain,
-  p.chain_id,
-  p.tx_id,
-  p.msg_index,
-  p.msg_type,
-  p.attribute_index,
-  attribute_key,
-  attribute_value,
+  block_id,
+  block_timestamp,
+  blockchain,
+  chain_id,
+  tx_id,
+  msg_index,
+  msg_type,
+  b.index AS attribute_index,
+  TRY_BASE64_DECODE_STRING(
+    b.value :key :: STRING
+  ) AS attribute_key,
+  TRY_BASE64_DECODE_STRING(
+    b.value :value :: STRING
+  ) AS attribute_value,
   ingested_at
 FROM
-  base A pivot(MAX(decode_value) for decode_key IN ('key', 'value')) AS p (
-    block_id,
-    block_timestamp,
-    blockchain,
-    chain_id,
-    tx_id,
-    msg_index,
-    msg_type,
-    attribute_index,
-    ingested_at,
-    attribute_key,
-    attribute_value
-  )
+  {{ ref('silver__msgs') }} A,
+  LATERAL FLATTEN(
+    input => A.msg,
+    path => 'attributes'
+  ) b
+
+{% if is_incremental() %}
+WHERE
+  ingested_at :: DATE >= CURRENT_DATE -2
+{% endif %}
