@@ -1,0 +1,86 @@
+version: 2
+models:
+  - name: silver__transactions
+    description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - CHAIN_ID
+            - BLOCK_ID
+            - TX_ID
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: CHAIN_ID
+        description: "{{ doc('chain_id') }}"
+        tests:
+          - not_null
+      - name: CODESPACE
+        description: "{{ doc('codespace') }}"
+      - name: GAS_USED
+        description: "{{ doc('gas_used') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: GAS_WANTED
+        description: "{{ doc('gas_wanted') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - not_null
+      - name: TX_STATUS
+        description: "{{ doc('tx_status') }}"
+        tests: 
+          - not_null
+      - name: TX_BLOCK_INDEX
+        description: "{{ doc('tx_block_index') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: TX_CODE
+        description: "{{ doc('tx_code') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: MSGS
+        description: "The underlying json from the messages or events within the transactions"
+        tests: 
+          - not_null
+      - name: INGESTED_AT
+        description: "{{ doc('ingested_at') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ

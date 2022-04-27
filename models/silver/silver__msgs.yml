@@ -1,0 +1,64 @@
+version: 2
+models:
+  - name: silver__msgs
+    description: Records of all messages associated to transactions that have occurred on Osmosis, dating back to the genesis block. 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - CHAIN_ID
+            - BLOCK_ID
+            - TX_ID
+            - MSG_INDEX
+            - ATTRIBUTE_INDEX
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: CHAIN_ID
+        description: "{{ doc('chain_id') }}"
+        tests:
+          - not_null 
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - not_null
+        tests: 
+          - not_null
+      - name: MSG_INDEX
+        description: "{{ doc('msg_index') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: MSG_TYPE
+        description: "{{ doc('msg_type') }}"
+        tests: 
+          - not_null
+      - name: MSG
+        description: "The underlying json from the message or event within the transactions"
+        tests: 
+          - not_null
+      - name: INGESTED_AT
+        description: "{{ doc('ingested_at') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
