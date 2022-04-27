@@ -16,10 +16,10 @@ WITH base AS (
     msg_index,
     msg_type,
     SUBSTRING(path, POSITION('[', path) + 1, POSITION(']', path) - POSITION('[', path) -1) AS attribute_index,
-    key AS xKey,
+    key AS decode_key,
     TRY_BASE64_DECODE_STRING(
       VALUE :: STRING
-    ) AS xValue,
+    ) AS decode_value,
     ingested_at
   FROM
     {{ ref('silver__msgs') }} A,
@@ -47,7 +47,7 @@ SELECT
   attribute_value,
   ingested_at
 FROM
-  base A pivot(MAX(xvalue) for xKey IN ('key', 'value')) AS p (
+  base A pivot(MAX(decode_value) for decode_key IN ('key', 'value')) AS p (
     block_id,
     block_timestamp,
     blockchain,

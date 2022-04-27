@@ -2,7 +2,7 @@
   materialized = 'incremental',
   unique_key = "CONCAT_WS('-', chain_id, block_id, tx_id, msg_index)",
   incremental_strategy = 'delete+insert',
-  cluster_by = ['block_timestamp::DATE'],
+  cluster_by = ['ingested_at::DATE'],
 ) }}
 
 SELECT
@@ -18,10 +18,7 @@ SELECT
   ingested_at
 FROM
   {{ ref('silver__transactions') }} A,
-  LATERAL FLATTEN(
-    input => A.msgs -- ,
-    -- outer => TRUE
-  )
+  LATERAL FLATTEN(input => A.msgs)
 
 {% if is_incremental() %}
 WHERE
