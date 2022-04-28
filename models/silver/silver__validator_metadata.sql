@@ -12,7 +12,6 @@ SELECT
    'validator' AS label_subtype, 
    moniker AS label, 
    identity AS project_name, 
-   details AS description,
    value
 FROM 
     {{ source(

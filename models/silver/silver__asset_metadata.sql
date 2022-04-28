@@ -11,8 +11,7 @@ SELECT
     'token' AS label_type, 
     'token_contract' AS label_subtype, 
     name AS label, 
-    symbol AS project_name, 
-    description, 
+    symbol AS project_name,  
     denom_units AS value
 FROM {{ source(
         'osmosis_external', 
