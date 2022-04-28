@@ -15,5 +15,3 @@ FROM {{ source(
         'osmosis_external', 
         'asset_metadata_api'
     ) }}
-
--- How do we do incremental on something with no inserted_at timestamp? 
