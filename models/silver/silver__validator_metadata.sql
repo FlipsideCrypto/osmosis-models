@@ -1,7 +1,5 @@
 {{ config(
-  materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', operator_address, creator, blockchain)",
-  incremental_strategy = 'delete+insert'
+  materialized = 'table'
 ) }}
 
 SELECT 
