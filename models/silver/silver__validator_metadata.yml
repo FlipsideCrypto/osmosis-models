@@ -5,19 +5,13 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - CREATOR
-            - ACCOUNT_ADDRESS
+            - ADDRESS
             - BLOCKCHAIN
     columns:
-      - name: ACCOUNT_ADDRESS
-        description: Figure out what this is
+      - name: ADDRESS
+        description: 
         tests: 
           - not_null
-      - name: OPERATOR_ADDRESS
-        description: FIGURE OUT WHAT THIS IS
-        tests: 
-          - not_null
-      - name: CONSENSUS_KEY
-        description: FIGURE OUT WHAT THIS IS
       - name: BLOCKCHAIN
         description: The name of the blockchain
         tests:
