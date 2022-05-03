@@ -31,12 +31,19 @@ b AS (
         INNER JOIN pool_creation_txs t
         ON t.tx_id = ma.tx_id
     WHERE
-        (attribute_key IN ('module', 'pool_id')
-        OR msg_type = 'transfer'
-        AND attribute_key = 'amount'
-        AND attribute_value IS NOT NULL
-        AND attribute_value NOT LIKE '%/pool/%'
-        AND ARRAY_SIZE(SPLIT(attribute_value, ',')) :: NUMBER > 1)
+        (
+            attribute_key IN (
+                'module',
+                'pool_id'
+            )
+            OR (
+                msg_type = 'transfer'
+                AND attribute_key = 'amount'
+                AND attribute_value IS NOT NULL
+                AND attribute_value NOT LIKE '%/pool/%'
+                AND ARRAY_SIZE(SPLIT(attribute_value, ',')) :: NUMBER > 1
+            )
+        )
 
 {% if is_incremental() %}
 AND ingested_at :: DATE <= CURRENT_DATE - 2
