@@ -16,7 +16,7 @@ if (
     row_cnt > 0
   ) THEN RESULT:= (
     SELECT
-      silver.udf_get_asset_metadata()
+      silver.udf_bulk_get_asset_metadata()
   );
   ELSE RESULT:= NULL;
 END if;
