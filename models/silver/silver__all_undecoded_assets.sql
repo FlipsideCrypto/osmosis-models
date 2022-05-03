@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'view',
-  post_hook = "call "
+  post_hook = "call silver.sp_bulk_get_asset_metadata()"
 ) }}
 
 select 
