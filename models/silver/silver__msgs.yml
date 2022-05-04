@@ -9,7 +9,6 @@ models:
             - BLOCK_ID
             - TX_ID
             - MSG_INDEX
-            - ATTRIBUTE_INDEX
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
