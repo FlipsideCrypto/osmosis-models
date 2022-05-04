@@ -1,0 +1,21 @@
+version: 2
+models:
+  - name: silver__pool_metadata
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - MODULE
+            - POOL_ID
+    columns:
+      - name: MODULE
+        description: "{{ doc('pool_module') }}"
+        tests:
+          - not_null
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - not_null
+      - name: ASSETS
+        description: "{{ doc('pool_assets') }}"
+        tests:
+          - not_null

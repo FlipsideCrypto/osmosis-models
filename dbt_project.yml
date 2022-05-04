@@ -39,3 +39,8 @@ models:
 vars:
   "dbt_date:time_zone": America/Los_Angeles
 
+on-run-start:
+  - '{{create_sps()}}'
+  - '{{create_tasks()}}'
+  - '{{create_udfs()}}'
+  - '{{sp_bulk_get_asset_metadata()}}'
