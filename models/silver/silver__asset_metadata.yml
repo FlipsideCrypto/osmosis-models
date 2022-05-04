@@ -40,7 +40,7 @@ models:
         description: "{{ doc('project_name') }}"
         tests:
           - not_null
-      - name: VALUE
-        description: "{{ doc('value') }}"
+      - name: RAW_METADATA
+        description: "{{ doc('raw_metadata') }}"
         tests: 
           - not_null

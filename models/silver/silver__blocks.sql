@@ -5,18 +5,20 @@
   cluster_by = ['ingested_at::DATE'],
 ) }}
 
-SELECT 
-    block_id, 
-    block_timestamp, 
-    chain_id, 
-    tx_count, 
-    header:proposer_address :: STRING AS proposer_address,
-    header:validators_hash :: STRING AS validator_hash, 
-    ingested_at
-FROM {{ ref('bronze__blocks') }}
+SELECT
+  block_id,
+  block_timestamp,
+  chain_id,
+  tx_count,
+  header :proposer_address :: STRING AS proposer_address,
+  header :validators_hash :: STRING AS validator_hash,
+  ingested_at AS _inested_at
+FROM
+  {{ ref('bronze__blocks') }}
 
 {% if is_incremental() %}
-    WHERE ingested_at :: DATE >= getdate() - INTERVAL '2 days'
+WHERE
+  ingested_at :: DATE >= getdate() - INTERVAL '2 days'
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY block_id
