@@ -24,7 +24,7 @@ SELECT
 FROM
   {{ ref('bronze__transactions') }}
 WHERE
-  block_id = tx :height
+  block_id = tx :height :: INT
 
 {% if is_incremental() %}
 AND ingested_at :: DATE >= CURRENT_DATE - 2
