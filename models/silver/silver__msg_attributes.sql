@@ -2,7 +2,7 @@
   materialized = 'incremental',
   unique_key = "CONCAT_WS('-', chain_id, block_id, tx_id, msg_index, attribute_index)",
   incremental_strategy = 'delete+insert',
-  cluster_by = ['ingested_at::DATE'],
+  cluster_by = ['_ingested_at::DATE'],
 ) }}
 
 SELECT
@@ -20,7 +20,7 @@ SELECT
   TRY_BASE64_DECODE_STRING(
     b.value :value :: STRING
   ) AS attribute_value,
-  ingested_at
+  _ingested_at
 FROM
   {{ ref('silver__msgs') }} A,
   LATERAL FLATTEN(
@@ -30,5 +30,5 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  ingested_at :: DATE >= CURRENT_DATE -2
+  _ingested_at :: DATE >= CURRENT_DATE -2
 {% endif %}

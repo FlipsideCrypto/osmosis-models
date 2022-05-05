@@ -57,14 +57,6 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
-      - name: TX_BLOCK_INDEX
-        description: "{{ doc('tx_block_index') }}"
-        tests: 
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER    
-                - FLOAT  
       - name: TX_CODE
         description: "{{ doc('tx_code') }}"
         tests: 
@@ -77,7 +69,7 @@ models:
         description: "The underlying json from the messages or events within the transactions"
         tests: 
           - not_null
-      - name: INGESTED_AT
+      - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:
           - not_null

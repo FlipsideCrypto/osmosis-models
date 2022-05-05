@@ -8,7 +8,7 @@ WITH base AS (
     base AS address,
     NAME AS label,
     symbol AS project_name,
-    denom_units AS VALUE
+    denom_units AS raw_metadata
   FROM
     {{ source(
       'osmosis_external',
@@ -28,6 +28,6 @@ SELECT
   'token_contract' AS label_subtype,
   label,
   project_name,
-  VALUE
+  raw_metadata
 FROM
   base
