@@ -23,10 +23,11 @@ SELECT
   ingested_at AS _ingested_at
 FROM
   {{ ref('bronze__transactions') }}
+WHERE
+  block_id = tx :height
 
 {% if is_incremental() %}
-WHERE
-  ingested_at :: DATE >= CURRENT_DATE - 2
+AND ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY tx_id
