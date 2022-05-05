@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', chain_id, block_id, tx_id)",
+  unique_key = "tx_id",
   incremental_strategy = 'delete+insert',
   cluster_by = ['_ingested_at::DATE'],
 ) }}
@@ -29,6 +29,6 @@ WHERE
   ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 
-qualify(ROW_NUMBER() over(PARTITION BY chain_id, block_id, tx_id
+qualify(ROW_NUMBER() over(PARTITION BY tx_id
 ORDER BY
   ingested_at DESC)) = 1

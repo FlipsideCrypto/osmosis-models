@@ -14,7 +14,7 @@ WITH pool_creation_txs AS (
         msg_type = 'pool_created'
 
 {% if is_incremental() %}
-AND ingested_at :: DATE <= CURRENT_DATE - 2
+AND _ingested_at :: DATE <= CURRENT_DATE - 2
 {% endif %}
 ),
 b AS (
@@ -46,7 +46,7 @@ b AS (
         )
 
 {% if is_incremental() %}
-AND ingested_at :: DATE <= CURRENT_DATE - 2
+AND _ingested_at :: DATE <= CURRENT_DATE - 2
 {% endif %}
 ),
 C AS (
