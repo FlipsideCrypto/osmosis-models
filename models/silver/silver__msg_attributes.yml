@@ -5,8 +5,6 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - CHAIN_ID
-            - BLOCK_ID
             - TX_ID
             - MSG_INDEX
             - ATTRIBUTE_INDEX
