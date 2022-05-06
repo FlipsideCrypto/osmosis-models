@@ -13,4 +13,4 @@ SELECT
     msg_type, 
     msg
 FROM 
-    {{ ('silver__msgs') }}
+    {{ ref('silver__msgs') }}

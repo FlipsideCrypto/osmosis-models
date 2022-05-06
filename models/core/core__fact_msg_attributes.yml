@@ -2,14 +2,6 @@ version: 2
 models:
   - name: core__fact_msg_attributes
     description: Records of all message attributes associated to messages that have occurred on Osmosis, dating back to the genesis block. 
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - CHAIN_ID
-            - BLOCK_ID
-            - TX_ID
-            - MSG_INDEX
-            - ATTRIBUTE_INDEX
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
