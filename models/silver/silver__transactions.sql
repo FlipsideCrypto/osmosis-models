@@ -1,8 +1,8 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', chain_id, block_id, tx_id)",
+  unique_key = "tx_id",
   incremental_strategy = 'delete+insert',
-  cluster_by = ['ingested_at::DATE'],
+  cluster_by = ['_ingested_at::DATE'],
 ) }}
 
 SELECT
@@ -18,16 +18,16 @@ SELECT
     WHEN tx :tx_result :code :: INT = 0 THEN 'SUCCEEDED'
     ELSE 'FAILED'
   END AS tx_status,
-  tx_block_index,
   tx :tx_result :code :: INT tx_code,
   tx :tx_result :events AS msgs,
-  ingested_at
+  ingested_at AS _ingested_at
 FROM
   {{ ref('bronze__transactions') }}
+WHERE
+  block_id = tx :height :: INT
 
 {% if is_incremental() %}
-WHERE
-  ingested_at :: DATE >= getdate() - INTERVAL '2 days'
+AND ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY tx_id

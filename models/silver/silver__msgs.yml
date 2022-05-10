@@ -5,8 +5,6 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - CHAIN_ID
-            - BLOCK_ID
             - TX_ID
             - MSG_INDEX
     columns:
@@ -52,9 +50,7 @@ models:
           - not_null
       - name: MSG
         description: "The underlying json from the message or event within the transactions"
-        tests: 
-          - not_null
-      - name: INGESTED_AT
+      - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:
           - not_null

@@ -41,6 +41,5 @@ vars:
 
 on-run-start:
   - '{{create_sps()}}'
-  - '{{create_tasks()}}'
   - '{{create_udfs()}}'
   - '{{sp_bulk_get_asset_metadata()}}'

@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', chain_id, block_id, tx_id, msg_index)",
+  unique_key = "CONCAT_WS('-', tx_id, msg_index)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['_ingested_at::DATE'],
 ) }}
@@ -22,5 +22,5 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  _ingested_at :: DATE >= getdate() - INTERVAL '2 days'
+  _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
