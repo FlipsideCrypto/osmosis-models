@@ -1,16 +1,36 @@
 {{ config(
-    materialized = 'view'
+  materialized = 'incremental',
+  unique_key = "tx_id",
+  incremental_strategy = 'delete+insert'
 ) }}
 
-WITH fees AS (
+WITH fee AS (
     SELECT 
         tx_id, 
-        COALESCE(attribute_value, 
-                 '0uosmo')
-        AS fee
+        attribute_value AS fee
+        
     FROM  {{ ref('silver__msg_attributes') }}
-  
     WHERE attribute_key = 'fee'
+
+    {% if is_incremental() %}
+        AND
+        _ingested_at :: DATE >= CURRENT_DATE -2
+    {% endif %}
+
+), 
+
+spender AS (
+   SELECT 
+        tx_id, 
+        split_part(attribute_value, '/', 0) AS tx_from
+        
+    FROM  {{ ref('silver__msg_attributes') }}
+    WHERE attribute_key = 'acc_seq'
+
+    {% if is_incremental() %}
+        AND
+        _ingested_at :: DATE >= CURRENT_DATE -2
+    {% endif %} 
 )
 
 SELECT 
@@ -19,21 +39,25 @@ SELECT
     t.blockchain, 
     t.chain_id, 
     t.tx_id,
-    s.attribute_value AS tx_from, 
+    tx_from, 
     tx_status, 
     codespace, 
-    f.fee, 
+    COALESCE( fee,
+            '0uosmo') AS fee,  
     gas_used, 
     gas_wanted,
     tx_code, 
     msgs
 FROM {{ ref('silver__transactions') }} t
 
-INNER JOIN fees f 
+LEFT OUTER JOIN fee f 
 ON t.tx_id = f.tx_id
 
-INNER JOIN {{ ref('silver__msg_attributes') }} s
+LEFT OUTER JOIN spender s
 ON t.tx_id = s.tx_id
 
-WHERE s.attribute_key = 'acc_seq'
+{% if is_incremental() %}
+AND
+  _ingested_at :: DATE >= CURRENT_DATE -2
+{% endif %}
 
