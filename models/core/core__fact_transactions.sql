@@ -58,7 +58,7 @@ LEFT OUTER JOIN spender s
 ON t.tx_id = s.tx_id
 
 {% if is_incremental() %}
-AND
-  _ingested_at :: DATE >= CURRENT_DATE -2
+    WHERE
+    _ingested_at :: DATE >= CURRENT_DATE -2
 {% endif %}
 
