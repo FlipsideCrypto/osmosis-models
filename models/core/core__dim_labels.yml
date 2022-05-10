@@ -32,6 +32,6 @@ models:
         tests:
           - dbt_expectations.expect_column_to_exist
       - name: RAW_METADATA
-        description: "{{ doc('value') }}"
+        description: "{{ doc('raw_metadata') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist

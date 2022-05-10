@@ -29,8 +29,8 @@ models:
         description: "{{ doc('tx_id') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: SENDER
-        description: sender
+      - name: TX_FROM
+        description: "{{ doc('tx_from') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: TX_STATUS
@@ -42,7 +42,7 @@ models:
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: FEE
-        description: fee
+        description: "{{ doc('fee') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: GAS_USED
