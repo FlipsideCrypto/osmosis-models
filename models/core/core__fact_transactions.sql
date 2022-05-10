@@ -1,7 +1,8 @@
 {{ config(
   materialized = 'incremental',
   unique_key = "tx_id",
-  incremental_strategy = 'delete+insert'
+  incremental_strategy = 'delete+insert', 
+  cluster_by = ['block_timestamp::DATE'],
 ) }}
 
 WITH fee AS (
@@ -39,7 +40,7 @@ SELECT
     t.blockchain, 
     t.chain_id, 
     t.tx_id,
-    tx_from, 
+    s.tx_from, 
     tx_status, 
     codespace, 
     COALESCE( fee,
