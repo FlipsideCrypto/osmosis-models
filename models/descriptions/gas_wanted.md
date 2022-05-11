@@ -1,5 +1,5 @@
 {% docs gas_wanted %}
 
-tbd
+Amount of gas requested for a transaction. It is provided by users when the transaction is generated.
 
 {% enddocs %}

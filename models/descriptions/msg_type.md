@@ -1,5 +1,5 @@
 {% docs msg_type %}
 
-tbd
+A string containing information about the type of message occurring.
 
 {% enddocs %}

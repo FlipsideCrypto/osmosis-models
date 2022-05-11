@@ -1,5 +1,5 @@
 {% docs msg_index %}
 
-tbd
+Short for "message index," the position in which messages occur in a transaction. 
 
 {% enddocs %}

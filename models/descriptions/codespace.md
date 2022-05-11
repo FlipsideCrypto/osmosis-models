@@ -1,5 +1,5 @@
 {% docs codespace %}
 
-tbd
+Namespace for the code. 
 
 {% enddocs %}
