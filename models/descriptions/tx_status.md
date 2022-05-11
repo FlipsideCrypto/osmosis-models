@@ -1,5 +1,5 @@
 {% docs tx_status %}
 
-tbd
+Transaction status is "SUCCEEDED" if the transaction went through, "FALSE" if the transaction failed. 
 
 {% enddocs %}

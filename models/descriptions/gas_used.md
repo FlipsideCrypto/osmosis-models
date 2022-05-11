@@ -1,5 +1,5 @@
 {% docs gas_used %}
 
-tbd
+The amount of gas consumed by the transaction. 
 
 {% enddocs %}

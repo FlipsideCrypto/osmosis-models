@@ -1,5 +1,5 @@
 {% docs tx_id %}
 
-tbd
+A unique key that identifies a transaction. Called "TxHash" on block explorers.
 
 {% enddocs %}
