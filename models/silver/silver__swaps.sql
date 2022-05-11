@@ -109,16 +109,16 @@ SELECT
 
 FROM {{ ref('silver__transactions') }} t 
 
-LEFT OUTER JOIN tokens_in f 
+INNER JOIN tokens_in f 
 ON t.tx_id = f.tx_id
 
 INNER JOIN tokens_out tt
 ON f.tx_id = tt.tx_id 
 
-LEFT OUTER JOIN trader s
+INNER JOIN trader s
 ON t.tx_id = s.tx_id
 
-LEFT OUTER JOIN pools p
+INNER JOIN pools p
 ON t.tx_id = p.tx_id 
 
 {% if is_incremental() %}
