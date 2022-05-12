@@ -46,17 +46,21 @@ models:
         tests: 
           - not_null
       - name: SWAP_FROM_AMOUNT
+        description: "{{ doc('swap_from_amount') }}"
         tests: 
           - not_null
       - name: SWAP_FROM_CURRENCY
+        description: "{{ doc('swap_from_currency') }}"
         tests: 
           - not_null
       - name: SWAP_FROM_DECIMAL
         description: "{{ doc('swap_from_decimal') }}"
       - name: SWAP_TO_AMOUNT
+        description: "{{ doc('swap_to_amount') }}"
         tests: 
           - not_null
       - name: SWAP_TO_CURRENCY
+        description: "{{ doc('swap_to_currency') }}"
         tests: 
           - not_null
       - name: SWAP_TO_DECIMAL
