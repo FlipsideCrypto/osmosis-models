@@ -40,7 +40,6 @@ b AS (
                 msg_type = 'transfer'
                 AND attribute_key = 'amount'
                 AND attribute_value IS NOT NULL
-                AND attribute_value NOT LIKE '%/pool/%'
                 AND ARRAY_SIZE(SPLIT(attribute_value, ',')) :: NUMBER > 1
             )
         )
