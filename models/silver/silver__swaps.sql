@@ -32,7 +32,7 @@ tokens_in AS (
     LEFT OUTER JOIN message_indexes m 
     ON t.tx_id = m.tx_id and t.attribute_key = m.attribute_key
   
-    INNER JOIN {{ ref('silver__asset_metadata') }} l 
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} l 
     ON right(attribute_value, length(attribute_value) - length(split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
   
     WHERE msg_type = 'token_swapped'
@@ -53,7 +53,7 @@ tokens_out AS (
     LEFT OUTER JOIN message_indexes m 
     ON t.tx_id = m.tx_id and t.attribute_key = m.attribute_key
   
-    INNER JOIN {{ ref('silver__asset_metadata') }} l 
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} l 
     ON right(attribute_value, length(attribute_value) - length(split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
   
     WHERE msg_type = 'token_swapped'
