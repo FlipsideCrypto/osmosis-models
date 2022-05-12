@@ -25,8 +25,9 @@ WITH message_indexes AS (
 tokens_in AS (
     SELECT 
         t.tx_id, 
-        split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0) / POW(10, COALESCE(l.raw_metadata[1]:exponent, 0)) AS swap_from_amount, 
-        right(attribute_value, length(attribute_value) - length(split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS swap_from_currency
+        split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0) AS swap_from_amount, 
+        right(attribute_value, length(attribute_value) - length(split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS swap_from_currency, 
+        l.raw_metadata[1]:exponent AS swap_from_decimal
     FROM {{ ref('silver__msg_attributes') }} t
   
     LEFT OUTER JOIN message_indexes m 
@@ -46,8 +47,9 @@ tokens_in AS (
 tokens_out AS (
     SELECT 
         t.tx_id, 
-        split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0) / POW(10, COALESCE(l.raw_metadata[1]:exponent, 0)) AS swap_to_amount, 
-        right(attribute_value, length(attribute_value) - length(split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS swap_to_currency
+        split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0) AS swap_to_amount, 
+        right(attribute_value, length(attribute_value) - length(split_part(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS swap_to_currency, 
+        l.raw_metadata[1]:exponent AS swap_to_decimal
     FROM {{ ref('silver__msg_attributes') }} t
     
     LEFT OUTER JOIN message_indexes m 
@@ -101,16 +103,18 @@ SELECT
    t.tx_status,
    s.trader, 
    f.swap_from_amount AS swap_from_amount, 
-   f.swap_from_currency,  
+   f.swap_from_currency, 
+   f.swap_from_decimal,  
    tt.swap_to_amount, 
    tt.swap_to_currency, 
+   tt.swap_to_decimal, 
    pool_ids, 
    t._ingested_at
 
-FROM {{ ref('silver__transactions') }} t 
+FROM tokens_in f 
 
-INNER JOIN tokens_in f 
-ON t.tx_id = f.tx_id
+LEFT OUTER JOIN {{ ref('silver__transactions') }} t 
+ON f.tx_id = t.tx_id
 
 INNER JOIN tokens_out tt
 ON f.tx_id = tt.tx_id 
