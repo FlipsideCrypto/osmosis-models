@@ -56,7 +56,8 @@ depositors AS (
         tx_id, 
         split_part(attribute_value, '/', 0) as depositor 
     FROM {{ ref('silver__msg_attributes') }}
-    WHERE attribute_key = 'acc_seq'
+    WHERE msg_type = 'proposal_deposit' 
+    AND attribute_key = 'acc_seq'
 
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
