@@ -43,7 +43,7 @@ models:
         tests: 
           - not_null
       - name: PROPOSAL_ID
-        description: "Description goes here"
+        description: "{{ doc('proposal_id') }}"
         tests: 
           - not_null 
       - name: DEPOSIT_AMOUNT

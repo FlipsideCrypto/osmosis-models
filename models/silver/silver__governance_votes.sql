@@ -8,9 +8,20 @@
 WITH vote_options AS (
   SELECT 
       tx_id, 
-      COALESCE(PARSE_JSON(attribute_value):option, 
-                PARSE_JSON(attribute_value):vote_option_yes) AS v_option, 
-      PARSE_JSON(attribute_value):weight :: INTEGER AS vote_weight
+      msg_index, 
+      CASE 
+        WHEN attribute_value::string = 'VOTE_OPTION_YES' THEN
+            1
+        WHEN attribute_value::string = 'VOTE_OPTION_ABSTAIN' THEN
+            4
+        WHEN attribute_value::string = 'VOTE_OPTION_NO' THEN
+            2
+        WHEN attribute_value::string = 'VOTE_OPTION_NO_WITH_VETO' THEN
+            3
+        ELSE
+            TRY_PARSE_JSON(attribute_value):option 
+      END AS vote_option, 
+      TRY_PARSE_JSON(attribute_value):weight :: INTEGER AS vote_weight
   FROM {{ ref('silver__msg_attributes') }}
   WHERE msg_type = 'proposal_vote'
   AND attribute_key = 'option'
@@ -23,6 +34,7 @@ WITH vote_options AS (
 proposal_id AS (
     SELECT 
         tx_id, 
+        msg_index, 
         attribute_value AS proposal_id 
     FROM {{ ref('silver__msg_attributes') }}
     WHERE msg_type = 'proposal_vote' 
@@ -54,16 +66,13 @@ SELECT
     tx_status, 
     v.voter, 
     p.proposal_id, 
-    CASE WHEN v_option = 1 THEN 'Yes'
-         WHEN v_option = 2 THEN 'No'
-         WHEN v_option = 3 THEN 'NoWithVeto'
-         ELSE 'ABSTAIN' END AS vote_option, 
+    vote_option, 
     vote_weight, 
     _ingested_at
 FROM vote_options o
 
 LEFT OUTER JOIN proposal_id p
-ON o.tx_id = p.tx_id
+ON o.tx_id = p.tx_id AND o.msg_index = p.msg_index
 
 LEFT OUTER JOIN voter v
 ON o.tx_id = v.tx_id 
@@ -72,5 +81,5 @@ LEFT OUTER JOIN {{ ref('silver__transactions') }} t
 ON o.tx_id = t.tx_id 
 
 {% if is_incremental() %}
-WITH _ingested_at :: DATE >= CURRENT_DATE - 2
+WHERE _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}

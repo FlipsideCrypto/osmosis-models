@@ -6,6 +6,7 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
+            - PROPOSAL_ID
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -48,10 +49,6 @@ models:
           - not_null
       - name: VOTE_OPTION
         description: "{{ doc('vote_option') }}"
-        tests: 
-          - not_null
-      - name: VOTE_WEIGHT
-        description: "{{ doc('vote_weight') }}"
         tests: 
           - not_null
       - name: _INGESTED_AT
