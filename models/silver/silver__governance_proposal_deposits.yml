@@ -1,0 +1,63 @@
+version: 2
+models:
+  - name: silver__governance_proposal_deposits
+    description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - TX_ID
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: BLOCKCHAIN
+        description: "{{ doc('blockchain') }}"
+        tests: 
+          - not_null
+      - name: CHAIN_ID
+        description: "{{ doc('chain_id') }}"
+        tests:
+          - not_null
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - not_null
+      - name: TX_STATUS
+        description: "{{ doc('tx_status') }}"
+        tests: 
+          - not_null
+      - name: DEPOSITOR 
+        description: "{{ doc('depositor') }}"
+        tests: 
+          - not_null
+      - name: PROPOSAL_ID
+        description: "Description goes here"
+        tests: 
+          - not_null 
+      - name: DEPOSIT_AMOUNT
+        description: "{{ doc('deposit_amount') }}"
+        tests: 
+          - not_null
+      - name: DEPOSIT_CURRENCY
+        description: "{{ doc('deposit_amount') }}"
+        tests: 
+          - not_null
+      - name: _INGESTED_AT
+        description: "{{ doc('ingested_at') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
