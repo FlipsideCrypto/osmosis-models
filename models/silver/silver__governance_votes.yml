@@ -1,7 +1,7 @@
 version: 2
 models:
-  - name: silver__governance_submit_proposal
-    description: Records of all proposal submissions on Osmosis, dating back to the Genesis block. 
+  - name: silver__governance_votes
+    description: Records of all votes on proposals. 
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -38,16 +38,20 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
-      - name: PROPOSER
-        description: "{{ doc('proposer') }}"
+      - name: VOTER
+        description: "{{ doc('voter') }}"
         tests: 
           - not_null
       - name: PROPOSAL_ID
         description: "{{ doc('proposal_id') }}"
         tests: 
           - not_null
-      - name: PROPOSAL_TYPE
-        description: "{{ doc('proposal_type') }}"
+      - name: VOTE_OPTION
+        description: "{{ doc('vote_option') }}"
+        tests: 
+          - not_null
+      - name: VOTE_WEIGHT
+        description: "{{ doc('vote_weight') }}"
         tests: 
           - not_null
       - name: _INGESTED_AT
