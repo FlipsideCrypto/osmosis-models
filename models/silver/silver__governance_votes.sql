@@ -13,11 +13,11 @@ WITH vote_options AS (
         WHEN attribute_value::string = 'VOTE_OPTION_YES' THEN
             1
         WHEN attribute_value::string = 'VOTE_OPTION_ABSTAIN' THEN
-            4
-        WHEN attribute_value::string = 'VOTE_OPTION_NO' THEN
             2
-        WHEN attribute_value::string = 'VOTE_OPTION_NO_WITH_VETO' THEN
+        WHEN attribute_value::string = 'VOTE_OPTION_NO' THEN
             3
+        WHEN attribute_value::string = 'VOTE_OPTION_NO_WITH_VETO' THEN
+            4
         ELSE
             TRY_PARSE_JSON(attribute_value):option 
       END AS vote_option, 
