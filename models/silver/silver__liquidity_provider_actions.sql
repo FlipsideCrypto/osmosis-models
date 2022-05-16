@@ -127,8 +127,10 @@ SELECT
     pool_id, 
     token_0_amount, 
     token_0_currency, 
-    token_1_amount, 
-    token_1_currency, 
+    CASE WHEN token_0_amount = token_1_amount AND token_0_currency = token_1_currency THEN 0
+    ELSE token_1_amount END AS token_1_amount, 
+    CASE WHEN token_0_amount = token_1_amount AND token_0_currency = token_1_currency THEN NULL
+    ELSE token_1_currency END AS token_1_currency, 
     _ingested_at
 FROM pool_ids p
 
