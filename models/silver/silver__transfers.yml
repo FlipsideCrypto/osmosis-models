@@ -6,8 +6,8 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
-            - SENDER
-            - RECEIVER
+            - MSG_INDEX
+            - CURRENCY_SENT
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -48,7 +48,7 @@ models:
         tests: 
           - not_null
       - name: AMOUNT_SENT
-        description: "{{ doc('amount_sent) }}"
+        description: "{{ doc('amount_sent') }}"
         tests: 
           - not_null
       - name: CURRENCY_SENT
