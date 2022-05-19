@@ -11,6 +11,7 @@ SELECT
   blockchain,
   chain_id,
   tx_id,
+  msg_group,
   msg_index,
   msg_type,
   b.index AS attribute_index,
