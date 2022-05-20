@@ -36,7 +36,7 @@ WITH base AS (
             WHEN LOWER(
                 A.attribute_value
             ) LIKE '%withdraw%' THEN 'withdraw_rewards'
-        END AS event_Type
+        END AS event_type
     FROM
         {{ ref('silver__msg_attributes') }} A
     WHERE
@@ -54,27 +54,16 @@ WITH base AS (
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 ),
-msg_attr AS (
+msg_attr_base AS (
     SELECT
-        A.tx_id,
+        tx_id,
         attribute_key,
         attribute_value,
         msg_index,
         msg_type,
-        b.event_Type,
-        A.msg_group
+        msg_group
     FROM
-        {{ ref('silver__msg_attributes') }} A
-        JOIN (
-            SELECT
-                tx_id,
-                msg_group,
-                event_type
-            FROM
-                base
-        ) b
-        ON A.tx_ID = b.tx_ID
-        AND A.msg_group = b.msg_group
+        {{ ref('silver__msg_attributes') }}
     WHERE
         msg_type IN (
             'claim',
@@ -82,35 +71,56 @@ msg_attr AS (
             'message',
             'redelegate',
             'unbond',
-            'withdraw_rewards'
+            'withdraw_rewards',
+            'tx'
         )
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 ),
+msg_attr AS (
+    SELECT
+        A.tx_id,
+        A.attribute_key,
+        A.attribute_value,
+        A.msg_index,
+        A.msg_type,
+        b.event_Type,
+        A.msg_group
+    FROM
+        msg_attr_base A
+        JOIN base b
+        ON A.tx_ID = b.tx_ID
+        AND A.msg_group = b.msg_group
+    WHERE
+        A.msg_type IN (
+            'claim',
+            'delegate',
+            'message',
+            'redelegate',
+            'unbond',
+            'withdraw_rewards'
+        )
+),
 tx_address AS (
     SELECT
-        tx_id,
+        A.tx_id,
         SPLIT_PART(
             attribute_value,
             '/',
             0
         ) AS tx_caller_address
     FROM
-        {{ ref('silver__msg_attributes') }} A
-    WHERE
-        tx_id IN (
+        msg_attr_base A
+        JOIN(
             SELECT
-                tx_id
+                DISTINCT tx_id
             FROM
                 base
-        )
+        ) b
+        ON A.tx_id = b.tx_id
         AND attribute_key = 'acc_seq'
-
-{% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
-{% endif %}
 ),
 prefinal AS (
     SELECT
