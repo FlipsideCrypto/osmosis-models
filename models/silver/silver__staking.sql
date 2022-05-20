@@ -8,12 +8,7 @@
 WITH base AS (
 
     SELECT
-        A.block_id,
-        A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
-        A.tx_id,// A.tx_status,
-        A._Ingested_at,
+        A.tx_id,
         A.msg_type,
         A.msg_group,
         CASE
