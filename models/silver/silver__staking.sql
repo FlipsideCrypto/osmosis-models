@@ -1,6 +1,6 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', tx_id, msg_group, currency)",
+    unique_key = "CONCAT_WS('-', tx_id, msg_group, action, currency)",
     incremental_strategy = 'delete+insert',
     cluster_by = ['_ingested_at::DATE'],
 ) }}
@@ -56,16 +56,40 @@ AND _ingested_at :: DATE >= CURRENT_DATE - 2
 ),
 msg_attr_base AS (
     SELECT
-        tx_id,
-        attribute_key,
-        attribute_value,
-        msg_index,
-        msg_type,
-        msg_group
+        A.tx_id,
+        A.attribute_key,
+        A.attribute_value,
+        A.msg_index,
+        A.msg_type,
+        A.msg_group,
+        conditional_change_event(
+            CASE
+                WHEN A.msg_type IN (
+                    'delegate',
+                    'redelegate',
+                    'unbond',
+                    'withdraw_rewards',
+                    'claim'
+                ) THEN 1
+                ELSE 0
+            END = 1
+        ) over (
+            PARTITION BY A.tx_id,
+            A.msg_group
+            ORDER BY
+                A.msg_index
+        ) AS change_index
     FROM
-        {{ ref('silver__msg_attributes') }}
+        {{ ref('silver__msg_attributes') }} A
+        JOIN (
+            SELECT
+                DISTINCT tx_id
+            FROM
+                base
+        ) b
+        ON A.tx_ID = b.tx_ID
     WHERE
-        msg_type IN (
+        A.msg_type IN (
             'claim',
             'delegate',
             'message',
@@ -87,7 +111,8 @@ msg_attr AS (
         A.msg_index,
         A.msg_type,
         b.event_Type,
-        A.msg_group
+        A.msg_group,
+        A.change_index
     FROM
         msg_attr_base A
         JOIN base b
@@ -113,282 +138,178 @@ tx_address AS (
         ) AS tx_caller_address
     FROM
         msg_attr_base A
-        JOIN(
-            SELECT
-                DISTINCT tx_id
-            FROM
-                base
-        ) b
-        ON A.tx_id = b.tx_id
-        AND attribute_key = 'acc_seq'
+    WHERE
+        attribute_key = 'acc_seq'
+),
+valid AS (
+    SELECT
+        tx_id,
+        msg_group,
+        OBJECT_AGG(
+            attribute_key :: STRING,
+            attribute_value :: variant
+        ) AS j,
+        COALESCE(
+            j :validator :: STRING,
+            j :destination_validator :: STRING
+        ) AS validator_address,
+        j :source_validator :: STRING AS redelegate_source_validator_address
+    FROM
+        msg_attr
+    WHERE
+        attribute_key LIKE '%validator'
+        AND change_index > 0
+    GROUP BY
+        tx_id,
+        msg_group
+),
+sendr AS (
+    SELECT
+        tx_id,
+        msg_group,
+        CASE
+            WHEN event_Type IN (
+                'delegate',
+                'redelegate'
+            )
+            AND msg_type = 'claim' THEN 'claim'
+            ELSE event_type
+        END event_type,
+        OBJECT_AGG(
+            msg_type || '_' || attribute_key :: STRING,
+            attribute_value :: variant
+        ) AS j,
+        j :claim_sender :: STRING AS claim_sender,
+        j :message_sender :: STRING AS message_sender
+    FROM
+        msg_attr
+    WHERE
+        attribute_key = 'sender'
+        AND change_index > 0
+    GROUP BY
+        tx_id,
+        msg_group,
+        CASE
+            WHEN event_Type IN (
+                'delegate',
+                'redelegate'
+            )
+            AND msg_type = 'claim' THEN 'claim'
+            ELSE event_type
+        END
+),
+amount AS (
+    SELECT
+        tx_id,
+        msg_group,
+        CASE
+            WHEN event_Type IN (
+                'delegate',
+                'redelegate'
+            )
+            AND msg_type = 'claim' THEN 'claim'
+            ELSE event_type
+        END event_type,
+        OBJECT_AGG(
+            attribute_key :: STRING,
+            attribute_value :: variant
+        ) AS j,
+        j :amount :: STRING AS amount
+    FROM
+        msg_attr
+    WHERE
+        attribute_key = 'amount'
+        AND change_index > 0
+    GROUP BY
+        tx_id,
+        msg_group,
+        CASE
+            WHEN event_Type IN (
+                'delegate',
+                'redelegate'
+            )
+            AND msg_type = 'claim' THEN 'claim'
+            ELSE event_type
+        END
+),
+ctime AS (
+    SELECT
+        tx_id,
+        msg_group,
+        CASE
+            WHEN event_Type IN (
+                'delegate',
+                'redelegate'
+            )
+            AND msg_type = 'claim' THEN 'claim'
+            ELSE event_type
+        END event_type,
+        OBJECT_AGG(
+            attribute_key :: STRING,
+            attribute_value :: variant
+        ) AS j,
+        j :completion_time :: STRING AS completion_time
+    FROM
+        msg_attr
+    WHERE
+        attribute_key = 'completion_time'
+        AND change_index > 0
+    GROUP BY
+        tx_id,
+        msg_group,
+        CASE
+            WHEN event_Type IN (
+                'delegate',
+                'redelegate'
+            )
+            AND msg_type = 'claim' THEN 'claim'
+            ELSE event_type
+        END
 ),
 prefinal AS (
     SELECT
-        'delegate' AS action,
-        tx_ID,
-        msg_group,
-        "'sender'" :: STRING AS delegator_address,
-        "'amount'" AS amount,
-        "'validator'" AS validator_address,
-        NULL AS redelegate_source_validator_address,
-        NULL AS completion_time
+        A.tx_ID,
+        A.msg_group,
+        A.event_type AS action,
+        COALESCE(
+            b.claim_sender,
+            message_sender
+        ) AS delegator_address,
+        d.amount,
+        C.validator_address,
+        C.redelegate_source_validator_address,
+        e.completion_time
     FROM
         (
             SELECT
-                A.tx_ID,
-                A.attribute_value,
-                A.attribute_key,
-                msg_group
+                DISTINCT tx_id,
+                msg_group,
+                CASE
+                    WHEN event_Type IN (
+                        'delegate',
+                        'redelegate'
+                    )
+                    AND msg_type = 'claim' THEN 'claim'
+                    ELSE event_type
+                END event_type
             FROM
-                msg_attr A
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'delegate'
-                ) b
-                ON A.tx_ID = b.tx_ID
-                AND A.msg_index = b.msg_index
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index + 1 AS msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'delegate'
-                ) C
-                ON A.tx_ID = C.tx_ID
-                AND A.msg_index = C.msg_index
-            WHERE
-                (
-                    b.tx_ID IS NOT NULL
-                    OR C.tx_ID IS NOT NULL
-                )
-                AND event_Type = 'delegate'
-                AND attribute_key IN (
-                    'sender',
-                    'validator',
-                    'amount'
-                )
-        ) x pivot(MAX(attribute_value) for attribute_key IN ('amount', 'validator', 'sender')) AS p
-    UNION ALL
-    SELECT
-        'redelegate' AS action,
-        tx_ID,
-        msg_group,
-        "'sender'" :: STRING AS delegator_address,
-        "'amount'" AS amount,
-        "'destination_validator'" AS validator_address,
-        "'source_validator'" AS redelegate_source_validator_address,
-        "'completion_time'" AS completion_time
-    FROM
-        (
-            SELECT
-                A.tx_ID,
-                A.attribute_value,
-                A.attribute_key,
-                msg_group
-            FROM
-                msg_attr A
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'redelegate'
-                ) b
-                ON A.tx_ID = b.tx_ID
-                AND A.msg_index = b.msg_index
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index + 1 AS msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'redelegate'
-                ) C
-                ON A.tx_ID = C.tx_ID
-                AND A.msg_index = C.msg_index
-            WHERE
-                (
-                    b.tx_ID IS NOT NULL
-                    OR C.tx_ID IS NOT NULL
-                )
-                AND event_Type = 'redelegate'
-                AND attribute_key IN (
-                    'sender',
-                    'source_validator',
-                    'destination_validator',
-                    'amount',
-                    'completion_time'
-                )
-        ) x pivot(MAX(attribute_value) for attribute_key IN ('sender', 'source_validator', 'destination_validator', 'amount', 'completion_time')) AS p
-    UNION ALL
-    SELECT
-        'undelegate' AS action,
-        tx_id,
-        msg_group,
-        "'sender'" :: STRING AS delegator_address,
-        "'amount'" AS amount,
-        "'validator'" AS validator_address,
-        NULL AS redelegate_source_validator_address,
-        "'completion_time'" AS completion_time
-    FROM
-        (
-            SELECT
-                A.tx_ID,
-                A.attribute_value,
-                A.attribute_key,
-                msg_group
-            FROM
-                msg_attr A
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'undelegate'
-                ) b
-                ON A.tx_ID = b.tx_ID
-                AND A.msg_index = b.msg_index
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index + 1 AS msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'undelegate'
-                ) C
-                ON A.tx_ID = C.tx_ID
-                AND A.msg_index = C.msg_index
-            WHERE
-                (
-                    b.tx_ID IS NOT NULL
-                    OR C.tx_ID IS NOT NULL
-                )
-                AND event_Type = 'undelegate'
-                AND attribute_key IN (
-                    'sender',
-                    'validator',
-                    'amount',
-                    'completion_time'
-                )
-        ) x pivot(MAX(attribute_value) for attribute_key IN ('amount', 'validator', 'sender', 'completion_time')) AS p
-    UNION ALL
-    SELECT
-        'withdraw_rewards' AS action,
-        tx_ID,
-        msg_group,
-        "'sender'" :: STRING AS delegator_address,
-        "'amount'" AS amount,
-        "'validator'" AS validator_address,
-        NULL AS redelegate_source_validator_address,
-        NULL AS completion_time
-    FROM
-        (
-            SELECT
-                A.tx_ID,
-                A.attribute_value,
-                A.attribute_key,
-                msg_group
-            FROM
-                msg_attr A
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'withdraw_rewards'
-                ) b
-                ON A.tx_ID = b.tx_ID
-                AND A.msg_index = b.msg_index
-                LEFT JOIN (
-                    SELECT
-                        tx_ID,
-                        msg_index + 1 AS msg_index
-                    FROM
-                        msg_attr
-                    WHERE
-                        event_Type = 'withdraw_rewards'
-                ) C
-                ON A.tx_ID = C.tx_ID
-                AND A.msg_index = C.msg_index
-            WHERE
-                (
-                    b.tx_ID IS NOT NULL
-                    OR C.tx_ID IS NOT NULL
-                )
-                AND event_Type = 'withdraw_rewards'
-                AND attribute_key IN (
-                    'sender',
-                    'validator',
-                    'amount'
-                )
-        ) x pivot(MAX(attribute_value) for attribute_key IN ('amount', 'validator', 'sender')) AS p -- UNION ALL
-        -- SELECT
-        --     'superfluid delegate' AS action,
-        --     tx_ID,
-        --     msg_group,
-        --     "'sender'" :: STRING AS delegator_address,
-        --     "'amount'" AS amount,
-        --     NULL AS validator_address,
-        --     NULL AS redelegate_source_validator_address,
-        --     NULL AS completion_time
-        -- FROM
-        --     (
-        --         SELECT
-        --             A.tx_ID,
-        --             A.attribute_value,
-        --             A.attribute_key,
-        --             msg_group
-        --         FROM
-        --             msg_attr A
-        --             LEFT JOIN (
-        --                 SELECT
-        --                     tx_ID,
-        --                     msg_index
-        --                 FROM
-        --                     msg_attr
-        --                 WHERE
-        --                     event_Type = 'lock_and_superfluid_delegate'
-        --             ) b
-        --             ON A.tx_ID = b.tx_ID
-        --             AND A.msg_index = b.msg_index
-        --             LEFT JOIN (
-        --                 SELECT
-        --                     tx_ID,
-        --                     msg_index + 1 AS msg_index
-        --                 FROM
-        --                     msg_attr
-        --                 WHERE
-        --                     event_Type = 'lock_and_superfluid_delegate'
-        --             ) C
-        --             ON A.tx_ID = C.tx_ID
-        --             AND A.msg_index = C.msg_index
-        --         WHERE
-        --             (
-        --                 b.tx_ID IS NOT NULL
-        --                 OR C.tx_ID IS NOT NULL
-        --             )
-        --             AND event_Type = 'lock_and_superfluid_delegate'
-        --             AND attribute_key IN (
-        --                 'sender',
-        --                 'validator',
-        --                 'amount'
-        --             )
-        --     ) x pivot(MAX(attribute_value) for attribute_key IN ('amount', 'validator', 'sender')) AS p
+                msg_attr
+        ) A
+        JOIN sendr b
+        ON A.tx_ID = b.tx_ID
+        AND A.msg_group = b.msg_group
+        AND A.event_type = b.event_type
+        JOIN valid C
+        ON A.tx_ID = C.tx_ID
+        AND A.msg_group = C.msg_group
+        JOIN amount d
+        ON A.tx_ID = d.tx_ID
+        AND A.msg_group = d.msg_group
+        AND A.event_type = d.event_type
+        LEFT JOIN ctime e
+        ON A.tx_ID = e.tx_ID
+        AND A.msg_group = e.msg_group
+        AND A.event_type = e.event_type
 )
 SELECT
     b.block_id,
