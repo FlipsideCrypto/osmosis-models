@@ -96,7 +96,8 @@ msg_attr_base AS (
             'redelegate',
             'unbond',
             'withdraw_rewards',
-            'tx'
+            'tx',
+            'transfer'
         )
 
 {% if is_incremental() %}
@@ -112,7 +113,15 @@ msg_attr AS (
         A.msg_type,
         b.event_Type,
         A.msg_group,
-        A.change_index
+        A.change_index,
+        COUNT(
+            DISTINCT CASE
+                WHEN A.msg_type = 'transfer' THEN msg_index
+            END
+        ) over(
+            PARTITION BY A.tx_id,
+            A.msg_group
+        ) transfer_count_msg_group
     FROM
         msg_attr_base A
         JOIN base b
@@ -125,7 +134,8 @@ msg_attr AS (
             'message',
             'redelegate',
             'unbond',
-            'withdraw_rewards'
+            'withdraw_rewards',
+            'transfer'
         )
 ),
 tx_address AS (
@@ -172,7 +182,10 @@ sendr AS (
                 'delegate',
                 'redelegate'
             )
-            AND msg_type = 'claim' THEN 'claim'
+            AND msg_type IN (
+                'claim',
+                'transfer'
+            ) THEN 'claim'
             ELSE event_type
         END event_type,
         OBJECT_AGG(
@@ -180,12 +193,26 @@ sendr AS (
             attribute_value :: variant
         ) AS j,
         j :claim_sender :: STRING AS claim_sender,
-        j :message_sender :: STRING AS message_sender
+        j :message_sender :: STRING AS message_sender,
+        j :transfer_recipient :: STRING AS transfer_recipient
     FROM
-        msg_attr
+        msg_attr A
     WHERE
-        attribute_key = 'sender'
-        AND change_index > 0
+        (
+            (
+                attribute_key = 'sender'
+                AND msg_type <> 'transfer'
+            )
+            OR (
+                msg_type = 'transfer'
+                AND attribute_key = 'recipient'
+                AND transfer_count_msg_group = 1
+            )
+        )
+        AND (
+            change_index > 0
+            OR msg_type = 'transfer'
+        )
     GROUP BY
         tx_id,
         msg_group,
@@ -194,7 +221,10 @@ sendr AS (
                 'delegate',
                 'redelegate'
             )
-            AND msg_type = 'claim' THEN 'claim'
+            AND msg_type IN (
+                'claim',
+                'transfer'
+            ) THEN 'claim'
             ELSE event_type
         END
 ),
@@ -207,19 +237,32 @@ amount AS (
                 'delegate',
                 'redelegate'
             )
-            AND msg_type = 'claim' THEN 'claim'
+            AND msg_type IN (
+                'claim',
+                'transfer'
+            ) THEN 'claim'
             ELSE event_type
         END event_type,
         OBJECT_AGG(
-            attribute_key :: STRING,
+            CASE
+                WHEN msg_type = 'transfer' THEN 'transfer_'
+                ELSE ''
+            END || attribute_key :: STRING,
             attribute_value :: variant
         ) AS j,
-        j :amount :: STRING AS amount
+        j :amount :: STRING AS amount,
+        j :transfer_amount :: STRING AS transfer_amount
     FROM
         msg_attr
     WHERE
         attribute_key = 'amount'
-        AND change_index > 0
+        AND (
+            change_index > 0
+            OR (
+                msg_type = 'transfer'
+                AND transfer_count_msg_group = 1
+            )
+        )
     GROUP BY
         tx_id,
         msg_group,
@@ -228,7 +271,10 @@ amount AS (
                 'delegate',
                 'redelegate'
             )
-            AND msg_type = 'claim' THEN 'claim'
+            AND msg_type IN (
+                'claim',
+                'transfer'
+            ) THEN 'claim'
             ELSE event_type
         END
 ),
@@ -241,7 +287,10 @@ ctime AS (
                 'delegate',
                 'redelegate'
             )
-            AND msg_type = 'claim' THEN 'claim'
+            AND msg_type IN (
+                'claim',
+                'transfer'
+            ) THEN 'claim'
             ELSE event_type
         END event_type,
         OBJECT_AGG(
@@ -262,7 +311,10 @@ ctime AS (
                 'delegate',
                 'redelegate'
             )
-            AND msg_type = 'claim' THEN 'claim'
+            AND msg_type IN (
+                'claim',
+                'transfer'
+            ) THEN 'claim'
             ELSE event_type
         END
 ),
@@ -273,9 +325,13 @@ prefinal AS (
         A.event_type AS action,
         COALESCE(
             b.claim_sender,
-            message_sender
+            b.transfer_recipient,
+            b.message_sender
         ) AS delegator_address,
-        d.amount,
+        COALESCE(
+            d.amount,
+            d.transfer_amount
+        ) AS amount,
         C.validator_address,
         C.redelegate_source_validator_address,
         e.completion_time
@@ -289,7 +345,10 @@ prefinal AS (
                         'delegate',
                         'redelegate'
                     )
-                    AND msg_type = 'claim' THEN 'claim'
+                    AND msg_type IN (
+                        'claim',
+                        'transfer'
+                    ) THEN 'claim'
                     ELSE event_type
                 END event_type
             FROM
