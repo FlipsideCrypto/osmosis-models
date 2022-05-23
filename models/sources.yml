@@ -130,3 +130,23 @@ sources:
             data_type: string
             description: ""
             expression: value:symbol::string
+      - name: balances_api
+        description: "Wallet balances from osmosis api"
+        external:
+          location: "@osmosis.bronze.analytics_external_tables/{{target.database}}/BALANCES_API"
+          file_format: "( type = json, strip_outer_array = TRUE )"
+          auto_refresh: true
+          partitions:
+            - name: _inserted_date
+              data_type: string
+              expression: substr((split_part(METADATA$FILENAME,'/',3)),16,10)
+        columns:
+          - name: block_id
+            data_type: number
+            description: ""
+          - name: address
+            data_type: string
+            description: ""
+          - name: balances
+            data_type: array
+            description: ""
