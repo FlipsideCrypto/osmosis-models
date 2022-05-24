@@ -122,13 +122,6 @@ osmo_tx_ids AS (
         attribute_key = 'module' 
     AND 
         attribute_value = 'bank'
-    AND tx_id NOT IN (
-        SELECT 
-            DISTINCT tx_id
-        FROM {{ ref('silver__msg_attributes') }}
-        WHERE 
-            msg_type = 'delegate'
-    )
 
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
