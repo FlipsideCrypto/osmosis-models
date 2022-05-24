@@ -122,6 +122,13 @@ osmo_tx_ids AS (
         attribute_key = 'module' 
     AND 
         attribute_value = 'bank'
+    AND tx_id NOT IN (
+        SELECT 
+            DISTINCT tx_id
+        FROM {{ ref('silver__msg_attributes') }}
+        WHERE 
+            msg_type = 'delegate'
+    )
 
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -132,17 +139,22 @@ message_indexes_osmo AS (
     SELECT 
         v.tx_id, 
         attribute_key, 
-        msg_index
+        m.msg_index
     FROM 
        osmo_tx_ids v
   
     LEFT OUTER JOIN {{ ref('silver__msg_attributes') }} m 
     ON v.tx_id = m.tx_id 
+
+    INNER JOIN sender s
+    ON v.tx_id = s.tx_id
     
     WHERE
         msg_type = 'coin_spent'
     AND 
         attribute_key = 'amount'
+    AND 
+        m.msg_index > s.msg_index 
 
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -162,12 +174,14 @@ osmo_receiver AS (
   
     LEFT OUTER JOIN message_indexes_osmo idx
     ON idx.tx_id = m.tx_id 
-    AND idx.msg_index + 1 = m.msg_index
+    
   
     WHERE 
         m.msg_type = 'coin_received'
     AND 
-        m.attribute_key = 'receiver'  
+        m.attribute_key = 'receiver' 
+    AND 
+        idx.msg_index + 1 = m.msg_index
     
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -198,7 +212,6 @@ osmo_amount AS (
   
     LEFT OUTER JOIN message_indexes_osmo idx
     ON idx.tx_id = m.tx_id 
-    AND idx.msg_index + 1 = m.msg_index
   
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} l
     ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
@@ -206,7 +219,9 @@ osmo_amount AS (
     WHERE 
         m.msg_type = 'coin_received'
     AND 
-        m.attribute_key = 'amount'  
+        m.attribute_key = 'amount' 
+    AND 
+        idx.msg_index + 1 = m.msg_index 
     
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
