@@ -1,0 +1,98 @@
+version: 2
+models:
+  - name: silver__staking
+    description: Records of all staking related transactions that have occurred on Osmosis, dating back to the genesis block. These actions include delegate, undelegate, and redelegate.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - TX_ID
+            - MSG_GROUP
+            - ACTION
+            - CURRENCY
+            - DELEGATOR_ADDRESS
+            - VALIDATOR_ADDRESS
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: BLOCKCHAIN
+        description: "{{ doc('blockchain') }}"
+        tests: 
+          - not_null
+      - name: CHAIN_ID
+        description: "{{ doc('chain_id') }}"
+        tests:
+          - not_null
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - not_null
+      - name: TX_STATUS
+        description: "{{ doc('tx_status') }}"
+        tests: 
+          - not_null
+      - name: TX_CALLER_ADDRESS
+        description: "{{ doc('tx_caller_address') }}"
+        tests: 
+          - not_null
+      - name: ACTION
+        description: "{{ doc('action') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING    
+                - VARCHAR  
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
+        tests: 
+          - not_null
+      - name: DELEGATOR_ADDRESS
+        description: "{{ doc('delegator_address') }}"
+        tests: 
+          - not_null
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
+      - name: CURRENCY
+        tests:
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+        description: "{{ doc('currency') }}"
+        tests: 
+          - not_null
+      - name: VALIDATOR_ADDRESS
+        description: "{{ doc('validator_address') }}"
+        tests: 
+          - not_null
+      - name: REDELEGATE_SOURCE_VALIDATOR_ADDRESS
+        description: "{{ doc('redelegate_source_validator_address') }}"
+      - name: COMPLETION_TIME
+        description: "{{ doc('completion_time') }}"
+        tests:
+        - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ    
+      - name: _INGESTED_AT
+        description: "{{ doc('ingested_at') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
