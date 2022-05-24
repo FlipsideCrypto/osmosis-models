@@ -34,7 +34,6 @@ message_index_ibc AS (
     INNER JOIN sender s
     ON att.tx_id = s.tx_id
 
-    
     WHERE
         msg_type = 'coin_spent' OR msg_type = 'transfer' 
     AND 
@@ -143,7 +142,7 @@ message_indexes_osmo AS (
     ON v.tx_id = s.tx_id
     
     WHERE
-        msg_type = 'coin_spent'
+        msg_type = 'transfer'
     AND 
         attribute_key = 'amount'
     AND 
@@ -170,11 +169,11 @@ osmo_receiver AS (
     
   
     WHERE 
-        m.msg_type = 'coin_received'
+        m.msg_type = 'transfer'
     AND 
-        m.attribute_key = 'receiver' 
+        m.attribute_key = 'recipient' 
     AND 
-        idx.msg_index + 1 = m.msg_index
+        idx.msg_index = m.msg_index
     
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -210,11 +209,11 @@ osmo_amount AS (
     ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
   
     WHERE 
-        m.msg_type = 'coin_received'
+        m.msg_type = 'transfer'
     AND 
         m.attribute_key = 'amount' 
     AND 
-        idx.msg_index + 1 = m.msg_index 
+        idx.msg_index = m.msg_index 
     
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
