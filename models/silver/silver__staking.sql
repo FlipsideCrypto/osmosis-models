@@ -244,7 +244,8 @@ SELECT
             WHEN A.split_amount LIKE '%ibc%' THEN LEFT(A.split_amount, CHARINDEX('i', A.split_amount) -1)
             ELSE A.split_amount
         END :: INT
-    ) AS amount,CASE
+    ) AS amount,
+    CASE
         WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'
         WHEN A.split_amount LIKE '%uion' THEN 'uion'
         WHEN A.split_amount LIKE '%pool%' THEN SUBSTRING(A.split_amount, CHARINDEX('g', A.split_amount), 99)
@@ -303,14 +304,9 @@ GROUP BY
     C.tx_caller_address,
     A.action,
     A.msg_group,
-    A.delegator_address,CASE
-        WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'
-        WHEN A.split_amount LIKE '%uion' THEN 'uion'
-        WHEN A.split_amount LIKE '%pool%' THEN SUBSTRING(A.split_amount, CHARINDEX('g', A.split_amount), 99)
-        WHEN A.split_amount LIKE '%ibc%' THEN SUBSTRING(A.split_amount, CHARINDEX('i', A.split_amount), 99)
-        ELSE 'uosmo'
-    END,
+    A.delegator_address,
+    currency,
     A.validator_address,
     A.redelegate_source_validator_address,
-    A.completion_time :: datetime,
+    completion_time,
     b._INGESTED_AT
