@@ -217,7 +217,7 @@ prefinal AS (
         LEFT JOIN ctime e
         ON A.tx_ID = e.tx_ID
         AND A.msg_group = e.msg_group
-        AND A.msg_index + 1 = e.msg_index
+        AND A.msg_index = e.msg_index
 )
 SELECT
     b.block_id,
