@@ -9,6 +9,7 @@ SELECT
     chain_id, 
     tx_id, 
     tx_status, 
+    msg_group,
     msg_index, 
     msg_type, 
     msg

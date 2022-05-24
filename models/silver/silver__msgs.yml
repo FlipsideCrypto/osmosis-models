@@ -36,6 +36,8 @@ models:
           - not_null
         tests: 
           - not_null
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
       - name: MSG_INDEX
         description: "{{ doc('msg_index') }}"
         tests: 
