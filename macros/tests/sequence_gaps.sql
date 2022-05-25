@@ -19,6 +19,8 @@
             ) AS {{ previous_column }}
         FROM
             {{ table }}
+        WHERE
+            block_timestamp::date <= current_date - 1
     )
 SELECT
     {{ partition_sql + "," if partition_sql }}
