@@ -6,6 +6,7 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
+            - CURRENCY
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -50,22 +51,16 @@ models:
         description: "{{ doc('pool_id') }}"
         tests: 
           - not_null
-      - name: TOKEN_0_AMOUNT
-        description: "{{ doc('token_0_amount') }}"
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
         tests: 
           - not_null
-      - name: TOKEN_0_CURRENCY
-        description: "{{ doc('token_0_currency') }}"
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
         tests: 
           - not_null
-      - name: TOKEN_1_AMOUNT
-        description: "{{ doc('token_1_amount') }}"
-        tests: 
-          - not_null
-      - name: TOKEN_1_CURRENCY
-        description: "{{ doc('token_1_currency') }}"
-        tests: 
-          - not_null
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:

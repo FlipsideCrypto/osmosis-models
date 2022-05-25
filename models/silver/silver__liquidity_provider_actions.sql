@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "tx_id",
+  unique_key = "CONCAT_WS('-', tx_id, currency)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['_ingested_at::DATE'],
 ) }}
@@ -49,41 +49,15 @@ pool_ids AS (
   GROUP BY tx_id
 ), 
 
-tokens AS ( 
+token_array AS ( 
     SELECT 
         a.tx_id, 
         msg_type AS action, 
-        split_part(SPLIT_PART(
-            TRIM(
-                REGEXP_REPLACE(
-                    attribute_value,
-                    '[^[:digit:]]',
-                    ' '
-                )
-            ),
-            ' ',
-            0
-        ), ',', 0) AS token_0_amount,
-  
-        split_part( RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))), ',', 0) AS token_0_currency,
-  
-        split_part(SPLIT_PART(
-            TRIM(
-                REGEXP_REPLACE(
-                    attribute_value,
-                    '[^[:digit:]]',
-                    ' '
-                )
-            ),
-            ' ',
-            -1
-        ), ',', -1) AS token_1_amount, 
-  
-        split_part( RIGHT(split_part(attribute_value, ',', -1), LENGTH(split_part(attribute_value, ',', -1)) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', -1))), ',', -1) AS token_1_currency 
+        split(attribute_value, ',') AS tokens
     FROM 
         {{ ref('silver__msg_attributes') }} a
   
-    LEFT OUTER JOIN message_indexes m
+     LEFT OUTER JOIN message_indexes m
         ON a.tx_id = m.tx_id
         AND a.attribute_key = m.attribute_key
     
@@ -95,12 +69,30 @@ tokens AS (
         OR a.attribute_key = 'tokens_out')
   
     AND a.msg_index = m.min_index
-
+  
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
     {% endif %}
   
-  
+), 
+
+tokens AS (
+    SELECT 
+        tx_id, 
+        action, 
+        SPLIT_PART(
+            TRIM(
+                REGEXP_REPLACE(
+                    t.value,
+                    '[^[:digit:]]',
+                    ' '
+                )
+            ),
+            ' ',
+            0) AS amount, 
+            RIGHT(t.value, LENGTH(t.value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(t.value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency
+    FROM token_array, 
+    LATERAL FLATTEN (input => tokens) t
 ), 
 
 lper AS (
@@ -118,19 +110,16 @@ lper AS (
 SELECT 
     block_id, 
     block_timestamp, 
-    blockchain, 
+    tx.blockchain, 
     chain_id, 
     p.tx_id, 
     tx_status, 
     liquidity_provider_address, 
     action,
     pool_id, 
-    token_0_amount, 
-    token_0_currency, 
-    CASE WHEN token_0_amount = token_1_amount AND token_0_currency = token_1_currency THEN 0
-    ELSE token_1_amount END AS token_1_amount, 
-    CASE WHEN token_0_amount = token_1_amount AND token_0_currency = token_1_currency THEN NULL
-    ELSE token_1_currency END AS token_1_currency, 
+    amount, 
+    currency, 
+    raw_metadata[1]:exponent AS decimal, 
     _ingested_at
 FROM pool_ids p
 
@@ -142,6 +131,9 @@ ON p.tx_id = l.tx_id
     
 LEFT OUTER JOIN {{ ref('silver__transactions') }} tx
 ON p.tx_id = tx.tx_id
+
+LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} a
+ON currency = a.address
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
