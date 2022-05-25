@@ -6,7 +6,7 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
-            - CURRENCY
+            - MSG_INDEX
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
