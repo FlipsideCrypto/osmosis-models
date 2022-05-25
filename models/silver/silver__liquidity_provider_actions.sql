@@ -30,23 +30,27 @@ WITH message_indexes AS (
 
 pool_ids AS (
     SELECT 
-        tx_id, 
-        ARRAY_AGG(
-        attribute_value :: INTEGER
-        ) AS pool_id
+        a.tx_id, 
+        attribute_value :: INTEGER AS pool_id
+        
     FROM 
-        {{ ref('silver__msg_attributes') }}
+        {{ ref('silver__msg_attributes') }} a
+
+    LEFT OUTER JOIN message_indexes m 
+    ON a.tx_id = m.tx_id 
     
     WHERE 
         (msg_type = 'pool_exited' 
         OR msg_type = 'pool_joined')
-    AND attribute_key = 'pool_id'
+    AND 
+        a.attribute_key = 'pool_id'
+    AND 
+        a.msg_index = m.min_index
 
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
     {% endif %}
   
-  GROUP BY tx_id
 ), 
 
 token_array AS ( 
