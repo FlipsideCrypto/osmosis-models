@@ -81,21 +81,8 @@ models:
         description: "{{ doc('validator_address') }}"
         tests: 
           - not_null
-      - name: REDELEGATE_SOURCE_VALIDATOR_ADDRESS
-        description: "{{ doc('redelegate_source_validator_address') }}"
-      - name: COMPLETION_TIME
-        description: "{{ doc('completion_time') }}"
-        tests:
-        - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - TIMESTAMP_NTZ  
-        - name: AMOUNT
+      - name: DECIMAL
         description: "{{ doc('decimal') }}"
-        tests:
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER    
-                - FLOAT  
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:
