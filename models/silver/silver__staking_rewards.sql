@@ -512,7 +512,7 @@ SELECT
     A.amount,
     A.currency,
     A.validator_address,
-    amd.raw_metadata [1] :exponent AS DECIMAL,
+    amd.raw_metadata [1] :exponent :: INT AS DECIMAL,
     A._INGESTED_AT
 FROM
     prefinal A

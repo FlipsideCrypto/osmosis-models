@@ -328,7 +328,7 @@ SELECT
     A.validator_address,
     A.redelegate_source_validator_address,
     A.completion_time,
-    amd.raw_metadata [1] :exponent AS DECIMAL,
+    amd.raw_metadata [1] :exponent :: INT AS DECIMAL,
     A._INGESTED_AT
 FROM
     add_dec A
