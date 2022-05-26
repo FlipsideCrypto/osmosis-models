@@ -32,10 +32,7 @@ pool_ids AS (
         attribute_value :: INTEGER AS pool_id
         
     FROM 
-        {{ ref('silver__msg_attributes') }} a
-
-    LEFT OUTER JOIN message_indexes m 
-    ON a.tx_id = m.tx_id 
+        {{ ref('silver__msg_attributes') }}
     
     WHERE 
         (msg_type = 'pool_exited' 
@@ -49,6 +46,7 @@ pool_ids AS (
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
     {% endif %}
   
+  GROUP BY tx_id
 ), 
 
 token_array AS ( 
