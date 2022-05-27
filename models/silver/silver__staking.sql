@@ -218,73 +218,74 @@ prefinal AS (
         ON A.tx_ID = e.tx_ID
         AND A.msg_group = e.msg_group
         AND A.msg_index = e.msg_index
-)
-SELECT
-    b.block_id,
-    b.block_timestamp,
-    b.blockchain,
-    b.chain_id,
-    A.tx_id,
-    b.tx_status,
-    C.tx_caller_address,
-    A.action,
-    A.msg_group,
-    A.delegator_address,
-    SUM(
+),
+add_dec AS (
+    SELECT
+        b.block_id,
+        b.block_timestamp,
+        b.blockchain,
+        b.chain_id,
+        A.tx_id,
+        b.tx_status,
+        C.tx_caller_address,
+        A.action,
+        A.msg_group,
+        A.delegator_address,
+        SUM(
+            CASE
+                WHEN A.split_amount LIKE '%uosmo' THEN REPLACE(
+                    A.split_amount,
+                    'uosmo'
+                )
+                WHEN A.split_amount LIKE '%uion' THEN REPLACE(
+                    A.split_amount,
+                    'uion'
+                )
+                WHEN A.split_amount LIKE '%pool%' THEN LEFT(A.split_amount, CHARINDEX('g', A.split_amount) -1)
+                WHEN A.split_amount LIKE '%ibc%' THEN LEFT(A.split_amount, CHARINDEX('i', A.split_amount) -1)
+                ELSE A.split_amount
+            END :: INT
+        ) AS amount,
         CASE
-            WHEN A.split_amount LIKE '%uosmo' THEN REPLACE(
-                A.split_amount,
-                'uosmo'
-            )
-            WHEN A.split_amount LIKE '%uion' THEN REPLACE(
-                A.split_amount,
-                'uion'
-            )
-            WHEN A.split_amount LIKE '%pool%' THEN LEFT(A.split_amount, CHARINDEX('g', A.split_amount) -1)
-            WHEN A.split_amount LIKE '%ibc%' THEN LEFT(A.split_amount, CHARINDEX('i', A.split_amount) -1)
-            ELSE A.split_amount
-        END :: INT
-    ) AS amount,
-    CASE
-        WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'
-        WHEN A.split_amount LIKE '%uion' THEN 'uion'
-        WHEN A.split_amount LIKE '%pool%' THEN SUBSTRING(A.split_amount, CHARINDEX('g', A.split_amount), 99)
-        WHEN A.split_amount LIKE '%ibc%' THEN SUBSTRING(A.split_amount, CHARINDEX('i', A.split_amount), 99)
-        ELSE 'uosmo'
-    END AS currency,
-    A.validator_address,
-    A.redelegate_source_validator_address,
-    A.completion_time :: datetime completion_time,
-    b._INGESTED_AT
-FROM
-    (
-        SELECT
-            p.tx_Id,
-            p.action,
-            p.msg_group,
-            p.delegator_address,
-            p.validator_address,
-            p.redelegate_source_validator_address,
-            p.completion_time,
-            am.value AS split_amount
-        FROM
-            prefinal p,
-            LATERAL SPLIT_TO_TABLE(
-                p.amount,
-                ','
-            ) am
-    ) A
-    JOIN (
-        SELECT
-            tx_ID,
-            block_id,
-            block_timestamp,
-            blockchain,
-            chain_id,
-            tx_status,
-            _INGESTED_AT
-        FROM
-            {{ ref('silver__transactions') }}
+            WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'
+            WHEN A.split_amount LIKE '%uion' THEN 'uion'
+            WHEN A.split_amount LIKE '%pool%' THEN SUBSTRING(A.split_amount, CHARINDEX('g', A.split_amount), 99)
+            WHEN A.split_amount LIKE '%ibc%' THEN SUBSTRING(A.split_amount, CHARINDEX('i', A.split_amount), 99)
+            ELSE 'uosmo'
+        END AS currency,
+        A.validator_address,
+        A.redelegate_source_validator_address,
+        A.completion_time :: datetime completion_time,
+        b._INGESTED_AT
+    FROM
+        (
+            SELECT
+                p.tx_Id,
+                p.action,
+                p.msg_group,
+                p.delegator_address,
+                p.validator_address,
+                p.redelegate_source_validator_address,
+                p.completion_time,
+                am.value AS split_amount
+            FROM
+                prefinal p,
+                LATERAL SPLIT_TO_TABLE(
+                    p.amount,
+                    ','
+                ) am
+        ) A
+        JOIN (
+            SELECT
+                tx_ID,
+                block_id,
+                block_timestamp,
+                blockchain,
+                chain_id,
+                tx_status,
+                _INGESTED_AT
+            FROM
+                {{ ref('silver__transactions') }}
 
 {% if is_incremental() %}
 WHERE
@@ -310,3 +311,26 @@ GROUP BY
     A.redelegate_source_validator_address,
     completion_time,
     b._INGESTED_AT
+)
+SELECT
+    block_id,
+    A.block_timestamp,
+    A.blockchain,
+    A.chain_id,
+    A.tx_id,
+    A.tx_status,
+    A.tx_caller_address,
+    A.action,
+    A.msg_group,
+    A.delegator_address,
+    A.amount,
+    A.currency,
+    A.validator_address,
+    A.redelegate_source_validator_address,
+    A.completion_time,
+    amd.raw_metadata [1] :exponent :: INT AS DECIMAL,
+    A._INGESTED_AT
+FROM
+    add_dec A
+    LEFT OUTER JOIN osmosis_dev.silver.asset_metadata amd
+    ON A.currency = amd.address
