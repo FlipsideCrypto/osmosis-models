@@ -245,21 +245,12 @@ msg_attr_trans AS (
         A.msg_type,
         A.attribute_key,
         A.attribute_value,
-        conditional_change_event(
-            CASE
-                WHEN A.msg_type IN (
-                    'delegate',
-                    'redelegate',
-                    'unbond'
-                ) THEN 1
-                ELSE 0
-            END = 1
-        ) over (
+        DENSE_RANK() over(
             PARTITION BY A.tx_id,
             A.msg_group
             ORDER BY
                 A.msg_index
-        ) AS change_index
+        ) change_index
     FROM
         tran_tran b
         JOIN msg_attributes_cte A
