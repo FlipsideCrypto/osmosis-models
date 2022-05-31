@@ -46,12 +46,16 @@ models:
         description: "{{ doc('proposal_id') }}"
         tests: 
           - not_null 
-      - name: DEPOSIT_AMOUNT
-        description: "{{ doc('deposit_amount') }}"
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
         tests: 
           - not_null
-      - name: DEPOSIT_CURRENCY
-        description: "{{ doc('deposit_amount') }}"
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - not_null
+      - name: DECIMAL 
+        description: "{{ doc('decimal') }}"
         tests: 
           - not_null
       - name: _INGESTED_AT

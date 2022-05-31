@@ -56,7 +56,7 @@ models:
         tests: 
           - not_null
       - name: CURRENCY_SENT_DECIMAL
-        description: "{{ doc('swap_from_decimal') }}"
+        description: "{{ doc('from_decimal') }}"
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:

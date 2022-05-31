@@ -45,26 +45,26 @@ models:
         description: "{{ doc('trader') }}"
         tests: 
           - not_null
-      - name: SWAP_FROM_AMOUNT
-        description: "{{ doc('swap_from_amount') }}"
+      - name: FROM_AMOUNT
+        description: "{{ doc('from_amount') }}"
         tests: 
           - not_null
-      - name: SWAP_FROM_CURRENCY
-        description: "{{ doc('swap_from_currency') }}"
+      - name: FROM_CURRENCY
+        description: "{{ doc('from_currency') }}"
         tests: 
           - not_null
-      - name: SWAP_FROM_DECIMAL
-        description: "{{ doc('swap_from_decimal') }}"
-      - name: SWAP_TO_AMOUNT
-        description: "{{ doc('swap_to_amount') }}"
+      - name: FROM_DECIMAL
+        description: "{{ doc('from_decimal') }}"
+      - name: TO_AMOUNT
+        description: "{{ doc('to_amount') }}"
         tests: 
           - not_null
-      - name: SWAP_TO_CURRENCY
-        description: "{{ doc('swap_to_currency') }}"
+      - name: TO_CURRENCY
+        description: "{{ doc('to_currency') }}"
         tests: 
           - not_null
-      - name: SWAP_TO_DECIMAL
-        description: "{{ doc('swap_to_decimal') }}"
+      - name: TO_DECIMAL
+        description: "{{ doc('to_decimal') }}"
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:
