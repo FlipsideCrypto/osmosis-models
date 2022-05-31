@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', tx_id, msg_index, currency_sent)",
+  unique_key = "CONCAT_WS('-', tx_id, msg_index, currency)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['_ingested_at::DATE'],
 ) }}
@@ -65,12 +65,12 @@ coin_sent_ibc AS (
                 0
             ), 
             TRY_PARSE_JSON(attribute_value):amount
-          ) AS amount_sent,
+          ) AS amount,
         COALESCE(
             RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))), 
             TRY_PARSE_JSON(attribute_value)[1]:denom )
-            AS currency_sent,
-        l.raw_metadata [1] :exponent AS currency_sent_decimal
+            AS currency,
+        l.raw_metadata [1] :exponent AS decimal
   
         FROM {{ ref('silver__msg_attributes') }} a 
   
@@ -194,9 +194,9 @@ osmo_amount AS (
             ),
             ' ',
             0
-        ) AS amount_sent,
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency_sent,
-        l.raw_metadata [1] :exponent AS currency_sent_decimal
+        ) AS amount,
+        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency,
+        l.raw_metadata [1] :exponent AS decimal
     FROM osmo_tx_ids o 
   
     LEFT OUTER JOIN {{ ref('silver__msg_attributes') }} m 
@@ -226,12 +226,13 @@ SELECT
     blockchain, 
     chain_id, 
     r.tx_id,
-    tx_status,  
+    tx_status, 
+    'IBC_TRANSFER_OUT' AS transfer_type,  
     r.msg_index, 
     sender, 
-    amount_sent, 
-    currency_sent,
-    currency_sent_decimal, 
+    amount, 
+    currency,
+    decimal, 
     receiver, 
     _ingested_at
 FROM receiver_ibc r
@@ -258,11 +259,12 @@ SELECT
     chain_id, 
     r.tx_id, 
     tx_status, 
+    'OSMOSIS' AS transfer_type, 
     r.msg_index, 
     sender, 
-    amount_sent, 
-    currency_sent,
-    currency_sent_decimal, 
+    amount, 
+    currency,
+    decimal, 
     receiver, 
     _ingested_at
 FROM osmo_receiver r
@@ -289,12 +291,13 @@ SELECT
     m.blockchain, 
     m.chain_id, 
     s.tx_id, 
-    tx_status, 
+    tx_status,
+    'IBC_TRANSFER_IN' AS transfer_type,  
     m.msg_index,
     TRY_PARSE_JSON(attribute_value):sender :: STRING AS sender, 
-    TRY_PARSE_JSON(attribute_value):amount :: INTEGER AS amount_sent, 
-    TRY_PARSE_JSON(attribute_value):denom :: STRING currency_sent,
-    raw_metadata[1]:exponent :: INTEGER AS currency_sent_decimal, 
+    TRY_PARSE_JSON(attribute_value):amount :: INTEGER AS amount, 
+    TRY_PARSE_JSON(attribute_value):denom :: STRING AS currency,
+    raw_metadata[1]:exponent :: INTEGER AS decimal, 
     TRY_PARSE_JSON(attribute_value):receiver :: STRING AS receiver, 
     m._ingested_at
     

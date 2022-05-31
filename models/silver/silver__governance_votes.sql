@@ -21,7 +21,7 @@ WITH vote_options AS (
         ELSE
             TRY_PARSE_JSON(attribute_value):option 
       END AS vote_option, 
-      TRY_PARSE_JSON(attribute_value):weight :: INTEGER AS vote_weight
+      TRY_PARSE_JSON(attribute_value):weight :: FLOAT AS vote_weight
   FROM {{ ref('silver__msg_attributes') }}
   WHERE msg_type = 'proposal_vote'
   AND attribute_key = 'option'

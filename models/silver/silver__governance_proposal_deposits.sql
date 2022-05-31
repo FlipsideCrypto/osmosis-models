@@ -31,9 +31,10 @@ deposit_value AS (
             ),
             ' ',
             0
-        ) / POW(10, COALESCE(raw_metadata[1]:exponent, 0)) AS deposit_amount, 
+        ) / POW(10, COALESCE(raw_metadata[1]:exponent, 0)) AS amount, 
         
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS deposit_currency
+        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency, 
+        raw_metadata [1] :exponent AS decimal 
   
         FROM {{ ref('silver__msg_attributes') }} m
   
@@ -72,8 +73,9 @@ SELECT
    tx_status,
    d.depositor, 
    p.proposal_id,
-   v.deposit_amount, 
-   v.deposit_currency, 
+   v.amount, 
+   v.currency, 
+   decimal, 
    _ingested_at
 FROM deposit_value v
 

@@ -1,4 +1,4 @@
-{% docs swap_to_currency %}
+{% docs from_currency %}
 
 The currency that the user sent to be swapped for another currency. 
 

@@ -7,7 +7,7 @@ models:
           combination_of_columns:
             - TX_ID
             - MSG_INDEX
-            - CURRENCY_SENT
+            - CURRENCY
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -43,20 +43,28 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
+      - name: TRANSFER_TYPE
+        description: "{{ doc('transfer_type') }}"
+        tests: 
+          - not_null
       - name: SENDER
         description: "{{ doc('sender') }}"
         tests: 
           - not_null
-      - name: AMOUNT_SENT
-        description: "{{ doc('amount_sent') }}"
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
         tests: 
           - not_null
-      - name: CURRENCY_SENT
-        description: "{{ doc('currency_sent') }}"
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
         tests: 
           - not_null
-      - name: CURRENCY_SENT_DECIMAL
-        description: "{{ doc('swap_from_decimal') }}"
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
+      - name: RECEIVER
+        description: "{{ doc('receiver') }}"
+        tests: 
+          - not_null
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:

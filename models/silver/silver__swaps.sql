@@ -41,9 +41,9 @@ tokens_in AS (
             ),
             ' ',
             0
-        ) AS swap_from_amount,
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS swap_from_currency,
-        l.raw_metadata [1] :exponent AS swap_from_decimal
+        ) AS from_amount,
+        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS from_currency,
+        l.raw_metadata [1] :exponent AS from_decimal
     FROM
         {{ ref('silver__msg_attributes') }}
         t
@@ -62,6 +62,7 @@ tokens_in AS (
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 ),
+
 tokens_out AS (
     SELECT
         t.tx_id,
@@ -75,9 +76,9 @@ tokens_out AS (
             ),
             ' ',
             0
-        ) AS swap_to_amount,
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS swap_to_currency,
-        l.raw_metadata [1] :exponent AS swap_to_decimal
+        ) AS to_amount,
+        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS to_currency,
+        l.raw_metadata [1] :exponent AS to_decimal
     FROM
         {{ ref('silver__msg_attributes') }}
         t
@@ -138,18 +139,18 @@ SELECT
     t.tx_id,
     t.tx_status,
     s.trader,
-    f.swap_from_amount AS swap_from_amount,
-    f.swap_from_currency,
+    f.from_amount AS from_amount,
+    f.from_currency,
     CASE
-        WHEN f.swap_from_currency LIKE 'gamm/pool/%' THEN 18
-        ELSE f.swap_from_decimal
-    END AS swap_from_decimal,
-    tt.swap_to_amount,
-    tt.swap_to_currency,
+        WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
+        ELSE f.from_decimal
+    END AS from_decimal,
+    tt.to_amount,
+    tt.to_currency,
     CASE
-        WHEN tt.swap_to_currency LIKE 'gamm/pool/%' THEN 18
-        ELSE tt.swap_to_decimal
-    END AS swap_to_decimal,
+        WHEN tt.to_currency LIKE 'gamm/pool/%' THEN 18
+        ELSE tt.to_decimal
+    END AS to_decimal,
     pool_ids,
     t._ingested_at
 FROM

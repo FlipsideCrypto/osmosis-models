@@ -1,11 +1,13 @@
 version: 2
 models:
-  - name: silver__governance_proposal_deposits
-    description: Records of all proposal deposits that have occurred on Osmosis, dating back to the genesis block. At least 500 OSMO must be deposited for a proposal to be voted on.
+  - name: silver__liquidity_provider_actions
+    description: Includes all actions entering and exiting liquidity pools  
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
+            - MSG_INDEX
+            - CURRENCY
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -38,14 +40,18 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
-      - name: DEPOSITOR 
-        description: "{{ doc('depositor') }}"
+      - name: LIQUIDITY_PROVIDER_ADDRESS
+        description: "{{ doc('liquidity_provider_address') }}"
         tests: 
           - not_null
-      - name: PROPOSAL_ID
-        description: "{{ doc('proposal_id') }}"
+      - name: ACTION
+        description: "{{ doc('action') }}"
         tests: 
-          - not_null 
+          - not_null
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - not_null
       - name: AMOUNT
         description: "{{ doc('amount') }}"
         tests: 
@@ -54,10 +60,8 @@ models:
         description: "{{ doc('currency') }}"
         tests: 
           - not_null
-      - name: DECIMAL 
+      - name: DECIMAL
         description: "{{ doc('decimal') }}"
-        tests: 
-          - not_null
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:
