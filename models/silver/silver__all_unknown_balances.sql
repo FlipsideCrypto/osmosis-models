@@ -8,7 +8,7 @@ WITH all_wallets AS (
     SELECT
         DISTINCT attribute_value AS address
     FROM
-        osmosis_dev.silver.msg_attributes
+        {{ ref('silver__msg_attributes') }}
     WHERE
         RLIKE(
             attribute_value,
@@ -21,7 +21,7 @@ wallets_per_block AS (
         DISTINCT block_id,
         attribute_value AS address
     FROM
-        osmosis_dev.silver.msg_attributes
+        {{ ref('silver__msg_attributes') }}
     WHERE
         RLIKE(
             attribute_value,
