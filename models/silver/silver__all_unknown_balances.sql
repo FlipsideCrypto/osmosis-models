@@ -14,7 +14,7 @@ WITH all_wallets AS (
             attribute_value,
             'osmo\\w{39}'
         )
-        AND block_timestamp :: DATE <= '2022-05-26' -- some snapshot date
+        AND block_timestamp :: DATE <= '2022-05-31' -- some snapshot date
 ),
 wallets_per_block AS (
     SELECT
