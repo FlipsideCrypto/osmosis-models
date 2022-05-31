@@ -100,9 +100,9 @@ tokens AS (
 ), 
 
 decimals AS (
-    SELECT 
+      SELECT 
         tx_id, 
-        msg_index, 
+        msg_index,
         action, 
         amount, 
         currency, 
@@ -112,19 +112,6 @@ decimals AS (
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
     ON currency = address
 ),  
-
-tokens_decimals AS (
-    SELECT 
-        tx_id, 
-        msg_index, 
-        action, 
-        ARRAY_AGG(amount) AS amount, 
-        ARRAY_AGG(currency) AS currency, 
-        ARRAY_AGG(decimal) AS decimal
-    FROM decimals
-    
-    GROUP BY tx_id, msg_index, action
-),
 
 lper AS (
     SELECT 
@@ -139,13 +126,13 @@ lper AS (
 )
 
 SELECT 
-    block_id, 
-    block_timestamp, 
+    tx.block_id, 
+    tx.block_timestamp, 
     tx.blockchain, 
-    chain_id, 
-    p.tx_id, 
+    tx.chain_id, 
+    d.tx_id, 
     tx_status, 
-    t.msg_index, 
+    d.msg_index, 
     liquidity_provider_address, 
     action,
     pool_id, 
@@ -153,17 +140,18 @@ SELECT
     currency, 
     decimal, 
     _ingested_at
-FROM pool_ids p
+FROM decimals d
 
-LEFT OUTER JOIN tokens_decimals t
-ON p.tx_id = t.tx_id
-AND p.msg_index = t.msg_index
+LEFT OUTER JOIN pool_ids p
+ON d.tx_id = p.tx_id
+AND d.msg_index = p.msg_index
 
 LEFT OUTER JOIN lper l
-ON p.tx_id = l.tx_id 
+ON d.tx_id = l.tx_id 
     
 LEFT OUTER JOIN {{ ref('silver__transactions') }} tx
-ON p.tx_id = tx.tx_id
+ON d.tx_id = tx.tx_id
+
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
