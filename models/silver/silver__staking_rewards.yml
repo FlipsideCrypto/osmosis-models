@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: silver__staking_rewards
-    description: Records of all claimed rewards earned from staking that have occurred on Osmosis, dating back to the genesis block. These actions include claim and withdral_rewards.
+    description: Records of all claimed rewards earned from staking that have occurred on Osmosis, dating back to the genesis block. These actions include claim and withdrawal_rewards.
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
