@@ -9,7 +9,6 @@ SELECT
     chain_id, 
     tx_id, 
     tx_status, 
-    msg_index, 
     liquidity_provider_address, 
     action, 
     pool_id, 

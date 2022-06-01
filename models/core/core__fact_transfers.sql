@@ -10,7 +10,6 @@ SELECT
     tx_id, 
     tx_status, 
     transfer_type, 
-    msg_index, 
     sender, 
     amount, 
     currency, 

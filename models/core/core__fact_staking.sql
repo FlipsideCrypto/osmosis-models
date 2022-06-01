@@ -11,7 +11,6 @@ SELECT
     tx_status, 
     tx_caller_address, 
     action, 
-    msg_group, 
     delegator_address,
     validator_address, 
     redelegate_source_validator_address,  
