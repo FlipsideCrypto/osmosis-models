@@ -29,6 +29,7 @@ wallets_per_block AS (
             'osmo\\w{39}'
         )
         AND block_id > 2383300
+        AND block_timestamp_date < CURRENT_DATE - 1
 ),
 max_block_id_per_date AS (
     SELECT
