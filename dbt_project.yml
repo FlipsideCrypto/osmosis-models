@@ -37,9 +37,10 @@ models:
     columns: true
 
 vars:
-  "dbt_date:time_zone": America/Los_Angeles
+  "dbt_date:time_zone": GMT
 
 on-run-start:
   - '{{create_sps()}}'
   - '{{create_udfs()}}'
   - '{{sp_bulk_get_asset_metadata()}}'
+  - '{{sp_create_bulk_get_balances()}}'
