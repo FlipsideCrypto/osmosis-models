@@ -3,6 +3,7 @@
   unique_key = "CONCAT_WS('-', tx_id, msg_index, attribute_index)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['_ingested_at::DATE'],
+  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
 ) }}
 
 SELECT
