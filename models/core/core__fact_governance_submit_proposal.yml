@@ -1,0 +1,41 @@
+version: 2
+models:
+  - name: core__fact_governance_submit_proposal
+    description: Records of all proposal submissions on Osmosis, dating back to the Genesis block. 
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCKCHAIN
+        description: "{{ doc('blockchain') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CHAIN_ID
+        description: "{{ doc('chain_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_STATUS
+        description: "{{ doc('tx_status') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PROPOSER
+        description: "{{ doc('proposer') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PROPOSAL_ID
+        description: "{{ doc('proposal_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PROPOSAL_TYPE
+        description: "{{ doc('proposal_type') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

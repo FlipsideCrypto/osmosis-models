@@ -1,78 +1,57 @@
 version: 2
 models:
-  - name: silver__swaps
+  - name: core__fact_swaps
     description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. 
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - TX_ID
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
         tests:
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER    
-                - FLOAT  
+          - dbt_expectations.expect_column_to_exist
       - name: BLOCK_TIMESTAMP
         description: "{{ doc('block_timestamp') }}"
         tests:
-          - not_null
-          - dbt_expectations.expect_row_values_to_have_recent_data:
-              datepart: day
-              interval: 1
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - TIMESTAMP_NTZ
+          - dbt_expectations.expect_column_to_exist
       - name: BLOCKCHAIN
         description: "{{ doc('blockchain') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: TRADER
         description: "{{ doc('trader') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: FROM_AMOUNT
         description: "{{ doc('from_amount') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: FROM_CURRENCY
         description: "{{ doc('from_currency') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: FROM_DECIMAL
         description: "{{ doc('from_decimal') }}"
       - name: TO_AMOUNT
         description: "{{ doc('to_amount') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: TO_CURRENCY
         description: "{{ doc('to_currency') }}"
         tests: 
-          - not_null
+          - dbt_expectations.expect_column_to_exist
       - name: TO_DECIMAL
         description: "{{ doc('to_decimal') }}"
       - name: POOL_IDS
         description: "{{ doc('pool_id') }}"
         tests: 
-          - not_null
-      - name: _INGESTED_AT
-        description: "{{ doc('ingested_at') }}"
-        tests:
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - TIMESTAMP_NTZ
+          - dbt_expectations.expect_column_to_exist
