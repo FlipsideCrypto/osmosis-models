@@ -2,7 +2,7 @@
   materialized = 'incremental',
   unique_key = "CONCAT_WS('-', tx_id, msg_index, attribute_index)",
   incremental_strategy = 'delete+insert',
-  cluster_by = ['_ingested_at::DATE'],
+  cluster_by = ['block_timestamp::DATE','_ingested_at::DATE'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
 ) }}
 
