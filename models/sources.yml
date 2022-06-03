@@ -7,6 +7,11 @@ sources:
     tables:
       - name: osmosis_blocks
       - name: osmosis_txs 
+  - name: shared
+    database: flipside_prod_db
+    schema: silver
+    tables:
+      - name: prices_v2
   - name: osmosis_external
     schema: bronze
     loader: S3
