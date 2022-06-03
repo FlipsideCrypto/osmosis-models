@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "tx_id",
+  unique_key = "CONCAT_WS('-', tx_id, proposal_id, voter)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['_ingested_at::DATE'],
 ) }}

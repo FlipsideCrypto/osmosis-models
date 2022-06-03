@@ -7,6 +7,7 @@ models:
           combination_of_columns:
             - TX_ID
             - PROPOSAL_ID
+            - VOTER
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
