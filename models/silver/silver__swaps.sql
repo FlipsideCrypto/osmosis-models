@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "tx_id",
     incremental_strategy = 'delete+insert',
-    cluster_by = ['_ingested_at::DATE'],
+    cluster_by = ['block_timestamp::DATE'],
 ) }}
 
 WITH message_indexes AS (
@@ -62,7 +62,6 @@ tokens_in AS (
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 ),
-
 tokens_out AS (
     SELECT
         t.tx_id,
@@ -78,7 +77,7 @@ tokens_out AS (
             0
         ) AS to_amount,
         RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS to_currency,
-        l.raw_metadata [1] :exponent AS to_decimal
+        l.raw_metadata [1] :exponent AS TO_DECIMAL
     FROM
         {{ ref('silver__msg_attributes') }}
         t
@@ -150,7 +149,7 @@ SELECT
     CASE
         WHEN tt.to_currency LIKE 'gamm/pool/%' THEN 18
         ELSE tt.to_decimal
-    END AS to_decimal,
+    END AS TO_DECIMAL,
     pool_ids,
     t._ingested_at
 FROM

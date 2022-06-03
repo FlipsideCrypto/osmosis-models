@@ -2,7 +2,7 @@
   materialized = 'incremental',
   unique_key = "tx_id",
   incremental_strategy = 'delete+insert',
-  cluster_by = ['_ingested_at::DATE'],
+  cluster_by = ['block_timestamp::DATE','_ingested_at::DATE'],
 ) }}
 
 SELECT
