@@ -48,9 +48,10 @@ proposal_id AS (
 voter AS (
     SELECT 
         tx_id, 
-        split_part(attribute_value, '/', 0) as voter
+        msg_index, 
+        attribute_value as voter
     FROM {{ ref('silver__msg_attributes') }}
-    WHERE attribute_key = 'acc_seq'
+    WHERE attribute_key = 'sender'
 
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -75,7 +76,7 @@ LEFT OUTER JOIN proposal_id p
 ON o.tx_id = p.tx_id AND o.msg_index = p.msg_index
 
 LEFT OUTER JOIN voter v
-ON o.tx_id = v.tx_id 
+ON o.tx_id = v.tx_id AND o.msg_index = v.msg_index - 1
 
 LEFT OUTER JOIN {{ ref('silver__transactions') }} t
 ON o.tx_id = t.tx_id 
