@@ -1,0 +1,33 @@
+version: 2
+models:
+  - name: silver__prices_swaps
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - BLOCK_HOUR
+            - CURRENCY
+    columns:
+      - name: BLOCK_HOUR
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
+      - name: CURRENCY
+        tests:
+          - not_null
+      - name: PRICE_USD
+        description: "The price of the asset in USD"
+        tests:
+          - not_null
+      - name: MIN_PRICE_USD_HOUR
+        description: "The lowest price found in the hour in USD"
+      - name: MAX_PRICE_USD_HOUR
+        description: "The highest price found in the hour in USD"
+      - name: VOLATILITY_MEASURE
+        description: "The difference between the min and max price for the hour"
+      - name: SWAPS_IN_HOUR
+        description: "The number of swap transactions in the hour"
+      - name: VOLUME_USD_IN_HOUR
+        description: "The volume of swap transactions (in USD) in the hour"
+  
