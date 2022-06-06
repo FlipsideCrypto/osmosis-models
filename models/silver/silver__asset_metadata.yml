@@ -7,6 +7,7 @@ models:
             - BLOCKCHAIN
             - CREATOR
             - ADDRESS
+          enabled: False 
     columns:
       - name: BLOCKCHAIN
         description: "{{ doc('blockchain') }}"
