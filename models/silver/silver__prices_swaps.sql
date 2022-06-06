@@ -483,7 +483,10 @@ fill_in_the_blanks_temp AS (
             SELECT
                 HOUR
             FROM
-                "FLIPSIDE_DEV_DB"."SILVER"."HOURS" A
+                {{ source(
+                    'shared2',
+                    'hours'
+                ) }} A
 
 {% if is_incremental() %}
 WHERE

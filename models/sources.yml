@@ -12,6 +12,11 @@ sources:
     schema: silver
     tables:
       - name: prices_v2
+  - name: shared2 
+    database: flipside_dev_db 
+    schema: silver
+    tables: 
+      - name: hours
   - name: osmosis_external
     schema: bronze
     loader: S3
