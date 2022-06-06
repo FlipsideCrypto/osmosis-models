@@ -51,6 +51,8 @@ WHERE
             OR asset_id = '4263'
             OR asset_id = '17208'
             OR asset_id = '9480'
+            OR asset_id = '3717'
+            OR asset_id = '2396'
         )
     )
     OR (
