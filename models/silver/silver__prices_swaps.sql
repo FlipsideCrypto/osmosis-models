@@ -12,11 +12,18 @@ WITH swaps AS (
                     block_timestamp
                 ) AS block_hour,
          from_currency,
-         from_amount,
+         from_amount / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
          to_currency,
-         to_amount,
+         to_amount / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
          'osmosis' AS dex
-    FROM {{ ref('silver__swaps') }}
+    FROM {{ ref('silver__swaps') }} s 
+
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata')}} f 
+    ON from_currency = f.address
+
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} t 
+    ON to_currency = t.address
+
     WHERE
         from_amount > 0
     AND 
@@ -183,23 +190,23 @@ osmo AS (
         A.block_hour,
         from_currency,
         f.project_name AS from_project_name,
-        from_amount,
+        from_amount / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
         CASE
             WHEN to_currency = 'uosmo' THEN (
-                to_amount * prices.price
+                to_amount / POW(10, t.raw_metadata[1]:exponent) * prices.price
             ) / NULLIF(
-                from_amount,
+                from_amount / POW(10, f.raw_metadata[1]:exponent),
                 0
             )
         END AS from_usd,
         to_currency,
         t.project_name AS to_project_name,
-        to_amount,
+        to_amount / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
         CASE
             WHEN from_currency = 'uosmo' THEN (
-                from_amount * prices.price
+                from_amount / POW(10, f.raw_metadata[1]:exponent) * prices.price
             ) / NULLIF(
-                to_amount,
+                to_amount / POW(10, t.raw_metadata[1]:exponent),
                 0
             )
         END AS to_usd,
@@ -394,81 +401,6 @@ final_dex AS (
         dex
 ), 
 
-weights AS (
-    SELECT
-        dex,
-        currency,
-        block_date,
-        total_amount_excludes / SUM(total_amount_excludes) over(
-            PARTITION BY currency,
-            block_date
-        ) vol_weight,
-        swaps_in_day_excludes / SUM(swaps_in_day_excludes) over(
-            PARTITION BY currency,
-            block_date
-        ) swaps_weight
-    FROM
-        (
-            SELECT
-                dex,
-                currency,
-                block_hour :: DATE block_date,
-                SUM(total_amount_excludes) total_amount_excludes,
-                SUM(swaps_in_hour_excludes) swaps_in_day_excludes
-            FROM
-                final_dex
-            GROUP BY
-                dex,
-                currency,
-                block_hour :: DATE
-        ) z
-), 
-
-ignore_weights AS (
-    SELECT
-        A.block_hour,
-        A.currency
-    FROM
-        (
-            SELECT
-                block_hour,
-                block_date,
-                currency,
-                SUM(swaps_in_hour) tx_count,
-                COUNT(
-                    DISTINCT dex
-                ) dex_count_final
-            FROM
-                final_dex
-            GROUP BY
-                block_hour,
-                block_date,
-                currency
-        ) A
-        LEFT JOIN (
-            SELECT
-                block_date,
-                currency,
-                COUNT(1) dex_count_weight
-            FROM
-                weights
-            GROUP BY
-                block_date,
-                currency
-        ) b
-        ON A.currency = b.currency
-        AND DATEADD(
-            'day',
-            -1,
-            A.block_date
-        ) = b.block_date
-    WHERE
-        (
-            tx_count < 20
-            OR A.dex_count_final < 4
-        )
-), 
-
 FINAL AS (
     SELECT
         A.block_hour,
@@ -480,11 +412,8 @@ FINAL AS (
         SUM(swaps_in_hour) AS swaps_in_hour,
         SUM(total_amount) AS volume_in_hour,
         SUM(
-            avg_price_usd_hour_excludes * CASE
-                WHEN C.currency IS NULL THEN vol_weight
-                ELSE current_hour_weight
-            END
-        ) price
+            avg_price_usd_hour_excludes 
+        ) AS price
     FROM
         (
             SELECT
@@ -498,33 +427,15 @@ FINAL AS (
                 max_price_usd_hour,
                 volatility_measure,
                 swaps_in_hour,
-                total_amount,
-                swaps_in_hour * 1.00 / SUM(swaps_in_hour) over(
-                    PARTITION BY block_hour,
-                    currency
-                ) current_hour_weight
+                total_amount
             FROM
                 final_dex
         ) A
-  
-        LEFT JOIN weights b
-        ON A.currency = b.currency
-        AND A.dex = b.dex
-        AND DATEADD(
-            'day',
-            -1,
-            A.block_date
-        ) = b.block_date
-        
-        LEFT JOIN ignore_weights C
-        ON A.currency = C.currency
-        AND A.block_hour = C.block_hour
         
     GROUP BY
         A.block_hour,
         A.currency,
-        A.project_name,
-        C.currency
+        A.project_name
 )
 
 {% if is_incremental() %},
