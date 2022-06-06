@@ -8,7 +8,6 @@ models:
             - TX_ID
             - MSG_INDEX
             - CURRENCY
-          enabled: False 
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
