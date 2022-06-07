@@ -13,21 +13,27 @@ WITH swaps AS (
                 ) AS block_hour,
          from_currency,
          from_amount / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
+         f.project_name AS from_project_name,
          to_currency,
          to_amount / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
+         t.project_name AS to_project_name,
          'osmosis' AS dex
     FROM {{ ref('silver__swaps') }} s 
 
-    LEFT OUTER JOIN {{ ref('silver__asset_metadata')}} f 
+    INNER JOIN {{ ref('silver__asset_metadata')}} f 
     ON from_currency = f.address
 
-    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} t 
+    INNER JOIN {{ ref('silver__asset_metadata') }} t 
     ON to_currency = t.address
 
     WHERE
         from_amount > 0
     AND 
         to_amount > 0
+    AND 
+        f.raw_metadata[1]:exponent IS NOT NULL
+    AND 
+        t.raw_metadata[1]:exponent IS NOT NULL  
 
 {% if is_incremental() %}
 AND block_hour >=(
@@ -60,7 +66,7 @@ usd AS (
     SELECT
         block_hour,
         from_currency,
-        f.project_name AS from_project_name,
+        from_project_name,
         from_amount,
         CASE
             WHEN from_currency IN (
@@ -75,7 +81,7 @@ usd AS (
             )
         END AS from_usd,
         to_currency,
-        t.project_name AS to_project_name,
+        to_project_name,
         to_amount,
         CASE
             WHEN to_currency IN (
@@ -92,12 +98,6 @@ usd AS (
         dex
     
     FROM swaps A
-    
-        LEFT JOIN {{ ref('silver__asset_metadata') }} f
-        ON A.from_currency = f.address
-        
-        LEFT JOIN {{ ref('silver__asset_metadata') }} t
-        ON A.to_currency = t.address
 ), 
 
 usd_2 AS (
@@ -189,35 +189,29 @@ osmo AS (
     SELECT
         A.block_hour,
         from_currency,
-        f.project_name AS from_project_name,
-        from_amount / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
+        from_project_name,
+        from_amount,
         CASE
             WHEN to_currency = 'uosmo' THEN (
-                to_amount / POW(10, t.raw_metadata[1]:exponent) * prices.price
+                to_amount  * prices.price
             ) / NULLIF(
-                from_amount / POW(10, f.raw_metadata[1]:exponent),
+                from_amount,
                 0
             )
         END AS from_usd,
         to_currency,
-        t.project_name AS to_project_name,
-        to_amount / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
+        to_project_name,
+        to_amount,
         CASE
             WHEN from_currency = 'uosmo' THEN (
-                from_amount / POW(10, f.raw_metadata[1]:exponent) * prices.price
+                from_amount * prices.price
             ) / NULLIF(
-                to_amount / POW(10, t.raw_metadata[1]:exponent),
+                to_amount,
                 0
             )
         END AS to_usd,
         dex
     FROM swaps A
-        
-    LEFT JOIN {{ ref('silver__asset_metadata') }} f
-    ON A.from_currency = f.address
-  
-    LEFT JOIN {{ ref('silver__asset_metadata') }} t
-    ON A.to_currency = t.address
   
     LEFT JOIN osmo_price_hour prices
     ON A.block_hour = prices.block_hour
@@ -572,8 +566,7 @@ FROM
     
 WHERE project_name IN ('axlUSDC',
                        'axlWBTC', 
-                       'gWETH', 
-                       'DHK', 
+                       'gWETH',  
                        'MARBLE', 
                        'axlFRAX', 
                        'gUSDC', 
