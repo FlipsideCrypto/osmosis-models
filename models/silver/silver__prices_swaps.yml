@@ -6,7 +6,6 @@ models:
           combination_of_columns:
             - BLOCK_HOUR
             - CURRENCY
-          enabled: False 
     columns:
       - name: BLOCK_HOUR
         tests:
