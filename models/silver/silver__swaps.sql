@@ -138,13 +138,13 @@ SELECT
     t.tx_id,
     t.tx_status,
     s.trader,
-    f.from_amount AS from_amount,
+    f.from_amount :: INTEGER AS from_amount,
     f.from_currency,
     CASE
         WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
         ELSE f.from_decimal
     END AS from_decimal,
-    tt.to_amount,
+    tt.to_amount :: INTEGER AS to_amount,
     tt.to_currency,
     CASE
         WHEN tt.to_currency LIKE 'gamm/pool/%' THEN 18

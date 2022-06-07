@@ -31,3 +31,7 @@ SELECT
   raw_metadata
 FROM
   base
+
+qualify(ROW_NUMBER() over(PARTITION BY blockchain, creator, address
+ORDER BY
+  project_name DESC)) = 1
