@@ -13,8 +13,8 @@ sources:
     tables:
       - name: prices_v2
   - name: shared2 
-    database: flipside_dev_db 
-    schema: silver
+    database: flipside_prod_db 
+    schema: redshift
     tables: 
       - name: hours
   - name: osmosis_external
