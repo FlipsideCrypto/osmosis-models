@@ -2,12 +2,12 @@
   materialized = 'incremental',
   unique_key = "CONCAT_WS('-', block_id, address, currency)",
   incremental_strategy = 'delete+insert',
-  cluster_by = ['date'],
+  cluster_by = ['block_timestamp'],
 ) }}
 
 SELECT 
     bal.block_id, 
-    bl.block_timestamp :: date AS date, 
+    bl.block_timestamp, 
     bal.address, 
     b.value:amount :: INT AS balance, 
     b.value:denom :: STRING AS currency,
@@ -15,7 +15,7 @@ SELECT
         WHEN currency LIKE 'gamm/pool/%' THEN 18
         ELSE raw_metadata[1]:exponent
     END AS decimal, 
-    _inserted_date
+    to_timestamp_ntz(substr(split_part(metadata$filename,'/',4),1,10)::number,0) as _inserted_timestamp
 FROM {{ source(
       'osmosis_external',
       'balances_api'
@@ -33,7 +33,7 @@ ON b.value:denom :: STRING = a.address
 
 {% if is_incremental() %}
 WHERE
-    _inserted_at :: DATE >= CURRENT_DATE -2
+    _inserted_timestamp :: DATE >= CURRENT_DATE -2
     _ingested_at :: DATE >= CURRENT_DATE -2
 {% endif %}
 
