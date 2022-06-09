@@ -25,32 +25,87 @@ WITH b AS (
       TRUE,
       FALSE
     ) AS is_action,
+    IFF(
+      TRY_BASE64_DECODE_STRING(
+        msg :attributes [0] :key :: STRING
+      ) = 'module',
+      TRUE,
+      FALSE
+    ) AS is_module,
     _ingested_at
   FROM
     {{ ref('silver__transactions') }} A,
-    LATERAL FLATTEN(input => A.msgs)
+    LATERAL FLATTEN(
+      input => A.msgs
+    )
 
 {% if is_incremental() %}
 WHERE
   _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
+),
+prefinal AS (
+  SELECT
+    block_id,
+    block_timestamp,
+    blockchain,
+    chain_id,
+    tx_id,
+    tx_status,
+    NULLIF(
+      (conditional_true_event(is_action) over (PARTITION BY tx_id
+      ORDER BY
+        msg_index) -1),
+        -1
+    ) AS msg_group,
+    msg_index,
+    msg_type,
+    msg,
+    is_module,
+    _ingested_at
+  FROM
+    b
+),
+grp AS (
+  SELECT
+    tx_id,
+    msg_index,
+    RANK() over(
+      PARTITION BY tx_id,
+      msg_group
+      ORDER BY
+        msg_index
+    ) msg_sub_group
+  FROM
+    prefinal
+  WHERE
+    is_module = TRUE
 )
 SELECT
   block_id,
   block_timestamp,
   blockchain,
   chain_id,
-  tx_id,
+  A.tx_id,
   tx_status,
-  NULLIF(
-    (conditional_true_event(is_action) over (PARTITION BY tx_id
-    ORDER BY
-      msg_index) -1),
-      -1
-  ) AS msg_group,
-  msg_index,
+  msg_group,
+  CASE
+    WHEN msg_group IS NULL THEN NULL
+    ELSE LAST_VALUE(
+      b.msg_sub_group ignore nulls
+    ) over(
+      PARTITION BY A.tx_id,
+      msg_group
+      ORDER BY
+        A.msg_index DESC rows unbounded preceding
+    )
+  END AS msg_sub_group,
+  A.msg_index,
   msg_type,
   msg,
   _ingested_at
 FROM
-  b
+  prefinal A
+  LEFT JOIN grp b
+  ON A.tx_id = b.tx_id
+  AND A.msg_index = b.msg_index
