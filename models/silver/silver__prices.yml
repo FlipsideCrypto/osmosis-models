@@ -1,6 +1,12 @@
 version: 2
 models:
   - name: silver__prices
+    description: Prices of tokens in USD from Coingecko and Coinmarketcap
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - RECORDED_AT
+            - SYMBOL
     columns:
       - name: RECORDED_AT
         description: Time that the price was recorded at 

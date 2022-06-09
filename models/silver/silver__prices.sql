@@ -80,3 +80,7 @@ WHERE
             OR asset_id = 'neta'
         )
     )
+
+qualify(ROW_NUMBER() over(PARTITION BY recorded_at, symbol
+ORDER BY
+  recorded_at DESC)) = 1
