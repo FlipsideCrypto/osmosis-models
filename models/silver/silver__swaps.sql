@@ -15,6 +15,8 @@ WITH message_indexes AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
+        block_timestamp :: date > '2021-09-23'
+    AND
         msg_type = 'token_swapped'
         AND (
             attribute_key = 'tokens_in'
@@ -54,7 +56,8 @@ tokens_in AS (
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
     WHERE
-        msg_type = 'token_swapped'
+        t.block_timestamp :: date > '2021-09-23'
+        AND msg_type = 'token_swapped'
         AND t.attribute_key = 'tokens_in'
         AND t.msg_index = m.min_index
 
@@ -88,7 +91,8 @@ tokens_out AS (
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
     WHERE
-        msg_type = 'token_swapped'
+        t.block_timestamp :: date > '2021-09-23'
+        AND msg_type = 'token_swapped'
         AND t.attribute_key = 'tokens_out'
         AND t.msg_index = m.max_index
 
@@ -105,7 +109,8 @@ pools AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        attribute_key = 'pool_id'
+        block_timestamp :: date > '2021-09-23'
+        AND attribute_key = 'pool_id'
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -124,7 +129,8 @@ trader AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        attribute_key = 'acc_seq'
+        block_timestamp :: date > '2021-09-23'
+        AND attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
