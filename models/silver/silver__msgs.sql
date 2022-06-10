@@ -32,6 +32,12 @@ WITH b AS (
       TRUE,
       FALSE
     ) AS is_module,
+    TRY_BASE64_DECODE_STRING(
+      msg :attributes [0] :key :: STRING
+    ) attribute_key,
+    TRY_BASE64_DECODE_STRING(
+      msg :attributes [0] :value :: STRING
+    ) attribute_value,
     _ingested_at
   FROM
     {{ ref('silver__transactions') }} A,
@@ -62,25 +68,41 @@ prefinal AS (
     msg_type,
     msg,
     is_module,
+    attribute_key,
+    attribute_value,
     _ingested_at
   FROM
     b
 ),
-grp AS (
+exec_actions AS (
   SELECT
-    tx_id,
-    msg_index,
-    RANK() over(
-      PARTITION BY tx_id,
-      msg_group
-      ORDER BY
-        msg_index
-    ) -1 msg_sub_group
+    DISTINCT tx_id,
+    msg_group
   FROM
     prefinal
   WHERE
-    is_module = TRUE
-    AND msg_type = 'message'
+    msg_type = 'message'
+    AND attribute_key = 'action'
+    AND LOWER(attribute_value) LIKE '%exec%'
+),
+grp AS (
+  SELECT
+    A.tx_id,
+    A.msg_index,
+    RANK() over(
+      PARTITION BY A.tx_id,
+      A.msg_group
+      ORDER BY
+        A.msg_index
+    ) -1 msg_sub_group
+  FROM
+    prefinal A
+    JOIN exec_actions b
+    ON A.tx_id = b.tx_id
+    AND A.msg_group = b.msg_group
+  WHERE
+    A.is_module = TRUE
+    AND A.msg_type = 'message'
 )
 SELECT
   block_id,
@@ -92,13 +114,16 @@ SELECT
   msg_group,
   CASE
     WHEN msg_group IS NULL THEN NULL
-    ELSE LAST_VALUE(
-      b.msg_sub_group ignore nulls
-    ) over(
-      PARTITION BY A.tx_id,
-      msg_group
-      ORDER BY
-        A.msg_index DESC rows unbounded preceding
+    ELSE COALESCE(
+      LAST_VALUE(
+        b.msg_sub_group ignore nulls
+      ) over(
+        PARTITION BY A.tx_id,
+        msg_group
+        ORDER BY
+          A.msg_index DESC rows unbounded preceding
+      ),
+      0
     )
   END AS msg_sub_group,
   A.msg_index,
