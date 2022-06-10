@@ -36,7 +36,7 @@ models:
         tests: 
           - not_null
       - name: MSG_GROUP
-        description: "{{ doc('msg_group') }}"
+        description: "{{ doc('silver_msg_group') }}"
       - name: MSG_SUB_GROUP
         description: "{{ doc('msg_sub_group') }}"
       - name: MSG_INDEX
