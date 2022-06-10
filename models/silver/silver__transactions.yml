@@ -67,6 +67,10 @@ models:
         description: "The underlying json from the messages or events within the transactions"
         tests: 
           - not_null
+      - name: AUTH_INFO
+        description:  "{{ doc('auth_info') }}"
+      - name: TX_BODY
+        description:  "{{ doc('tx_body') }}"
       - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests:
