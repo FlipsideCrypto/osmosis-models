@@ -75,11 +75,12 @@ grp AS (
       msg_group
       ORDER BY
         msg_index
-    ) msg_sub_group
+    ) -1 msg_sub_group
   FROM
     prefinal
   WHERE
     is_module = TRUE
+    AND msg_type = 'message'
 )
 SELECT
   block_id,
