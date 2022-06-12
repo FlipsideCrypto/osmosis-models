@@ -143,7 +143,7 @@ sources:
       - name: balances_api
         description: "Wallet balances from osmosis api"
         external:
-          location: "@osmosis.bronze.analytics_external_tables/{{target.database}}/BALANCES_API"
+          location: "@osmosis.bronze.analytics_external_tables/OSMOSIS/BALANCES_API"
           file_format: "( type = json, strip_outer_array = TRUE )"
           auto_refresh: true
           partitions:

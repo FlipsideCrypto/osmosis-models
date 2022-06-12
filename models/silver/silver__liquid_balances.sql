@@ -7,7 +7,7 @@
 
 SELECT 
     bal.block_id, 
-    bl.block_timestamp, 
+    bl.block_timestamp,
     bal.address, 
     b.value:amount :: INT AS balance, 
     b.value:denom :: STRING AS currency,

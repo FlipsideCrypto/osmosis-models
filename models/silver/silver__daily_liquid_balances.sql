@@ -36,7 +36,7 @@ new AS (
         1 AS RANK, 
         _inserted_timestamp
     FROM 
-        {{ ref('silver__balances') }}
+        {{ ref('silver__liquid_balances') }}
     WHERE block_timestamp :: date >= (
         SELECT
             DATEADD('day', -1, MAX(DATE))
@@ -120,7 +120,7 @@ base AS (
         decimal, 
         _inserted_timestamp
     FROM
-        {{ ref('silver__balances') }}
+        {{ ref('silver__liquid_balances') }}
 
     {% endif %}
 ), 
@@ -207,6 +207,7 @@ balance_temp AS (
 SELECT
     block_id, 
     date, 
+    'liquid' AS balance_type, 
     address, 
     LAST_VALUE(
         balance ignore nulls
