@@ -1,11 +1,12 @@
 version: 2
 models:
-  - name: silver__liquid_balances
+  - name: silver__staked_balances
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - BLOCK_ID
             - ADDRESS
+            - BALANCE
             - CURRENCY
     columns:
       - name: BLOCK_ID 
@@ -30,7 +31,7 @@ models:
           - not_null
       - name: DECIMAL 
         description: "{{ doc('decimal') }}"
-      - name: _INSERTED_TIMESTAMP
+      - name: _INGESTED_AT
         description: "{{ doc('ingested_at') }}"
         tests: 
           - not_null

@@ -8,6 +8,7 @@
 SELECT 
     bal.block_id, 
     bl.block_timestamp,
+    'liquid' AS balance_type, 
     bal.address, 
     b.value:amount :: INT AS balance, 
     b.value:denom :: STRING AS currency,
