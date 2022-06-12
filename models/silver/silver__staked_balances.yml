@@ -31,7 +31,7 @@ models:
           - not_null
       - name: DECIMAL 
         description: "{{ doc('decimal') }}"
-      - name: _INGESTED_AT
+      - name: _INSERTED_TIMESTAMP
         description: "{{ doc('ingested_at') }}"
         tests: 
           - not_null

@@ -71,5 +71,5 @@ SELECT
     SUM(amount) OVER( ORDER BY block_timestamp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as balance, 
     currency, 
     decimal, 
-    _ingested_at
+    _ingested_at AS _inserted_timestamp
 FROM all_staked
