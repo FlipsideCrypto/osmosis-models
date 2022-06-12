@@ -28,7 +28,7 @@ WITH all_staked AS (
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE -2
     {% endif %}
-
+    
     qualify(ROW_NUMBER() over(PARTITION BY block_id, block_timestamp, currency, amount
     ORDER BY
     _ingested_at DESC)) = 1
@@ -57,10 +57,11 @@ WITH all_staked AS (
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE -2
     {% endif %}
-
+    
     qualify(ROW_NUMBER() over(PARTITION BY block_id, block_timestamp, currency, amount
     ORDER BY
     _ingested_at DESC)) = 1
+
 ) 
 
 SELECT 
@@ -68,7 +69,10 @@ SELECT
     block_timestamp, 
     'staked' AS balance_type, 
     address, 
-    SUM(amount) OVER( ORDER BY block_timestamp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as balance, 
+    SUM(amount) OVER( PARTITION BY address,
+    currency 
+    ORDER BY block_timestamp ASC ROWS UNBOUNDED PRECEDING
+    ) AS balance, 
     currency, 
     decimal, 
     _ingested_at AS _inserted_timestamp
