@@ -1,6 +1,6 @@
-{% macro run_sp_bulk_get_validator_metadata(db_name) %}
+{% macro run_sp_bulk_get_validator_metadata() %}
 {% set sql %}
-call {{ db_name }}.silver.sp_bulk_get_validator_metadata();
+call silver.sp_bulk_get_validator_metadata();
 {% endset %}
 
 {% do run_query(sql) %}
