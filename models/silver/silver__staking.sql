@@ -80,7 +80,7 @@ tx_address AS (
             0
         ) AS tx_caller_address
     FROM
-        osmosis_dev.silver.msg_attributes A
+        {{ ref('silver__msg_attributes') }} A
         JOIN (
             SELECT
                 DISTINCT tx_id
@@ -332,5 +332,6 @@ SELECT
     A._INGESTED_AT
 FROM
     add_dec A
-    LEFT OUTER JOIN osmosis_dev.silver.asset_metadata amd
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
+    amd
     ON A.currency = amd.address
