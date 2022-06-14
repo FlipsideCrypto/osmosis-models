@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_airdrop
-    description: Records of all airdrops on Osmosis, including IBC transfers as on- and off-ramps to Osmosis and wallet to wallet transfers
+    description: Record of the OSMO airdrop to ATOM stakers. 
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
