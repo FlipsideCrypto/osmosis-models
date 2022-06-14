@@ -111,9 +111,10 @@ osmo_tx_ids AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        msg_type = 'message'
+        (msg_type = 'message'
         AND attribute_key = 'module'
-        AND attribute_value = 'bank'
+        AND attribute_value = 'bank')
+        OR msg_type = 'claim'
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
