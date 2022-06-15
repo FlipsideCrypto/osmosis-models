@@ -59,7 +59,7 @@ models:
                 - STRING    
                 - VARCHAR  
       - name: MSG_GROUP
-        description: "{{ doc('msg_group') }}"
+        description: "{{ doc('silver_msg_group') }}"
         tests: 
           - not_null
       - name: DELEGATOR_ADDRESS

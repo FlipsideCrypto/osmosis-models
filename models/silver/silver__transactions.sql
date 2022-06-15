@@ -20,6 +20,8 @@ SELECT
   END AS tx_status,
   tx :tx_result :code :: INT tx_code,
   tx :tx_result :events AS msgs,
+  tx :auth_info AS auth_info,
+  tx :body AS tx_body,
   ingested_at AS _ingested_at
 FROM
   {{ ref('bronze__transactions') }}
