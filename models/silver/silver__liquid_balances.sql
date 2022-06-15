@@ -10,12 +10,12 @@ SELECT
     bl.block_timestamp,
     'liquid' AS balance_type, 
     bal.address, 
-    b.value:amount :: INT AS balance, 
     b.value:denom :: STRING AS currency,
     CASE 
         WHEN currency LIKE 'gamm/pool/%' THEN 18
         ELSE raw_metadata[1]:exponent
     END AS decimal, 
+    b.value:amount :: INT AS balance, 
     to_timestamp_ntz(substr(split_part(metadata$filename,'/',4),1,10)::number,0) as _inserted_timestamp
 FROM {{ source(
       'osmosis_external',

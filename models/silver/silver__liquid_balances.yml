@@ -1,6 +1,7 @@
 version: 2
 models:
   - name: silver__liquid_balances
+    description: A table containing all the liquid balance changes of wallets on the Osmosis chain. 
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:

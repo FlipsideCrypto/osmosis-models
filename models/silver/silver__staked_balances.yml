@@ -1,6 +1,7 @@
 version: 2
 models:
   - name: silver__staked_balances
+    description: A table of each staked balance change for wallets on the Osmosis chain. 
     columns:
       - name: BLOCK_ID 
         description: "{{ doc('block_id') }}"

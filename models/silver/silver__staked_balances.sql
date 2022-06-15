@@ -60,11 +60,11 @@ SELECT
     block_timestamp, 
     'staked' AS balance_type, 
     address, 
+    currency, 
+    decimal, 
     SUM(amount) OVER( PARTITION BY address,
     currency 
     ORDER BY block_timestamp ASC ROWS UNBOUNDED PRECEDING
     ) AS balance, 
-    currency, 
-    decimal, 
     _ingested_at AS _inserted_timestamp
 FROM all_staked
