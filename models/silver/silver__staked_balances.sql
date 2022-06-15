@@ -1,6 +1,5 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', block_id, address, balance, currency)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['block_timestamp'],
 ) }}
@@ -28,16 +27,12 @@ WITH all_staked AS (
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE -2
     {% endif %}
-    
-    qualify(ROW_NUMBER() over(PARTITION BY block_id, block_timestamp, currency, amount
-    ORDER BY
-    _ingested_at DESC)) = 1
         
     UNION ALL 
   
     SELECT 
         block_id, 
-        block_timestamp, 
+        block_timestamp,  
         delegator_address AS address,
         -amount, 
         currency, 
@@ -57,10 +52,6 @@ WITH all_staked AS (
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE -2
     {% endif %}
-    
-    qualify(ROW_NUMBER() over(PARTITION BY block_id, block_timestamp, currency, amount
-    ORDER BY
-    _ingested_at DESC)) = 1
 
 ) 
 

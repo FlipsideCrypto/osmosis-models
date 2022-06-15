@@ -4,14 +4,11 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - BLOCK_ID
+            - DATE
             - ADDRESS
-            - BALANCE
+            - BALANCE_TYPE
+            - CURRENCY
     columns:
-      - name: BLOCK_ID 
-        description: "{{ doc('block_id') }}"
-        tests: 
-          - not_null
       - name: DATE
         description: The day the balance was recorded on. 
         tests: 
@@ -36,6 +33,4 @@ models:
         description: "{{ doc('decimal') }}"
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('ingested_at') }}"
-        tests: 
-          - not_null
       

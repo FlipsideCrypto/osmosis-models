@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', date, address, currency)",
+  unique_key = "CONCAT_WS('-', date, address, balance_type, currency)",
   incremental_strategy = 'delete+insert',
   cluster_by = ['date'],
 ) }}
@@ -169,6 +169,7 @@ address_ranges AS (
         address, 
         balance_type, 
         currency, 
+        decimal, 
         MIN(
             block_timestamp :: date
         ) AS min_block_date, 
@@ -180,7 +181,8 @@ address_ranges AS (
     GROUP BY 
         address, 
         balance_type, 
-        currency
+        currency, 
+        decimal
 ), 
 
 ddate AS (
@@ -199,7 +201,8 @@ all_dates AS (
         d.date, 
         a.balance_type, 
         a.address, 
-        a.currency
+        a.currency, 
+        a.decimal
     FROM 
         ddate d
     
@@ -232,11 +235,11 @@ osmosis_balances AS (
 balance_temp AS (
     SELECT
         d.date, 
-        b.balance_type, 
+        d.balance_type, 
         d.address, 
         b.balance, 
         d.currency,
-        b.decimal, 
+        d.decimal, 
         _inserted_timestamp
 
     FROM 
@@ -253,6 +256,8 @@ SELECT
     date, 
     balance_type, 
     address, 
+    currency, 
+    decimal, 
     LAST_VALUE(
         balance ignore nulls
     ) over(
@@ -262,8 +267,6 @@ SELECT
     ORDER BY
       DATE ASC rows unbounded preceding
     )  AS balance, 
-    currency, 
-    decimal, 
     _inserted_timestamp
 FROM 
     balance_temp
