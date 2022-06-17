@@ -328,9 +328,12 @@ SELECT
     A.validator_address,
     A.redelegate_source_validator_address,
     A.completion_time,
-    amd.raw_metadata [1] :exponent :: INT AS DECIMAL,
+    CASE
+        WHEN A.currency LIKE 'gamm/pool/%' THEN 18
+        ELSE amd.raw_metadata [1] :exponent
+    END AS decimal, 
     A._INGESTED_AT
 FROM
     add_dec A
-    LEFT OUTER JOIN osmosis_dev.silver.asset_metadata amd
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} amd
     ON A.currency = amd.address

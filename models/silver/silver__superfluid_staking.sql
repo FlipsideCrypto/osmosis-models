@@ -4,8 +4,7 @@
     incremental_strategy = 'delete+insert',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
---need to add incremental logic
----all relevant tx_ids
+
 WITH base_txn AS (
 
     SELECT
@@ -44,7 +43,7 @@ WITH base_txn AS (
         AND _ingested_at :: DATE >= CURRENT_DATE - 2
         {% endif %}
 ),
---find the relevant lock ids for undelegate events (need to be able to look up the validator)
+
 locks AS (
     SELECT
         b.tx_ID ub_tx_id,
@@ -71,7 +70,7 @@ locks AS (
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
 ),
---get the body info from the original delegate
+
 lock_body AS (
     SELECT
         b.ub_tx_id,
@@ -100,9 +99,8 @@ lock_body AS (
     {% if is_incremental() %}
     AND _ingested_at :: DATE >= CURRENT_DATE - 2
     {% endif %}
-), --tie together the delegate events with the undelegte (plus the info from the original delegate)
+), 
 
--- caller logic 
 tx_address AS (
     SELECT
         A.tx_id,
@@ -135,11 +133,10 @@ GROUP BY
     msg_group
 )
 
---need to all the caller logic from the other staking model
 SELECT
     A.block_id,
     A.block_timestamp,
-    blockchain,
+    A.blockchain,
     chain_ID,
     A.tx_ID,
     A.tx_status,
@@ -154,6 +151,10 @@ SELECT
         C.amount :: INT
     ) AS amount,
     A.currency :: STRING AS currency,
+    CASE
+        WHEN A.currency LIKE 'gamm/pool/%' THEN 18
+        ELSE am.raw_metadata [1] :exponent
+    END AS decimal, 
     COALESCE(
         A.validator_address :: STRING,
         C.validator_address :: STRING
@@ -172,3 +173,6 @@ FROM
 
     LEFT JOIN tx_address tx
     ON A.tx_id = tx.tx_id
+
+    LEFT JOIN {{ ref('silver__asset_metadata') }} am
+    ON A.currency = am.address
