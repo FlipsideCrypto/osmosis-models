@@ -80,7 +80,7 @@ tx_address AS (
             0
         ) AS tx_caller_address
     FROM
-        osmosis_dev.silver.msg_attributes A
+        {{ ref('silver__msg_attributes') }} A
         JOIN (
             SELECT
                 DISTINCT tx_id

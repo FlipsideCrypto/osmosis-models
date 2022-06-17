@@ -25,7 +25,7 @@ WITH base_txn AS (
         _INGESTED_AT,
         this :lock_id AS lock_id
     FROM
-        osmosis_dev.silver.transactions A,
+        {{ ref('silver__transactions') }} A,
         LATERAL FLATTEN (
             input => tx_body :messages,
             recursive => TRUE
@@ -39,6 +39,10 @@ WITH base_txn AS (
             '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
         )
         AND tx_status = 'SUCCEEDED'
+
+        {% if is_incremental() %}
+        AND _ingested_at :: DATE >= CURRENT_DATE - 2
+        {% endif %}
 ),
 --find the relevant lock ids for undelegate events (need to be able to look up the validator)
 locks AS (
@@ -47,7 +51,7 @@ locks AS (
         A.tx_ID,
         attribute_value lock_id
     FROM
-        osmosis_dev.silver.msg_attributes A
+        {{ ref('silver__msg_attributes') }} A
         JOIN (
             SELECT
                 DISTINCT lock_id,
@@ -62,6 +66,10 @@ locks AS (
             'add_tokens_to_lock'
         )
         AND attribute_key LIKE '%lock%'
+
+{% if is_incremental() %}
+AND _ingested_at :: DATE >= CURRENT_DATE - 2
+{% endif %}
 ),
 --get the body info from the original delegate
 lock_body AS (
@@ -75,7 +83,7 @@ lock_body AS (
         this :duration,
         this
     FROM
-        osmosis_dev.silver.transactions A,
+        {{ ref('silver__transactions') }} A,
         locks b,
         LATERAL FLATTEN (
             input => tx_body :messages,
@@ -88,7 +96,45 @@ lock_body AS (
             '/osmosis.superfluid.MsgLockAndSuperfluidDelegate',
             '/osmosis.superfluid.MsgSuperfluidDelegate'
         )
-) --tie together the delegate events with the undelegte (plus the info from the original delegate)
+
+    {% if is_incremental() %}
+    AND _ingested_at :: DATE >= CURRENT_DATE - 2
+    {% endif %}
+), --tie together the delegate events with the undelegte (plus the info from the original delegate)
+
+-- caller logic 
+tx_address AS (
+    SELECT
+        A.tx_id,
+        OBJECT_AGG(
+            attribute_key :: STRING,
+            attribute_value :: variant
+        ) AS j,
+        SPLIT_PART(
+            j :acc_seq :: STRING,
+            '/',
+            0
+        ) AS tx_caller_address
+    FROM
+        {{ ref('silver__msg_attributes') }} A
+        JOIN (
+            SELECT
+                DISTINCT tx_id
+            FROM
+                base_txn
+        ) b
+        ON A.tx_ID = b.tx_ID
+    WHERE
+        attribute_key = 'acc_seq'
+
+{% if is_incremental() %}
+AND _ingested_at :: DATE >= CURRENT_DATE - 2
+{% endif %}
+GROUP BY
+    A.tx_id,
+    msg_group
+)
+
 --need to all the caller logic from the other staking model
 SELECT
     A.block_id,
@@ -97,27 +143,32 @@ SELECT
     chain_ID,
     A.tx_ID,
     A.tx_status,
-    NULL AS caller,
+    tx.tx_caller_address,
     REPLACE(
         A.actio :: STRING,
         '/osmosis.superfluid.Msg'
     ) action,
-    A.delegator_address,
+    A.delegator_address :: STRING AS delegator_address,
     COALESCE(
-        A.amount,
-        C.amount
+        A.amount :: INT,
+        C.amount :: INT
     ) AS amount,
-    A.currency,
+    A.currency :: STRING AS currency,
     COALESCE(
-        A.validator_address,
-        C.validator_address
+        A.validator_address :: STRING,
+        C.validator_address :: STRING
     ) AS validator_address,
     COALESCE(
         A.lock_id,
         C.lock_id
     ) AS lock_ID,
-    C.tx_ID AS original_superfluid_delegate_tx_ID
+    C.tx_ID AS original_superfluid_delegate_tx_ID, 
+    _ingested_at
 FROM
     base_txn A
+
     LEFT JOIN lock_body C
     ON A.tx_id = C.ub_tx_ID
+
+    LEFT JOIN tx_address tx
+    ON A.tx_id = tx.tx_id
