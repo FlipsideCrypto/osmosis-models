@@ -15,8 +15,4 @@ SELECT
     currency, 
     decimal, 
     receiver
-FROM {{ ref('silver__transfers') }}
-
-WHERE block_timestamp :: date > '2021-06-17'
-AND block_timestamp :: date < '2021-12-31'
-AND sender = 'osmo1wmsuutkzg0lu7s5vj94j0ws90msy6ju2vyq66m'
+FROM {{ ref('silver__airdrops') }}
