@@ -50,9 +50,16 @@ msg_atts AS (
             WHEN msg_type = 'transfer'
             AND attribute_key = 'amount' THEN 'non lp tokens'
             WHEN attribute_key = 'acc_seq' THEN 'lper'
+            WHEN attribute_key = 'sender' THEN 'msg sender'
         END what_is_this,
         b.action,
-        A.*
+        A.tx_ID,
+        A.msg_group,
+        A.msg_sub_group,
+        A.msg_index,
+        A.attribute_key,
+        A.attribute_value,
+        A.block_timestamp
     FROM
         {{ ref('silver__msg_attributes') }} A
         JOIN in_play b
@@ -76,6 +83,10 @@ msg_atts AS (
                 AND A.msg_group = b.msg_group
             )
             OR attribute_key = 'acc_seq'
+            OR (
+                msg_type = 'message'
+                AND attribute_key = 'sender'
+            )
         )
 
 {% if is_incremental() %}
@@ -88,6 +99,19 @@ AND _ingested_at >= (
         {{ this }}
 )
 {% endif %}
+),
+lper AS (
+    SELECT
+        tx_id,
+        SPLIT_PART(
+            attribute_value,
+            '/',
+            0
+        ) AS liquidity_provider_address
+    FROM
+        msg_atts
+    WHERE
+        what_is_this = 'lper'
 ),
 tokens AS (
     SELECT
@@ -122,6 +146,42 @@ tokens AS (
             'non lp tokens'
         )
 ),
+sndr AS (
+    SELECT
+        tx_id,
+        msg_index,
+        attribute_value
+    FROM
+        msg_atts
+    WHERE
+        attribute_key = 'sender'
+),
+tokens_2 AS (
+    SELECT
+        A.tx_id,
+        A.msg_index,
+        A.msg_group,
+        A.msg_sub_group,
+        A.what_is_this,
+        A.amount,
+        A.currency,
+        A.action,
+        A.block_timestamp
+    FROM
+        tokens A
+        LEFT JOIN lper b
+        ON A.tx_id = b.tx_id
+        LEFT JOIN sndr C
+        ON A.tx_Id = C.tx_ID
+        AND b.liquidity_provider_address = C.attribute_value
+        AND A.msg_index = C.msg_index + 1
+    WHERE
+        what_is_this = 'non lp tokens'
+        OR (
+            what_is_this = 'lp tokens'
+            AND C.tx_ID IS NOT NULL
+        )
+),
 decimals AS (
     SELECT
         tx_id,
@@ -138,7 +198,7 @@ decimals AS (
         action,
         block_timestamp
     FROM
-        tokens t
+        tokens_2 t
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
         ON currency = address
 ),
@@ -147,20 +207,11 @@ pools AS (
         tx_id,
         msg_group,
         msg_sub_group,
-        REPLACE(SPLIT_PART(attribute_value, 'gamm', 2), '/pool/') :: INT pool_id
+        REPLACE(SPLIT_PART(currency, 'gamm', 2), '/pool/') :: INT pool_id
     FROM
-        msg_atts
+        tokens_2
     WHERE
         what_is_this = 'lp tokens'
-),
-lper AS (
-    SELECT
-        tx_id,
-        attribute_value
-    FROM
-        msg_atts
-    WHERE
-        what_is_this = 'lper'
 ),
 txn AS (
     SELECT
@@ -194,11 +245,7 @@ SELECT
     tx.tx_id,
     tx.tx_status,
     d.msg_index,
-    SPLIT_PART(
-        l.attribute_value,
-        '/',
-        0
-    ) AS liquidity_provider_address,
+    l.liquidity_provider_address,
     CASE
         WHEN action = 'join_pool'
         AND what_is_this = 'lp tokens' THEN 'lp_tokens_minted'
