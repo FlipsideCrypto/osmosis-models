@@ -306,7 +306,6 @@ FROM
     ON d.tx_id = p.tx_id
     AND d.msg_group = p.msg_group
     AND d.msg_sub_group = p.msg_sub_group
-    AND d.msg_group = p.msg_group
     JOIN lper l
     ON d.tx_id = l.tx_id
     JOIN txn tx

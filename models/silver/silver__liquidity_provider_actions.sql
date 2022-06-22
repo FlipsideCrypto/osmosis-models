@@ -8,7 +8,7 @@
 WITH in_play AS (
 
     SELECT
-        tx_ID,
+        DISTINCT tx_ID,
         msg_group,
         msg_sub_group
     FROM
@@ -59,7 +59,19 @@ msg_atts AS (
             WHEN attribute_key = 'acc_seq' THEN 'lper'
             WHEN attribute_key = 'sender' THEN 'msg sender'
         END what_is_this,
-        block_timestamp
+        block_timestamp,
+        SUM(
+            CASE
+                WHEN msg_type = 'transfer'
+                AND attribute_key = 'amount'
+                AND attribute_value LIKE '%gamm%pool%'
+                AND attribute_value NOT LIKE '%,%' THEN 1
+                ELSE 0
+            END
+        ) over(
+            PARTITION BY A.tx_id,
+            A.msg_group
+        ) lp_count
     FROM
         {{ ref('silver__msg_attributes') }} A
         JOIN in_play b
@@ -135,7 +147,8 @@ tokens AS (
             0
         ) :: INTEGER AS amount,
         RIGHT(t.value, LENGTH(t.value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(t.value, '[^[:digit:]]', ' ')), ' ', 0))) :: STRING AS currency,
-        block_timestamp
+        block_timestamp,
+        lp_count
     FROM
         msg_atts,
         LATERAL SPLIT_TO_TABLE (
@@ -180,7 +193,10 @@ tokens_2 AS (
         what_is_this = 'non lp tokens'
         OR (
             what_is_this = 'lp tokens'
-            AND C.tx_ID IS NOT NULL
+            AND (
+                C.tx_ID IS NOT NULL
+                OR lp_count = 1
+            )
         )
 ),
 decimals AS (
@@ -229,6 +245,7 @@ act AS (
     SELECT
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_type AS action
     FROM
         msg_atts
@@ -273,12 +290,11 @@ FROM
     JOIN act
     ON d.tx_id = act.tx_id
     AND d.msg_group = act.msg_group
-    AND d.msg_group = act.msg_group
+    AND d.msg_sub_group = act.msg_sub_group
     JOIN pools p
     ON d.tx_id = p.tx_id
     AND d.msg_group = p.msg_group
     AND d.msg_sub_group = p.msg_sub_group
-    AND d.msg_group = p.msg_group
     JOIN lper l
     ON d.tx_id = l.tx_id
     JOIN txn tx
