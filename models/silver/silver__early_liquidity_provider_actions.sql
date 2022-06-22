@@ -33,6 +33,35 @@ AND _ingested_at >= (
         {{ this }}
 )
 {% endif %}
+EXCEPT
+SELECT
+    tx_ID,
+    msg_group,
+    msg_sub_group,
+    CASE
+        msg_type
+        WHEN 'pool_exited' THEN 'exit_pool'
+        WHEN 'pool_joined' THEN 'join_pool'
+    END action,
+    block_timestamp
+FROM
+    {{ ref('silver__msg_attributes') }}
+WHERE
+    msg_type IN(
+        'pool_exited',
+        'pool_joined'
+    )
+
+{% if is_incremental() %}
+AND _ingested_at >= (
+    SELECT
+        MAX(
+            _ingested_at
+        )
+    FROM
+        {{ this }}
+)
+{% endif %}
 ),
 msg_atts AS (
     SELECT
@@ -81,6 +110,10 @@ msg_atts AS (
                 AND A.attribute_key = 'amount'
                 AND A.msg_sub_group = b.msg_sub_group
                 AND A.msg_group = b.msg_group
+                AND (
+                    attribute_value LIKE '%gamm%pool%'
+                    OR attribute_value LIKE '%,%'
+                )
             )
             OR attribute_key = 'acc_seq'
             OR (
