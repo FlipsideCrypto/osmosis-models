@@ -193,6 +193,7 @@ osmo_amount AS (
         m.msg_type = 'transfer'
         AND m.attribute_key = 'amount'
         AND idx.msg_index = m.msg_index
+        
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -223,6 +224,10 @@ FROM
     t
     ON r.tx_id = t.tx_id
 
+    WHERE 
+        (amount IS NOT NULL 
+        OR currency IS NOT NULL)
+
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
 {% endif %}
@@ -252,6 +257,9 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
     t
     ON r.tx_id = t.tx_id
+WHERE
+    (amount IS NOT NULL 
+    OR currency IS NOT NULL)
 
 {% if is_incremental() %}
 AND _ingested_at :: DATE >= CURRENT_DATE - 2
@@ -288,6 +296,8 @@ FROM
 WHERE
     m.msg_type = 'write_acknowledgement'
     AND m.attribute_key = 'packet_data'
+    AND (amount IS NOT NULL 
+    OR currency IS NOT NULL)
 
 {% if is_incremental() %}
 AND m._ingested_at :: DATE >= CURRENT_DATE - 2
