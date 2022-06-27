@@ -160,3 +160,16 @@ sources:
           - name: balances
             data_type: array
             description: ""
+      - name: pool_balances_api
+        description: "pool balances from osmosis api"
+        external:
+          location: "@osmosis.bronze.analytics_external_tables/{{target.database}}/POOL_BALANCES_API"
+          file_format: "( type = json, strip_outer_array = TRUE )"
+          auto_refresh: true
+        columns:
+          - name: block_id
+            data_type: number
+            description: ""
+          - name: pools
+            data_type: variant
+            description: ""

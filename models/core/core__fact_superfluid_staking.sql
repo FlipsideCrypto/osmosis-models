@@ -9,10 +9,14 @@ SELECT
     chain_id, 
     tx_id, 
     tx_status, 
-    transfer_type, 
-    sender, 
+    tx_caller_address, 
+    action, 
+    delegator_address, 
     amount, 
     currency, 
     decimal, 
-    receiver
-FROM {{ ref('silver__airdrops') }}
+    validator_address, 
+    lock_id, 
+    original_superfluid_delegate_tx_ID
+FROM 
+    {{ ref('silver__superfluid_staking') }}
