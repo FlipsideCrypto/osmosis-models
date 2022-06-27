@@ -575,7 +575,8 @@ WHERE project_name IN ('axlUSDC',
                        'axlDAI', 
                        'axlWETH', 
                        'RAW', 
-                       'gDAI')
+                       'gDAI', 
+                       'ION')
 
 qualify(LAST_VALUE(price ignore nulls) over(PARTITION BY currency
 ORDER BY
