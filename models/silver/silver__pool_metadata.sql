@@ -44,7 +44,8 @@ b AS (
         msg_index,
         attribute_index,
         attribute_key,
-        attribute_value
+        attribute_value,
+        _inserted_timestamp
     FROM
         {{ ref('silver__msg_attributes') }}
         ma
@@ -78,6 +79,7 @@ AND _inserted_timestamp >= (
 C AS (
     SELECT
         tx_id,
+        _inserted_timestamp,
         OBJECT_AGG(
             attribute_key,
             attribute_value :: variant
@@ -85,7 +87,8 @@ C AS (
     FROM
         b
     GROUP BY
-        tx_id
+        tx_id,
+        _inserted_timestamp
 ),
 d AS (
     SELECT
@@ -96,7 +99,8 @@ d AS (
         LTRIM(
             A.value,
             '0123456789'
-        ) AS asset_address
+        ) AS asset_address,
+        _inserted_timestamp
     FROM
         C,
         TABLE(FLATTEN(SPLIT(obj :amount, ','))) A
@@ -110,14 +114,16 @@ e AS (
         OBJECT_AGG(
             object_key,
             asset_address :: variant
-        ) AS asset_obj
+        ) AS asset_obj,
+        _inserted_timestamp
     FROM
         d
     GROUP BY
         tx_id,
         module,
         pool_id,
-        asset_address
+        asset_address,
+        _inserted_timestamp
 )
 SELECT
     module,
@@ -127,9 +133,11 @@ SELECT
         '-',
         module,
         pool_id
-    ) AS _unique_key
+    ) AS _unique_key,
+    _inserted_timestamp
 FROM
     e
 GROUP BY
     module,
-    pool_id
+    pool_id,
+    _inserted_timestamp

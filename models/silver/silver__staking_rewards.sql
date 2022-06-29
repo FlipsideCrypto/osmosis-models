@@ -489,14 +489,15 @@ prefinal AS (
                 {{ ref('silver__transactions') }} A
 
 {% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
+WHERE
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}
 ) b
 ON A.tx_Id = b.tx_ID
