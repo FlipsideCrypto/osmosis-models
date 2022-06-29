@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', tx_id, action)",
-    incremental_strategy = 'delete+insert',
+    unique_key = "_unique_key",
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH base_txn AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+base_txn AS (
     SELECT
         top 100 block_ID,
         block_timestamp,
@@ -21,7 +34,7 @@ WITH base_txn AS (
         this :coins [0] :denom AS currency,
         this :val_addr AS validator_address,
         this :duration,
-        _INGESTED_AT,
+        _inserted_timestamp,
         this :lock_id AS lock_id
     FROM
         {{ ref('silver__transactions') }} A,
@@ -39,11 +52,17 @@ WITH base_txn AS (
         )
         AND tx_status = 'SUCCEEDED'
 
-        {% if is_incremental() %}
-        AND _ingested_at :: DATE >= CURRENT_DATE - 2
-        {% endif %}
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
 ),
-
 locks AS (
     SELECT
         b.tx_ID ub_tx_id,
@@ -67,10 +86,16 @@ locks AS (
         AND attribute_key LIKE '%lock%'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
-
 lock_body AS (
     SELECT
         b.ub_tx_id,
@@ -96,11 +121,17 @@ lock_body AS (
             '/osmosis.superfluid.MsgSuperfluidDelegate'
         )
 
-    {% if is_incremental() %}
-    AND _ingested_at :: DATE >= CURRENT_DATE - 2
-    {% endif %}
-), 
-
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
+),
 tx_address AS (
     SELECT
         A.tx_id,
@@ -126,13 +157,19 @@ tx_address AS (
         attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 GROUP BY
     A.tx_id,
     msg_group
 )
-
 SELECT
     A.block_id,
     A.block_timestamp,
@@ -154,7 +191,7 @@ SELECT
     CASE
         WHEN A.currency LIKE 'gamm/pool/%' THEN 18
         ELSE am.raw_metadata [1] :exponent
-    END AS decimal, 
+    END AS DECIMAL,
     COALESCE(
         A.validator_address :: STRING,
         C.validator_address :: STRING
@@ -163,16 +200,19 @@ SELECT
         A.lock_id,
         C.lock_id
     ) AS lock_ID,
-    C.tx_ID AS original_superfluid_delegate_tx_ID, 
-    _ingested_at
+    C.tx_ID AS original_superfluid_delegate_tx_ID,
+    _inserted_timestamp,
+    concat_ws(
+        '-',
+        A.tx_id,
+        action
+    ) AS _unique_key
 FROM
     base_txn A
-
     LEFT JOIN lock_body C
     ON A.tx_id = C.ub_tx_ID
-
     LEFT JOIN tx_address tx
     ON A.tx_id = tx.tx_id
-
-    LEFT JOIN {{ ref('silver__asset_metadata') }} am
+    LEFT JOIN {{ ref('silver__asset_metadata') }}
+    am
     ON A.currency = am.address

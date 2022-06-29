@@ -1,8 +1,8 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', tx_id, msg_index, attribute_index)",
-  incremental_strategy = 'delete+insert',
-  cluster_by = ['block_timestamp::DATE','_ingested_at::DATE'],
+  unique_key = "_unique_key",
+  incremental_strategy = 'merge',
+  cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
 ) }}
 
@@ -23,7 +23,13 @@ SELECT
   TRY_BASE64_DECODE_STRING(
     b.value :value :: STRING
   ) AS attribute_value,
-  _ingested_at
+  _inserted_timestamp,
+  concat_ws(
+    '-',
+    tx_id,
+    msg_index,
+    attribute_index
+  ) AS _unique_key
 FROM
   {{ ref('silver__msgs') }} A,
   LATERAL FLATTEN(
@@ -33,5 +39,12 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  _ingested_at :: DATE >= CURRENT_DATE -2
+  _inserted_timestamp >= (
+    SELECT
+      MAX(
+        _inserted_timestamp
+      )
+    FROM
+      {{ this }}
+  )
 {% endif %}

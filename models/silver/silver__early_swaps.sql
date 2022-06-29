@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
     unique_key = "tx_id",
-    incremental_strategy = 'delete+insert',
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH early_swaps AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+early_swaps AS (
     SELECT
         DISTINCT tx_id
     FROM
@@ -18,7 +31,14 @@ WITH early_swaps AS (
         AND attribute_value = 'swap_exact_amount_in'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 INDEXES AS (
@@ -39,7 +59,14 @@ INDEXES AS (
         m.msg_type = 'transfer'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 GROUP BY
     e.tx_id
@@ -59,7 +86,14 @@ trader AS (
         AND attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 from_token AS (
@@ -91,7 +125,14 @@ from_token AS (
         AND attribute_key = 'amount'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 to_token AS (
@@ -123,7 +164,14 @@ to_token AS (
         AND attribute_key = 'amount'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 )
 SELECT
@@ -147,7 +195,7 @@ SELECT
         ELSE tok.to_decimal
     END AS TO_DECIMAL,
     NULL :: ARRAY AS pool_ids,
-    _ingested_at
+    _inserted_timestamp
 FROM
     early_swaps e
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
@@ -161,6 +209,12 @@ FROM
     ON e.tx_id = tok.tx_id
 
 {% if is_incremental() %}
-WHERE
-    _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}

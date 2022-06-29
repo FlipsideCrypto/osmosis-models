@@ -1,8 +1,8 @@
 {{ config(
   materialized = 'incremental',
   unique_key = "tx_id",
-  incremental_strategy = 'delete+insert',
-  cluster_by = ['block_timestamp::DATE','_ingested_at::DATE'],
+  incremental_strategy = 'merge',
+  cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
 ) }}
 
 SELECT
@@ -22,14 +22,21 @@ SELECT
   tx :tx_result :events AS msgs,
   tx :auth_info AS auth_info,
   tx :body AS tx_body,
-  ingested_at AS _ingested_at
+  ingested_at AS _inserted_timestamp
 FROM
   {{ ref('bronze__transactions') }}
 WHERE
   block_id = tx :height :: INT
 
 {% if is_incremental() %}
-AND ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+  SELECT
+    MAX(
+      _inserted_timestamp
+    )
+  FROM
+    {{ this }}
+)
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY tx_id

@@ -1,11 +1,24 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', module, pool_id)",
-    incremental_strategy = 'delete+insert',
+    unique_key = "_unique_key",
+    incremental_strategy = 'merge',
 ) }}
 
-WITH pool_creation_txs AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+pool_creation_txs AS (
     SELECT
         DISTINCT tx_id
     FROM
@@ -14,7 +27,14 @@ WITH pool_creation_txs AS (
         msg_type = 'pool_created'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE <= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 b AS (
@@ -45,7 +65,14 @@ b AS (
         )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE <= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 C AS (
@@ -58,7 +85,7 @@ C AS (
     FROM
         b
     GROUP BY
-        1
+        tx_id
 ),
 d AS (
     SELECT
@@ -87,17 +114,22 @@ e AS (
     FROM
         d
     GROUP BY
-        1,
-        2,
-        3,
-        4
+        tx_id,
+        module,
+        pool_id,
+        asset_address
 )
 SELECT
     module,
     pool_id,
-    ARRAY_AGG(asset_obj) AS assets
+    ARRAY_AGG(asset_obj) AS assets,
+    concat_ws(
+        '-',
+        module,
+        pool_id
+    ) AS _unique_key
 FROM
     e
 GROUP BY
-    1,
-    2
+    module,
+    pool_id

@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', tx_id, msg_index, currency)",
-    incremental_strategy = 'delete+insert',
+    unique_key = "_unique_key",
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH sender AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+sender AS (
     SELECT
         tx_id,
         msg_index,
@@ -21,7 +34,14 @@ WITH sender AS (
         attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 tx_ids AS (
@@ -36,7 +56,14 @@ tx_ids AS (
         AND block_timestamp <= '2021-12-31'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 message_indexes AS (
@@ -57,7 +84,14 @@ message_indexes AS (
         AND m.msg_index > s.msg_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 areceiver AS (
@@ -78,7 +112,14 @@ areceiver AS (
         AND idx.msg_index = m.msg_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 aamount AS (
@@ -114,10 +155,16 @@ aamount AS (
         AND idx.msg_index = m.msg_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 )
-
 SELECT
     block_id,
     block_timestamp,
@@ -132,7 +179,13 @@ SELECT
     currency,
     DECIMAL,
     receiver,
-    _ingested_at
+    _inserted_timestamp,
+    concat_ws(
+        '-',
+        r.tx_id,
+        r.msg_index,
+        currency
+    ) _unique_key
 FROM
     areceiver r
     LEFT OUTER JOIN aamount C
@@ -143,10 +196,17 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
     t
     ON r.tx_id = t.tx_id
-
-WHERE currency IS NOT NULL
-AND amount IS NOT NULL
+WHERE
+    currency IS NOT NULL
+    AND amount IS NOT NULL
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
