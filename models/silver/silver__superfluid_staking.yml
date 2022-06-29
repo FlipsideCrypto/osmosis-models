@@ -75,8 +75,8 @@ models:
         description: An ID corresponding to the locking step of the transaction.  
       - name: ORIGINAL_SUPERFLUID_DELEGATE_TX_ID
         description: The transaction id when the user initialized the superfluid stake. 
-      - name: _INGESTED_AT
-        description: "{{ doc('ingested_at') }}"
+      - name: _INSERTED_TIMESTAMP
+        description: "{{ doc('inserted_timestamp') }}"
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_type_list:

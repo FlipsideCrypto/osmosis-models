@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', tx_id, msg_group, action, currency, delegator_address, validator_address)",
-    incremental_strategy = 'delete+insert',
+    unique_key = "_unique_key",
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH base AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+base AS (
     SELECT
         A.tx_id,
         A.msg_type,
@@ -27,7 +40,14 @@ WITH base AS (
         )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 msg_attr AS (
@@ -64,7 +84,14 @@ msg_attr AS (
         )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 tx_address AS (
@@ -92,7 +119,14 @@ tx_address AS (
         attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 GROUP BY
     A.tx_id,
@@ -256,7 +290,7 @@ add_dec AS (
         A.validator_address,
         A.redelegate_source_validator_address,
         A.completion_time :: datetime completion_time,
-        b._INGESTED_AT
+        b._inserted_timestamp
     FROM
         (
             SELECT
@@ -283,13 +317,20 @@ add_dec AS (
                 blockchain,
                 chain_id,
                 tx_status,
-                _INGESTED_AT
+                _inserted_timestamp
             FROM
                 {{ ref('silver__transactions') }}
 
 {% if is_incremental() %}
 WHERE
-    _ingested_at :: DATE >= CURRENT_DATE - 2
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}
 ) b
 ON A.tx_Id = b.tx_ID
@@ -310,7 +351,7 @@ GROUP BY
     A.validator_address,
     A.redelegate_source_validator_address,
     completion_time,
-    b._INGESTED_AT
+    b._inserted_timestamp
 )
 SELECT
     block_id,
@@ -331,9 +372,19 @@ SELECT
     CASE
         WHEN A.currency LIKE 'gamm/pool/%' THEN 18
         ELSE amd.raw_metadata [1] :exponent
-    END AS decimal, 
-    A._INGESTED_AT
+    END AS DECIMAL,
+    A._inserted_timestamp,
+    concat_ws(
+        '-',
+        tx_id,
+        msg_group,
+        action,
+        currency,
+        delegator_address,
+        validator_address
+    ) AS _unique_key
 FROM
     add_dec A
-    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} amd
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
+    amd
     ON A.currency = amd.address

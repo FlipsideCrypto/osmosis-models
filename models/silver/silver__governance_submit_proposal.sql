@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
     unique_key = "tx_id",
-    incremental_strategy = 'delete+insert',
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH proposal_ids AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+proposal_ids AS (
     SELECT
         tx_id,
         attribute_value AS proposal_id
@@ -17,7 +30,14 @@ WITH proposal_ids AS (
         AND attribute_key = 'proposal_id'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 proposal_type AS (
@@ -31,7 +51,14 @@ proposal_type AS (
         AND attribute_key = 'proposal_type'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 proposer AS (
@@ -48,7 +75,14 @@ proposer AS (
         attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 )
 SELECT
@@ -61,7 +95,7 @@ SELECT
     proposer,
     p.proposal_id,
     y.proposal_type,
-    _ingested_at
+    _inserted_timestamp
 FROM
     proposal_ids p
     INNER JOIN proposal_type y
@@ -74,5 +108,12 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-    t._ingested_at :: DATE >= CURRENT_DATE - 2
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}

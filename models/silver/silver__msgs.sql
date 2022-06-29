@@ -1,8 +1,8 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', tx_id, msg_index)",
-  incremental_strategy = 'delete+insert',
-  cluster_by = ['block_timestamp::DATE','_ingested_at::DATE'],
+  unique_key = "_unique_key",
+  incremental_strategy = 'merge',
+  cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
 ) }}
 
@@ -38,7 +38,7 @@ WITH b AS (
     TRY_BASE64_DECODE_STRING(
       msg :attributes [0] :value :: STRING
     ) attribute_value,
-    _ingested_at
+    _inserted_timestamp
   FROM
     {{ ref('silver__transactions') }} A,
     LATERAL FLATTEN(
@@ -47,7 +47,14 @@ WITH b AS (
 
 {% if is_incremental() %}
 WHERE
-  _ingested_at :: DATE >= CURRENT_DATE - 2
+  _inserted_timestamp >= (
+    SELECT
+      MAX(
+        _inserted_timestamp
+      )
+    FROM
+      {{ this }}
+  )
 {% endif %}
 ),
 prefinal AS (
@@ -70,7 +77,7 @@ prefinal AS (
     is_module,
     attribute_key,
     attribute_value,
-    _ingested_at
+    _inserted_timestamp
   FROM
     b
 ),
@@ -129,7 +136,12 @@ SELECT
   A.msg_index,
   msg_type,
   msg,
-  _ingested_at
+  _inserted_timestamp,
+  concat_ws(
+    '-',
+    A.tx_id,
+    A.msg_index
+  ) AS _unique_key
 FROM
   prefinal A
   LEFT JOIN grp b

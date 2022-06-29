@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
     unique_key = "tx_id",
-    incremental_strategy = 'delete+insert',
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH message_indexes AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+message_indexes AS (
     SELECT
         tx_id,
         attribute_key,
@@ -15,16 +28,22 @@ WITH message_indexes AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        block_timestamp :: date > '2021-09-23'
-    AND
-        msg_type = 'token_swapped'
+        block_timestamp :: DATE > '2021-09-23'
+        AND msg_type = 'token_swapped'
         AND (
             attribute_key = 'tokens_in'
             OR attribute_key = 'tokens_out'
         )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 GROUP BY
     tx_id,
@@ -56,13 +75,20 @@ tokens_in AS (
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
     WHERE
-        t.block_timestamp :: date > '2021-09-23'
+        t.block_timestamp :: DATE > '2021-09-23'
         AND msg_type = 'token_swapped'
         AND t.attribute_key = 'tokens_in'
         AND t.msg_index = m.min_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 tokens_out AS (
@@ -91,13 +117,20 @@ tokens_out AS (
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
     WHERE
-        t.block_timestamp :: date > '2021-09-23'
+        t.block_timestamp :: DATE > '2021-09-23'
         AND msg_type = 'token_swapped'
         AND t.attribute_key = 'tokens_out'
         AND t.msg_index = m.max_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 pools AS (
@@ -109,11 +142,11 @@ pools AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        block_timestamp :: date > '2021-09-23'
+        block_timestamp :: DATE > '2021-09-23'
         AND attribute_key = 'pool_id'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp :: DATE >= CURRENT_DATE - 2
 {% endif %}
 GROUP BY
     tx_id
@@ -129,11 +162,18 @@ trader AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        block_timestamp :: date > '2021-09-23'
+        block_timestamp :: DATE > '2021-09-23'
         AND attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 )
 SELECT
@@ -157,7 +197,7 @@ SELECT
         ELSE tt.to_decimal
     END AS TO_DECIMAL,
     pool_ids,
-    t._ingested_at
+    t._inserted_timestamp
 FROM
     tokens_in f
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
@@ -172,5 +212,12 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-    t._ingested_at :: DATE >= CURRENT_DATE - 2
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}

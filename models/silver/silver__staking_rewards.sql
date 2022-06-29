@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', tx_id, msg_group, action, currency, delegator_address, validator_address)",
-    incremental_strategy = 'delete+insert',
+    unique_key = "_unique_key",
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH msg_attributes_cte AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+msg_attributes_cte AS (
     SELECT
         tx_id,
         msg_type,
@@ -29,7 +42,14 @@ WITH msg_attributes_cte AS (
         )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 reward_base AS (
@@ -203,7 +223,14 @@ tran_base AS (
 
 {% if is_incremental() %}
 WHERE
-    _ingested_at :: DATE >= CURRENT_DATE - 2
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}
 ),
 tran_tran AS (
@@ -432,7 +459,7 @@ prefinal AS (
             ELSE 'uosmo'
         END AS currency,
         A.validator_address,
-        b._INGESTED_AT
+        b._inserted_timestamp
     FROM
         (
             SELECT
@@ -457,13 +484,20 @@ prefinal AS (
                 blockchain,
                 chain_id,
                 tx_status,
-                _INGESTED_AT
+                _inserted_timestamp
             FROM
                 {{ ref('silver__transactions') }} A
 
 {% if is_incremental() %}
 WHERE
-    _ingested_at :: DATE >= CURRENT_DATE - 2
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}
 ) b
 ON A.tx_Id = b.tx_ID
@@ -487,7 +521,7 @@ GROUP BY
         ELSE 'uosmo'
     END,
     A.validator_address,
-    b._INGESTED_AT
+    b._inserted_timestamp
 )
 SELECT
     block_id,
@@ -504,7 +538,16 @@ SELECT
     A.currency,
     A.validator_address,
     amd.raw_metadata [1] :exponent :: INT AS DECIMAL,
-    A._INGESTED_AT
+    A._inserted_timestamp,
+    concat_ws(
+        '-',
+        A.tx_id,
+        A.msg_group,
+        A.action,
+        A.currency,
+        A.delegator_address,
+        A.validator_address
+    ) AS _unique_key
 FROM
     prefinal A
     LEFT OUTER JOIN osmosis_dev.silver.asset_metadata amd
