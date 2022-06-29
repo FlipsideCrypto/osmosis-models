@@ -45,3 +45,4 @@ on-run-start:
   - '{{sp_bulk_get_asset_metadata()}}'
   - '{{sp_create_bulk_get_balances()}}'
   - '{{sp_create_bulk_get_validator_metadata()}}'
+  - '{{sp_create_bulk_get_pool_balances()}}'
