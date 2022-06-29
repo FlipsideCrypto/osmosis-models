@@ -18,23 +18,18 @@ WHERE
     (
         provider = 'coinmarketcap'
         AND (
-            asset_id = '1281'
-            OR asset_id = '7431'
+            asset_id = '7431'
             OR asset_id = '7281'
             OR asset_id = '3874'
-            OR asset_id = '2643'
             OR asset_id = '3635'
-            OR asset_id = '3026'
+            OR asset_id = '7271'
             OR asset_id = '12008'
             OR asset_id = '4679'
-            OR asset_id = '707'
             OR asset_id = '3794'
             OR asset_id = '14973'
-            OR asset_id = '2303'
-            OR asset_id = '2659'
+            OR asset_id = '17748'
             OR asset_id = '2909'
             OR asset_id = '16214'
-            OR asset_id = '1191'
             OR asset_id = '8905'
             OR asset_id = '13314'
             OR asset_id = '19899'
@@ -78,6 +73,7 @@ WHERE
             OR asset_id = 'terra-krw'
             OR asset_id = 'cheqd-network'
             OR asset_id = 'neta'
+            OR asset_id = 'medibloc'
         )
     )
 
