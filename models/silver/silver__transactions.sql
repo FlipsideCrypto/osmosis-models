@@ -22,7 +22,7 @@ SELECT
   tx :tx_result :events AS msgs,
   tx :auth_info AS auth_info,
   tx :body AS tx_body,
-  ingested_at AS _inserted_timestamp
+  _inserted_timestamp
 FROM
   {{ ref('bronze__transactions') }}
 WHERE
@@ -41,4 +41,4 @@ AND _inserted_timestamp >= (
 
 qualify(ROW_NUMBER() over(PARTITION BY tx_id
 ORDER BY
-  ingested_at DESC)) = 1
+  _inserted_timestamp DESC)) = 1
