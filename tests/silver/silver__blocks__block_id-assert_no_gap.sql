@@ -1,1 +1,0 @@
---{{ sequence_gaps(ref("silver__blocks"), [], "block_id") }}
