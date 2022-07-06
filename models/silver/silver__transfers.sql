@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', tx_id, msg_index, currency)",
-    incremental_strategy = 'delete+insert',
+    unique_key = "_unique_key",
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH sender AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+sender AS (
     SELECT
         tx_id,
         msg_index,
@@ -21,7 +34,14 @@ WITH sender AS (
         attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 message_index_ibc AS (
@@ -42,7 +62,14 @@ message_index_ibc AS (
         AND att.msg_index > s.msg_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 GROUP BY
     att.tx_id
@@ -81,7 +108,14 @@ coin_sent_ibc AS (
         AND A.attribute_key = 'amount'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 receiver_ibc AS (
@@ -99,7 +133,14 @@ receiver_ibc AS (
         AND attribute_key = 'receiver'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 GROUP BY
     tx_id,
@@ -111,13 +152,22 @@ osmo_tx_ids AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        (msg_type = 'message'
-        AND attribute_key = 'module'
-        AND attribute_value = 'bank')
+        (
+            msg_type = 'message'
+            AND attribute_key = 'module'
+            AND attribute_value = 'bank'
+        )
         OR msg_type = 'claim'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 message_indexes_osmo AS (
@@ -138,7 +188,14 @@ message_indexes_osmo AS (
         AND m.msg_index > s.msg_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 osmo_receiver AS (
@@ -159,7 +216,14 @@ osmo_receiver AS (
         AND idx.msg_index = m.msg_index
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 osmo_amount AS (
@@ -193,10 +257,16 @@ osmo_amount AS (
         m.msg_type = 'transfer'
         AND m.attribute_key = 'amount'
         AND idx.msg_index = m.msg_index
-        
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 )
 SELECT
@@ -213,7 +283,13 @@ SELECT
     currency,
     DECIMAL,
     receiver,
-    _ingested_at
+    _inserted_timestamp,
+    concat_ws(
+        '-',
+        r.tx_id,
+        r.msg_index,
+        currency
+    ) AS _unique_key
 FROM
     receiver_ibc r
     LEFT OUTER JOIN coin_sent_ibc C
@@ -223,13 +299,21 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
     t
     ON r.tx_id = t.tx_id
-
-    WHERE 
-        (amount IS NOT NULL 
-        OR currency IS NOT NULL)
+WHERE
+    (
+        amount IS NOT NULL
+        OR currency IS NOT NULL
+    )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 UNION ALL
 SELECT
@@ -246,7 +330,13 @@ SELECT
     currency,
     DECIMAL,
     receiver,
-    _ingested_at
+    _inserted_timestamp,
+    concat_ws(
+        '-',
+        r.tx_id,
+        r.msg_index,
+        currency
+    ) AS _unique_key
 FROM
     osmo_receiver r
     LEFT OUTER JOIN osmo_amount C
@@ -258,11 +348,20 @@ FROM
     t
     ON r.tx_id = t.tx_id
 WHERE
-    (amount IS NOT NULL 
-    OR currency IS NOT NULL)
+    (
+        amount IS NOT NULL
+        OR currency IS NOT NULL
+    )
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 UNION ALL
 SELECT
@@ -279,7 +378,13 @@ SELECT
     TRY_PARSE_JSON(attribute_value) :denom :: STRING AS currency,
     raw_metadata [1] :exponent :: INTEGER AS DECIMAL,
     TRY_PARSE_JSON(attribute_value) :receiver :: STRING AS receiver,
-    m._ingested_at
+    m._inserted_timestamp,
+    concat_ws(
+        '-',
+        s.tx_id,
+        m.msg_index,
+        currency
+    ) AS _unique_key
 FROM
     sender s
     LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
@@ -296,10 +401,26 @@ FROM
 WHERE
     m.msg_type = 'write_acknowledgement'
     AND m.attribute_key = 'packet_data'
-    AND (amount IS NOT NULL 
-    OR currency IS NOT NULL)
+    AND (
+        amount IS NOT NULL
+        OR currency IS NOT NULL
+    )
 
 {% if is_incremental() %}
-AND m._ingested_at :: DATE >= CURRENT_DATE - 2
-AND t._ingested_at :: DATE >= CURRENT_DATE - 2
+AND m._inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+AND t._inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}

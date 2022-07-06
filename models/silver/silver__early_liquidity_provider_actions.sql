@@ -5,8 +5,21 @@
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH in_play AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+in_play AS (
     SELECT
         tx_ID,
         msg_group,
@@ -24,13 +37,13 @@ WITH in_play AS (
         )
 
 {% if is_incremental() %}
-AND _ingested_at >= (
+AND _inserted_timestamp >= (
     SELECT
         MAX(
-            _ingested_at
+            _inserted_timestamp
         )
     FROM
-        {{ this }}
+        max_date
 )
 {% endif %}
 EXCEPT
@@ -53,13 +66,13 @@ WHERE
     )
 
 {% if is_incremental() %}
-AND _ingested_at >= (
+AND _inserted_timestamp >= (
     SELECT
         MAX(
-            _ingested_at
+            _inserted_timestamp
         )
     FROM
-        {{ this }}
+        max_date
 )
 {% endif %}
 ),
@@ -123,13 +136,13 @@ msg_atts AS (
         )
 
 {% if is_incremental() %}
-AND _ingested_at >= (
+AND _inserted_timestamp >= (
     SELECT
         MAX(
-            _ingested_at
+            _inserted_timestamp
         )
     FROM
-        {{ this }}
+        max_date
 )
 {% endif %}
 ),
@@ -254,19 +267,19 @@ txn AS (
         chain_id,
         tx_id,
         tx_status,
-        _ingested_at
+        _inserted_timestamp
     FROM
         {{ ref('silver__transactions') }}
 
 {% if is_incremental() %}
 WHERE
-    _ingested_at >= (
+    _inserted_timestamp >= (
         SELECT
             MAX(
-                _ingested_at
+                _inserted_timestamp
             )
         FROM
-            {{ this }}
+            max_date
     )
 {% endif %}
 )
@@ -293,7 +306,7 @@ SELECT
     d.amount,
     d.currency,
     d.decimal,
-    tx._ingested_at,
+    tx._inserted_timestamp,
     concat_ws(
         '-',
         d.tx_id,

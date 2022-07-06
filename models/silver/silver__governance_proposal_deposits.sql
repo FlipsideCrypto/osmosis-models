@@ -1,12 +1,25 @@
 {{ config(
     materialized = 'incremental',
     unique_key = "tx_id",
-    incremental_strategy = 'delete+insert',
+    incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH proposal_ids AS (
+WITH
 
+{% if is_incremental() %}
+max_date AS (
+
+    SELECT
+        MAX(
+            _inserted_timestamp
+        ) _inserted_timestamp
+    FROM
+        {{ this }}
+),
+{% endif %}
+
+proposal_ids AS (
     SELECT
         tx_id,
         attribute_value AS proposal_id
@@ -17,7 +30,14 @@ WITH proposal_ids AS (
         AND attribute_key = 'proposal_id'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 deposit_value AS (
@@ -47,7 +67,14 @@ deposit_value AS (
         AND attribute_value IS NOT NULL
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 ),
 depositors AS (
@@ -64,7 +91,14 @@ depositors AS (
         attribute_key = 'acc_seq'
 
 {% if is_incremental() %}
-AND _ingested_at :: DATE >= CURRENT_DATE - 2
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        {{ this }}
+)
 {% endif %}
 )
 SELECT
@@ -79,7 +113,7 @@ SELECT
     v.amount,
     v.currency,
     DECIMAL,
-    _ingested_at
+    _inserted_timestamp
 FROM
     deposit_value v
     INNER JOIN proposal_ids p
@@ -92,5 +126,12 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-    t._ingested_at :: DATE >= CURRENT_DATE - 2
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            {{ this }}
+    )
 {% endif %}
