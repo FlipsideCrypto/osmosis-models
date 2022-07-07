@@ -15,7 +15,7 @@ WITH all_staked AS (
             WHEN currency LIKE 'gamm/pool/%' THEN 18
             ELSE raw_metadata[1]:exponent
         END AS decimal,
-        _ingested_at
+        _inserted_timestamp
   
     FROM {{ ref('silver__staking') }} s
     
@@ -25,8 +25,15 @@ WITH all_staked AS (
     WHERE action = 'delegate'
 
     {% if is_incremental() %}
-    AND _ingested_at :: DATE >= CURRENT_DATE -2
-    {% endif %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
         
     UNION ALL 
   
@@ -40,7 +47,7 @@ WITH all_staked AS (
             WHEN currency LIKE 'gamm/pool/%' THEN 18
             ELSE raw_metadata[1]:exponent
         END AS decimal,
-        _ingested_at
+        _inserted_timestamp
   
     FROM {{ ref('silver__staking') }} s
     
@@ -50,8 +57,15 @@ WITH all_staked AS (
     WHERE action = 'undelegate'  
 
     {% if is_incremental() %}
-    AND _ingested_at :: DATE >= CURRENT_DATE -2
-    {% endif %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
 
 ) 
 
@@ -66,5 +80,5 @@ SELECT
     currency 
     ORDER BY block_timestamp ASC ROWS UNBOUNDED PRECEDING
     ) AS balance, 
-    _ingested_at AS _inserted_timestamp
+    _inserted_timestamp
 FROM all_staked
