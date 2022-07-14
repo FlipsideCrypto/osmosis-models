@@ -48,13 +48,13 @@ WHERE
             OR asset_id = '9480'
             OR asset_id = '3717'
             OR asset_id = '2396'
+            OR asset_id = '12220'
         )
     )
     OR (
         provider = 'coingecko'
         AND (
-            asset_id = 'osmosis'
-            OR asset_id = 'pstake-finance'
+            asset_id = 'pstake-finance'
             OR asset_id = 'e-money-eur'
             OR asset_id = 'juno-network'
             OR asset_id = 'terra-luna'
