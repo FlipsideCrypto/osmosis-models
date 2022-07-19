@@ -19,116 +19,111 @@ max_date AS (
 ),
 {% endif %}
 
-vote_options AS (
-    SELECT
-        tx_id,
-        msg_index,
-        CASE
-            WHEN attribute_value :: STRING = 'VOTE_OPTION_YES' THEN 1
-            WHEN attribute_value :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
-            WHEN attribute_value :: STRING = 'VOTE_OPTION_NO' THEN 3
-            WHEN attribute_value :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
-            ELSE TRY_PARSE_JSON(attribute_value) :option
-        END AS vote_option,
-        TRY_PARSE_JSON(attribute_value) :weight :: FLOAT AS vote_weight
-    FROM
-        {{ ref('silver__msg_attributes') }}
-    WHERE
-        msg_type = 'proposal_vote'
-        AND attribute_key = 'option'
+weighted_votes AS (
+    SELECT 
+        block_id, 
+        block_timestamp, 
+        blockchain, 
+        chain_id, 
+        tx_id, 
+        tx_status, 
+        tx_body, 
+        path :: STRING AS _path, 
+        _inserted_timestamp
+    FROM 
+        {{ ref('silver__transactions') }}, 
+    LATERAL FLATTEN (input => tx_body :messages, recursive => TRUE ) b 
+    WHERE 
+        key = '@type' 
+        AND VALUE :: STRING = '/cosmos.gov.v1beta1.MsgVoteWeighted'
 
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
+    {% if is_incremental() %}
+        AND _inserted_timestamp >= (
+            SELECT
+                MAX(
+                    _inserted_timestamp
+                )
+            FROM
+                max_date
+        )   
+    {% endif %}
+    
 )
-{% endif %}
-),
-proposal_id AS (
-    SELECT
-        tx_id,
-        msg_index,
-        attribute_value AS proposal_id
-    FROM
-        {{ ref('silver__msg_attributes') }}
-    WHERE
-        msg_type = 'proposal_vote'
-        AND attribute_key = 'proposal_id'
 
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-),
-voter AS (
-    SELECT
-        tx_id,
-        msg_index,
-        attribute_value AS voter
-    FROM
-        {{ ref('silver__msg_attributes') }}
-    WHERE
-        attribute_key = 'sender'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-)
 SELECT
-    block_id,
-    block_timestamp,
-    blockchain,
-    chain_id,
-    o.tx_id,
-    tx_status,
-    v.voter,
-    p.proposal_id,
-    vote_option,
-    vote_weight,
-    _inserted_timestamp,
+    block_id, 
+    block_timestamp, 
+    blockchain, 
+    chain_id, 
+    tx_id, 
+    tx_status, 
+    path :: STRING AS _path, 
+    this :proposal_id :: STRING AS proposal_id, 
+    this :voter :: STRING AS voter, 
+    CASE
+        WHEN this :option :: STRING = 'VOTE_OPTION_YES' THEN 1
+        WHEN this :option :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
+        WHEN this :option :: STRING = 'VOTE_OPTION_NO' THEN 3
+        WHEN this :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
+        ELSE this :option
+    END AS vote_option,
+    1.000 AS vote_weight, 
+    _inserted_timestamp, 
     concat_ws(
         '-',
-        o.tx_id,
-        p.proposal_id,
-        v.voter
+        tx_id,
+        proposal_id,
+        voter, 
+        vote_option, 
+        _path
     ) AS _unique_key
-FROM
-    vote_options o
-    LEFT OUTER JOIN proposal_id p
-    ON o.tx_id = p.tx_id
-    AND o.msg_index = p.msg_index
-    LEFT OUTER JOIN voter v
-    ON o.tx_id = v.tx_id
-    AND o.msg_index = v.msg_index - 1
-    LEFT OUTER JOIN {{ ref('silver__transactions') }}
-    t
-    ON o.tx_id = t.tx_id
+FROM 
+    {{ ref('silver__transactions') }}, 
+LATERAL FLATTEN (input => tx_body :messages, recursive => TRUE ) b
+WHERE 
+    key = '@type' 
+    AND VALUE :: STRING = '/cosmos.gov.v1beta1.MsgVote'
 
 {% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
+    AND _inserted_timestamp >= (
         SELECT
-            MAX(
-                _inserted_timestamp
+             MAX(
+                 _inserted_timestamp
             )
         FROM
             max_date
-    )
+        )
 {% endif %}
+    
+UNION ALL 
+    
+SELECT
+    block_id, 
+    block_timestamp, 
+    blockchain, 
+    chain_id, 
+    tx_id, 
+    tx_status, 
+    _path, 
+    b.value :proposal_id :: STRING AS proposal_id, 
+    b.value :voter :: STRING AS voter, 
+    CASE
+        WHEN o.value :option :: STRING = 'VOTE_OPTION_YES' THEN 1
+        WHEN o.value :option :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
+        WHEN o.value :option :: STRING = 'VOTE_OPTION_NO' THEN 3
+        WHEN o.value :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
+        ELSE o.value :option
+    END AS vote_option,
+    o.value :weight :: FLOAT AS vote_weight, 
+    _inserted_timestamp, 
+    concat_ws(
+        '-',
+        tx_id,
+        proposal_id,
+        voter, 
+        vote_option, 
+        _path
+    ) AS _unique_key
+FROM weighted_votes, 
+LATERAL FLATTEN (input => tx_body :messages) b, 
+LATERAL FLATTEN (input => b.value :options) o
