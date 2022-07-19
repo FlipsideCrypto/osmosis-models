@@ -45,9 +45,9 @@ new AS (
             {{ this }}
         ) 
         
-    qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: date, address, balance_type, currency
+    qualify(ROW_NUMBER() over (PARTITION BY block, address, balance_type, currency
         ORDER BY 
-            block_timestamp DESC)) = 1
+            _inserted_timestamp DESC)) = 1
 
     UNION ALL
     
