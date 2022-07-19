@@ -34,10 +34,16 @@ ON b.value:denom :: STRING = a.address
 
 {% if is_incremental() %}
 WHERE
-    _inserted_timestamp :: DATE >= CURRENT_DATE -2
-    _ingested_at :: DATE >= CURRENT_DATE -2
+  _inserted_timestamp >= (
+    SELECT
+      MAX(
+        _inserted_timestamp
+      )
+    FROM
+      {{ this }}
+  )
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY bal.block_id, bal.address, currency
 ORDER BY
-  project_name DESC)) = 1
+  _inserted_timestamp DESC)) = 1
