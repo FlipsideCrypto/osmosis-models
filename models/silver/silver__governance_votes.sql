@@ -67,7 +67,7 @@ SELECT
         WHEN this :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
         ELSE this :option
     END AS vote_option,
-    1 AS vote_weight, 
+    1.000 AS vote_weight, 
     _inserted_timestamp, 
     concat_ws(
         '-',
@@ -114,7 +114,7 @@ SELECT
         WHEN o.value :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
         ELSE o.value :option
     END AS vote_option,
-    o.value :weight :: DECIMAL AS vote_weight, 
+    o.value :weight :: FLOAT AS vote_weight, 
     _inserted_timestamp, 
     concat_ws(
         '-',
