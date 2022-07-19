@@ -1,6 +1,5 @@
 {{ config(
     materialized = 'view',
-    post_hook = 'call silver.sp_bulk_get_balances()',
 ) }}
 
 WITH all_wallets AS (
@@ -49,17 +48,31 @@ unique_address_per_block_date AS (
         LEFT OUTER JOIN max_block_id_per_date d
         ON d.block_timestamp_date = b.block_timestamp_date
 ),
+all_lp_wallets as (
+    SELECT
+        DISTINCT liquidity_provider_address as address
+    FROM
+        {{ ref('silver__liquidity_provider_actions') }}
+    WHERE
+        action = 'pool_joined'
+),
 possible_balances_needed AS (
     SELECT
         2383300 AS block_id,
         address
     FROM
         all_wallets
-    UNION ALL
+    UNION
     SELECT
         *
     FROM
         unique_address_per_block_date
+    UNION 
+    SELECT 
+        max_block_id,
+        address
+    FROM all_lp_wallets
+    CROSS JOIN (select distinct max_block_id from unique_address_per_block_date)
 )
 SELECT
     block_id,
@@ -78,4 +91,4 @@ FROM
 ORDER BY
     block_id
 LIMIT
-    50000
+    100000
