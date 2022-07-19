@@ -8,6 +8,8 @@ models:
             - TX_ID
             - PROPOSAL_ID
             - VOTER
+            - VOTE_OPTION
+            - _PATH
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -59,3 +61,11 @@ models:
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - TIMESTAMP_NTZ
+      - name: _PATH
+        description: Internal use for unique key. Path recursive lateral flatten pulls info from. 
+        tests:
+          - not_null
+      - name: VOTE_WEIGHT
+        description: The percentage of one's delegation put towards a voting option. 1 = 100%, etc. 
+        tests: 
+          - not_null
