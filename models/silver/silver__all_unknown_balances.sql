@@ -91,4 +91,4 @@ FROM
 ORDER BY
     block_id
 LIMIT
-    50000
+    100000
