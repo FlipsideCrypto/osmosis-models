@@ -24,15 +24,16 @@ WITH all_staked AS (
   
     WHERE action = 'delegate'
 
-    {% if is_incremental() %}
-AND _inserted_timestamp >= (
+{% if is_incremental() %}
+AND
+  _inserted_timestamp >= (
     SELECT
-        MAX(
-            _inserted_timestamp
-        )
+      MAX(
+        _inserted_timestamp
+      )
     FROM
-        max_date
-)
+      {{ this }}
+  )
 {% endif %}
         
     UNION ALL 
@@ -63,7 +64,7 @@ AND _inserted_timestamp >= (
             _inserted_timestamp
         )
     FROM
-        max_date
+        {{ this }}
 )
 {% endif %}
 
