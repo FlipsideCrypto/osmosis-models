@@ -12,8 +12,7 @@ WITH recent AS (
         address, 
         balance, 
         currency, 
-        decimal,
-        _inserted_timestamp 
+        decimal
     FROM {{ this }}
   
     WHERE date = (
@@ -33,8 +32,7 @@ new AS (
         balance, 
         currency, 
         decimal, 
-        1 AS RANK, 
-        _inserted_timestamp
+        1 AS RANK
     FROM 
         {{ ref('silver__liquid_balances') }}
 
@@ -47,7 +45,7 @@ new AS (
         
     qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: date, address, balance_type, currency
         ORDER BY 
-            _inserted_timestamp DESC)) = 1
+            block_timestamp DESC)) = 1
 
     UNION ALL
     
@@ -58,8 +56,7 @@ new AS (
         balance, 
         currency, 
         decimal, 
-        1 AS RANK, 
-        _inserted_timestamp
+        1 AS RANK
     FROM 
         {{ ref('silver__staked_balances') }}
 
@@ -83,8 +80,7 @@ incremental AS (
         address, 
         balance, 
         currency, 
-        decimal, 
-        _inserted_timestamp
+        decimal
     FROM 
         (
             SELECT
@@ -94,8 +90,7 @@ incremental AS (
                 balance, 
                 currency, 
                 decimal, 
-                2 AS RANK, 
-                _inserted_timestamp
+                2 AS RANK
             FROM 
                 recent
             
@@ -108,8 +103,7 @@ incremental AS (
                 balance, 
                 currency, 
                 decimal, 
-                1 AS RANK, 
-                _inserted_timestamp
+                1 AS RANK
             FROM 
                 new
         )
@@ -130,8 +124,7 @@ base AS (
         address, 
         balance, 
         currency, 
-        decimal, 
-        _inserted_timestamp
+        decimal
     FROM
         incremental
     
@@ -143,8 +136,7 @@ base AS (
         address, 
         balance, 
         currency, 
-        decimal, 
-        _inserted_timestamp
+        decimal
     FROM
         {{ ref('silver__liquid_balances') }}
 
@@ -156,8 +148,7 @@ base AS (
         address, 
         balance, 
         currency, 
-        decimal, 
-        _inserted_timestamp
+        decimal
     FROM
         {{ ref('silver__staked_balances') }}
 
@@ -222,8 +213,7 @@ osmosis_balances AS (
         address, 
         balance, 
         currency, 
-        decimal, 
-        _inserted_timestamp
+        decimal
     FROM
         base
     
@@ -239,8 +229,7 @@ balance_temp AS (
         d.address, 
         b.balance, 
         d.currency,
-        d.decimal, 
-        _inserted_timestamp
+        d.decimal
 
     FROM 
         all_dates d 
@@ -266,7 +255,6 @@ SELECT
     balance_type
     ORDER BY
       DATE ASC rows unbounded preceding
-    )  AS balance, 
-    _inserted_timestamp
+    )  AS balance
 FROM 
     balance_temp
