@@ -39,6 +39,9 @@ models:
 vars:
   "dbt_date:time_zone": GMT
 
+tests:
+  +store_failures: true # all tests
+
 on-run-start:
   - '{{create_sps()}}'
   - '{{create_udfs()}}'
