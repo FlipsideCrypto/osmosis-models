@@ -5,7 +5,11 @@
   cluster_by = ['date'],
 ) }}
 
-WITH recent AS (
+WITH 
+
+{% if is_incremental() %}
+
+recent AS (
     SELECT  
         date, 
         balance_type, 
@@ -18,10 +22,8 @@ WITH recent AS (
     WHERE date = (
         SELECT 
             DATEADD('day', -1, MAX(date))
-      
         FROM {{ this }}
     )
-
 ), 
 
 new AS (
@@ -113,6 +115,8 @@ incremental AS (
             RANK ASC)) = 1
     
 ), 
+{% endif %}
+
 
 base AS (
 
