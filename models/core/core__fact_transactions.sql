@@ -35,6 +35,10 @@ spender AS (
 {% if is_incremental() %}
 AND _inserted_timestamp :: DATE >= CURRENT_DATE -2
 {% endif %}
+
+qualify(ROW_NUMBER() over(PARTITION BY tx_id
+ORDER BY
+    msg_index)) = 1
 )
 SELECT
     t.block_id,
