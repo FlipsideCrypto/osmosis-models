@@ -1,6 +1,5 @@
 {{ config(
-    materialized = 'view',
-    post_hook = 'call silver.sp_bulk_get_balances()'
+    materialized = 'view'
 ) }}
 
 WITH all_wallets AS (
