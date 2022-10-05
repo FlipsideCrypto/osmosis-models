@@ -79,7 +79,10 @@ all_currency AS (
 tmp AS (
     SELECT
         A.address,
-        A.balance,
+        COALESCE(
+            A.balance,
+            0
+        ) AS balance,
         A.balance_type,
         A.block_id,
         A.block_timestamp,
