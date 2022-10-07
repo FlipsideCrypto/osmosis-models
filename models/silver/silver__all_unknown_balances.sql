@@ -1,13 +1,34 @@
 {{ config(
-    materialized = 'view'
+    materialized = 'view',
 ) }}
 
-WITH all_wallets AS (
+WITH base AS (
 
+    SELECT
+        block_id,
+        block_timestamp,
+        tx_id,
+        msg_type,
+        attribute_key,
+        attribute_value
+    FROM
+        {{ ref('silver__msg_attributes') }}
+    WHERE
+        RLIKE(
+            attribute_value,
+            'osmo\\w{39}'
+        )
+        OR (
+            msg_type = 'message'
+            AND attribute_key = 'action'
+            AND attribute_value = 'superfluid_delegate'
+        )
+),
+all_wallets AS (
     SELECT
         DISTINCT attribute_value AS address
     FROM
-        {{ ref('silver__msg_attributes') }}
+        base
     WHERE
         RLIKE(
             attribute_value,
@@ -21,7 +42,7 @@ wallets_per_block AS (
         block_timestamp :: DATE AS block_timestamp_date,
         attribute_value AS address
     FROM
-        {{ ref('silver__msg_attributes') }}
+        base
     WHERE
         RLIKE(
             attribute_value,
@@ -55,6 +76,35 @@ all_lp_wallets AS (
         {{ ref('silver__liquidity_provider_actions') }}
     WHERE
         action = 'pool_joined'
+    UNION
+    SELECT
+        DISTINCT b.address
+    FROM
+        (
+            SELECT
+                block_id,
+                tx_id
+            FROM
+                base
+            WHERE
+                msg_type = 'message'
+                AND attribute_key = 'action'
+                AND attribute_value = 'superfluid_delegate'
+        ) A
+        INNER JOIN (
+            SELECT
+                SPLIT_PART(
+                    attribute_value,
+                    '/',
+                    0
+                ) address,
+                tx_ID
+            FROM
+                base
+            WHERE
+                attribute_key = 'acc_seq'
+        ) b
+        ON A.tx_ID = b.tx_ID
 ),
 possible_balances_needed AS (
     SELECT
@@ -97,4 +147,4 @@ FROM
 ORDER BY
     block_id
 LIMIT
-    100000
+    25000
