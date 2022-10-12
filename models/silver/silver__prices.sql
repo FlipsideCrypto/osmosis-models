@@ -49,6 +49,9 @@ WHERE
             OR asset_id = '3717'
             OR asset_id = '2396'
             OR asset_id = '12220'
+            OR asset_id = '7226'
+            OR asset_id = '17799'
+            OR asset_id = '4846'
         )
     )
     OR (
@@ -74,6 +77,7 @@ WHERE
             OR asset_id = 'cheqd-network'
             OR asset_id = 'neta'
             OR asset_id = 'medibloc'
+            OR asset_id = 'kujira'
         )
     )
 
