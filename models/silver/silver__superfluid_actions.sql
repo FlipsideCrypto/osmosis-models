@@ -13,7 +13,7 @@ SELECT
     A.tx_id,
     tx_status,
     msg_type,
-    msg_index,
+    A.msg_group,
     msg :sender :: STRING AS delegator_address,
     msg :coins [0] :amount :: INT AS amount,
     msg :coins [0] :denom :: STRING AS currency,
@@ -25,7 +25,7 @@ SELECT
     concat_ws(
         '-',
         A.tx_id,
-        msg_index
+        A.msg_group
     ) AS _unique_key,
     _inserted_timestamp
 FROM
@@ -33,6 +33,7 @@ FROM
     LEFT JOIN (
         SELECT
             tx_id,
+            msg_group,
             attribute_value AS lock_id
         FROM
             {{ ref('silver__msg_attributes') }} A
@@ -58,6 +59,7 @@ AND _inserted_timestamp >= (
 {% endif %}
 ) b
 ON A.tx_id = b.tx_id
+AND A.msg_group = b.msg_group
 WHERE
     msg_type IN (
         '/osmosis.superfluid.MsgLockAndSuperfluidDelegate',

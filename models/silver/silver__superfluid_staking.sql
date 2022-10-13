@@ -28,7 +28,6 @@ base_txn AS (
         tx_id,
         tx_status,
         msg_type AS actio,
-        msg_index,
         msg :sender AS delegator_address,
         msg :coins [0] :amount AS amount,
         msg :coins [0] :denom AS currency,

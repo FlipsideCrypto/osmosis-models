@@ -2,8 +2,7 @@
   materialized = 'incremental',
   unique_key = "_unique_key",
   incremental_strategy = 'merge',
-  cluster_by = ['_inserted_timestamp::DATE'],
-  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
+  cluster_by = ['_inserted_timestamp::DATE']
 ) }}
 
 WITH b AS (
@@ -15,7 +14,7 @@ WITH b AS (
     chain_id,
     tx_id,
     tx_status,
-    INDEX AS msg_index,
+    INDEX AS msg_group,
     VALUE :"@type" :: STRING AS msg_type,
     VALUE AS msg,
     _inserted_timestamp
@@ -44,13 +43,13 @@ SELECT
   chain_id,
   tx_id,
   tx_status,
-  msg_index,
+  msg_group,
   msg_type,
   msg,
   concat_ws(
     '-',
     tx_id,
-    msg_index
+    msg_group
   ) AS _unique_key,
   _inserted_timestamp
 FROM
