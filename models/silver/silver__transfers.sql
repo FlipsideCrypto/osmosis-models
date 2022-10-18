@@ -374,8 +374,8 @@ SELECT
     'IBC_TRANSFER_IN' AS transfer_type,
     m.msg_index,
     TRY_PARSE_JSON(attribute_value) :sender :: STRING AS sender,
-    TRY_PARSE_JSON(attribute_value) :amount :: INTEGER AS amount,
-    TRY_PARSE_JSON(attribute_value) :denom :: STRING AS currency,
+    C.amount,
+    C.currency,
     raw_metadata [1] :exponent :: INTEGER AS DECIMAL,
     TRY_PARSE_JSON(attribute_value) :receiver :: STRING AS receiver,
     m._inserted_timestamp,
@@ -398,8 +398,11 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
     t
     ON s.tx_id = t.tx_id
+    INNER JOIN coin_sent_ibc C
+    ON s.tx_id = C.tx_id
 WHERE
-    m.msg_type = 'write_acknowledgement'
+    TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
+    AND m.msg_type = 'write_acknowledgement'
     AND m.attribute_key = 'packet_data'
     AND (
         amount IS NOT NULL
