@@ -1,0 +1,27 @@
+version: 2
+models:
+  - name: silver__locked_liquidity_transactions
+    description: helper table for locked LPs
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - TX_ID
+            - MSG_GROUP
+            - MSG_SUB_GROUP
+    columns:
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - not_null
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
+        tests: 
+          - not_null
+      - name: MSG_SUB_GROUP
+        description: "{{ doc('msg_sub_group') }}"
+        tests: 
+          - not_null
+      - name: LOCK_ID
+        description: "{{ doc('lock_id') }}"
+        tests: 
+          - not_null

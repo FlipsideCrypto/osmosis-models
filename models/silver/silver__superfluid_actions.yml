@@ -6,7 +6,7 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
-            - MSG_INDEX
+            - MSG_GROUP
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -50,8 +50,8 @@ models:
               column_type_list:
                 - STRING    
                 - VARCHAR  
-      - name: MSG_INDEX
-        description: "{{ doc('msg_index') }}"
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
         tests: 
           - not_null
       - name: DELEGATOR_ADDRESS

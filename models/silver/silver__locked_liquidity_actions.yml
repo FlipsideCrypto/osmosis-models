@@ -1,12 +1,14 @@
 version: 2
 models:
-  - name: silver__locked_liquidity_activity
-    description: Records of all staking related transactions that have occurred on Osmosis, dating back to the genesis block. These actions include delegate, undelegate, and redelegate.
+  - name: silver__locked_liquidity_actions
+    description: Records of all LP token locking transactions that have occurred on Osmosis, dating back to the genesis block. These actions include lock, unlock, unpool, and all superfluid actions.
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
-            - ACTION
+            - MSG_GROUP
+            - LOCK_ID
+            - LOCKER_ADDRESS
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -42,43 +44,45 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
-      - name: TX_CALLER_ADDRESS
-        description: "{{ doc('tx_caller_address') }}"
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
         tests: 
           - not_null
-      - name: ACTION
+      - name: MSG_TYPE
+        description: "{{ doc('msg_type') }}"
+        tests: 
+          - not_null
+      - name: MSG_ACTION
         description: "{{ doc('action') }}"
         tests: 
           - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - STRING    
-                - VARCHAR  
-      - name: DELEGATOR_ADDRESS
-        description: "{{ doc('delegator_address') }}"
+      - name: MSG_ACTION_DESCRIPTION
+        description: "{{ doc('msg_action_description') }}"
         tests: 
           - not_null
+      - name: LOCKER_ADDRESS
+        description: "{{ doc('locker_address') }}"
+        tests: 
+          - not_null
+      - name: LOCK_ID
+        description: "{{ doc('lock_id') }}"
       - name: AMOUNT
         description: "{{ doc('amount') }}"
-        tests:
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER    
-                - FLOAT  
       - name: CURRENCY
         description: "{{ doc('currency') }}"
-      - name: VALIDATOR_ADDRESS
-        description: "{{ doc('validator_address') }}"
-      - name: DECIMAL
-        description: "{{ doc('decimal') }}"
-      - name: LOCK_ID
-        description: An ID corresponding to the locking step of the transaction.  
-      - name: ORIGINAL_SUPERFLUID_DELEGATE_TX_ID
-        description: The transaction id when the user initialized the superfluid stake. 
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+      - name: LOCK_DURATION
+        description: "{{ doc('lock_duration') }}"    
+      - name: UNLOCK_TIME
+        description: "{{ doc('unlock_time') }}"    
+      - name: IS_SUPERFLUID
+        description: "{{ doc('is_superfluid') }}"  
+        tests: 
+          - not_null
+      - name: UNPOOL_NEW_LOCK_IDS
+        description: "{{ doc('unpool_new_lock_ids') }}"  
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
           - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - TIMESTAMP_NTZ

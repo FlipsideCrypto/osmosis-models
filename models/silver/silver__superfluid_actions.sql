@@ -11,8 +11,8 @@ SELECT
     blockchain,
     chain_id,
     A.tx_id,
-    tx_status,
-    msg_type,
+    A.tx_status,
+    A.msg_type,
     A.msg_group,
     msg :sender :: STRING AS delegator_address,
     msg :coins [0] :amount :: INT AS amount,
@@ -20,8 +20,10 @@ SELECT
     msg :val_addr :: STRING AS validator_address,
     COALESCE(
         msg :lock_id :: INT,
-        b.lock_id :: INT
+        b.lock_id :: INT,
+        msg: id :: INT
     ) AS lock_id,
+    msg :pool_id :: INT AS pool_id,
     concat_ws(
         '-',
         A.tx_id,
