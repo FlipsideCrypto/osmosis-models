@@ -1,264 +1,303 @@
 {{ config(
-  materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', date, address, balance_type, currency)",
-  incremental_strategy = 'delete+insert',
-  cluster_by = ['date'],
+    materialized = 'incremental',
+    unique_key = "CONCAT_WS('-', date, address, balance_type, currency)",
+    incremental_strategy = 'delete+insert',
+    cluster_by = ['date'],
 ) }}
 
-WITH 
+WITH
 
 {% if is_incremental() %}
-
 recent AS (
-    SELECT  
-        date, 
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal
-    FROM {{ this }}
-  
-    WHERE date = (
-        SELECT 
-            DATEADD('day', -1, MAX(date))
-        FROM {{ this }}
-    )
-), 
 
-new AS (
-    SELECT 
-        block_timestamp :: date AS date, 
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal, 
-        1 AS RANK
-    FROM 
-        {{ ref('silver__liquid_balances') }}
-
-    WHERE block_timestamp :: date >= (
-        SELECT
-            DATEADD('day', -1, MAX(DATE))
-        FROM 
-            {{ this }}
-        ) 
-        
-    qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: date, address, balance_type, currency
-        ORDER BY 
-            block_timestamp DESC)) = 1
-
-    UNION ALL
-    
-    SELECT 
-        block_timestamp :: date AS date, 
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal, 
-        1 AS RANK
-    FROM 
-        {{ ref('silver__staked_balances') }}
-
-    WHERE block_timestamp :: date >= (
-        SELECT
-            DATEADD('day', -1, MAX(DATE))
-        FROM 
-            {{ this }}
-        ) 
-        
-    qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: date, address, balance_type, currency
-        ORDER BY 
-            block_timestamp DESC)) = 1
-    
-), 
-
-incremental AS (
     SELECT
-        date, 
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal
-    FROM 
-        (
+        DATE,
+        balance_type,
+        address,
+        balance,
+        currency,
+        DECIMAL
+    FROM
+        {{ this }}
+    WHERE
+        DATE = (
             SELECT
-                date, 
-                balance_type, 
-                address, 
-                balance, 
-                currency, 
-                decimal, 
-                2 AS RANK
-            FROM 
-                recent
-            
-            UNION
-
+                DATEADD('day', -1, MAX(DATE))
+            FROM
+                {{ this }})
+        ),
+        NEW AS (
             SELECT
-                date, 
-                balance_type, 
-                address, 
-                balance, 
-                currency, 
-                decimal, 
+                block_timestamp :: DATE AS DATE,
+                balance_type,
+                address,
+                balance,
+                currency,
+                DECIMAL,
                 1 AS RANK
-            FROM 
-                new
-        )
+            FROM
+                {{ ref('silver__liquid_balances') }}
+            WHERE
+                block_timestamp :: DATE >= (
+                    SELECT
+                        DATEADD('day', -1, MAX(DATE))
+                    FROM
+                        {{ this }}) qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: DATE, address, balance_type, currency
+                    ORDER BY
+                        block_timestamp DESC)) = 1
+                    UNION ALL
+                    SELECT
+                        block_timestamp :: DATE AS DATE,
+                        balance_type,
+                        address,
+                        balance,
+                        currency,
+                        DECIMAL,
+                        1 AS RANK
+                    FROM
+                        {{ ref('silver__staked_balances') }}
+                    WHERE
+                        block_timestamp :: DATE >= (
+                            SELECT
+                                DATEADD('day', -1, MAX(DATE))
+                            FROM
+                                {{ this }}) qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: DATE, address, balance_type, currency
+                            ORDER BY
+                                block_timestamp DESC)) = 1
+                            UNION ALL
+                            SELECT
+                                block_timestamp,
+                                balance_type,
+                                address,
+                                SUM(balance) AS balance,
+                                currency,
+                                DECIMAL,
+                                1 AS RANK
+                            FROM
+                                (
+                                    SELECT
+                                        block_timestamp,
+                                        balance_type,
+                                        address,
+                                        balance,
+                                        currency,
+                                        DECIMAL,
+                                        1 AS RANK
+                                    FROM
+                                        {{ ref('silver__locked_liquidity_balances') }}
+                                    WHERE
+                                        block_timestamp :: DATE >= (
+                                            SELECT
+                                                DATEADD('day', -1, MAX(DATE))
+                                            FROM
+                                                {{ this }})
+                                                AND lock_id || '---' || block_timestamp :: DATE :: STRING NOT IN (
+                                                    SELECT
+                                                        lock_id || '---' || block_timestamp :: DATE :: STRING
+                                                    FROM
+                                                        {{ ref('silver__superfluid_staked_balances') }}
+                                                    WHERE
+                                                        block_timestamp :: DATE >= (
+                                                            SELECT
+                                                                DATEADD('day', -1, MAX(DATE))
+                                                            FROM
+                                                                {{ this }})
+                                                        ) qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: DATE, address, balance_type, currency, lock_id
+                                                    ORDER BY
+                                                        block_timestamp DESC)) = 1
+                                                    UNION ALL
+                                                    SELECT
+                                                        block_timestamp,
+                                                        balance_type,
+                                                        address,
+                                                        balance,
+                                                        currency,
+                                                        DECIMAL,
+                                                        1 AS RANK
+                                                    FROM
+                                                        {{ ref('silver__superfluid_staked_balances') }}
+                                                    WHERE
+                                                        block_timestamp :: DATE >= (
+                                                            SELECT
+                                                                DATEADD('day', -1, MAX(DATE))
+                                                            FROM
+                                                                {{ this }}) qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: DATE, address, balance_type, currency, lock_id
+                                                            ORDER BY
+                                                                block_timestamp DESC)) = 1
+                                                        ) liq
+                                                    GROUP BY
+                                                        block_timestamp,
+                                                        balance_type,
+                                                        address,
+                                                        currency,
+                                                        DECIMAL
+                                                ),
+                                                incremental AS (
+                                                    SELECT
+                                                        DATE,
+                                                        balance_type,
+                                                        address,
+                                                        balance,
+                                                        currency,
+                                                        DECIMAL
+                                                    FROM
+                                                        (
+                                                            SELECT
+                                                                DATE,
+                                                                balance_type,
+                                                                address,
+                                                                balance,
+                                                                currency,
+                                                                DECIMAL,
+                                                                2 AS RANK
+                                                            FROM
+                                                                recent
+                                                            UNION
+                                                            SELECT
+                                                                DATE,
+                                                                balance_type,
+                                                                address,
+                                                                balance,
+                                                                currency,
+                                                                DECIMAL,
+                                                                1 AS RANK
+                                                            FROM
+                                                                NEW
+                                                        ) qualify(ROW_NUMBER() over (PARTITION BY DATE, address, balance_type, currency
+                                                    ORDER BY
+                                                        RANK ASC)) = 1
+                                                ),
+                                            {% endif %}
 
-    qualify(ROW_NUMBER() over (PARTITION BY date, address, balance_type, currency
-        ORDER BY 
-            RANK ASC)) = 1
-    
-), 
-{% endif %}
+                                            base AS (
 
-
-base AS (
-
-    {% if is_incremental() %}
-
-    SELECT 
-        date AS block_timestamp,
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal
-    FROM
-        incremental
-    
-    {% else %}
-    
-    SELECT 
-        block_timestamp,
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal
-    FROM
-        {{ ref('silver__liquid_balances') }}
-
-    UNION ALL 
-
-    SELECT 
-        block_timestamp,
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal
-    FROM
-        {{ ref('silver__staked_balances') }}
-
-    {% endif %}
-), 
-
+{% if is_incremental() %}
+SELECT
+    DATE AS block_timestamp, balance_type, address, balance, currency, DECIMAL
+FROM
+    incremental
+{% else %}
+SELECT
+    block_timestamp, balance_type, address, balance, currency, DECIMAL
+FROM
+    {{ ref('silver__liquid_balances') }}
+UNION ALL
+SELECT
+    block_timestamp, balance_type, address, balance, currency, DECIMAL
+FROM
+    {{ ref('silver__staked_balances') }}
+UNION ALL
+SELECT
+    block_timestamp, balance_type, address, SUM(balance) AS balance, currency, DECIMAL
+FROM
+    (
+SELECT
+    block_timestamp, balance_type, address, balance, currency, DECIMAL
+FROM
+    {{ ref('silver__locked_liquidity_balances') }}
+WHERE
+    lock_id || '---' || block_timestamp :: DATE :: STRING NOT IN (
+SELECT
+    lock_id || '---' || block_timestamp :: DATE :: STRING
+FROM
+    {{ ref('silver__superfluid_staked_balances') }})
+UNION ALL
+SELECT
+    block_timestamp, balance_type, address, balance, currency, DECIMAL
+FROM
+    {{ ref('silver__superfluid_staked_balances') }}) liq
+GROUP BY
+    block_timestamp, balance_type, address, currency, DECIMAL
+{% endif %}),
 address_ranges AS (
     SELECT
-        address, 
-        balance_type, 
-        currency, 
-        decimal, 
+        address,
+        balance_type,
+        currency,
+        DECIMAL,
         MIN(
-            block_timestamp :: date
-        ) AS min_block_date, 
+            block_timestamp :: DATE
+        ) AS min_block_date,
         MAX (
-            CURRENT_TIMESTAMP :: date
+            CURRENT_TIMESTAMP :: DATE
         ) AS max_block_date
-    FROM 
-        base
-    GROUP BY 
-        address, 
-        balance_type, 
-        currency, 
-        decimal
-), 
-
-ddate AS (
-    SELECT
-        hour :: date AS date
-    FROM 
-        {{ source(
-            'shared2', 
-            'hours'
-        ) }}
-    GROUP BY date
-), 
-
-all_dates AS (
-    SELECT 
-        d.date, 
-        a.balance_type, 
-        a.address, 
-        a.currency, 
-        a.decimal
-    FROM 
-        ddate d
-    
-    LEFT JOIN address_ranges a
-    ON d.date 
-    BETWEEN a.min_block_date 
-    AND a.max_block_date
-
-    WHERE 
-        a.address IS NOT NULL 
-), 
-
-osmosis_balances AS (
-    SELECT 
-        block_timestamp,
-        balance_type, 
-        address, 
-        balance, 
-        currency, 
-        decimal
     FROM
         base
-    
-    qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: date, address, balance_type, currency
-        ORDER BY 
-            block_timestamp DESC)) = 1
-), 
-
+    GROUP BY
+        address,
+        balance_type,
+        currency,
+        DECIMAL
+),
+ddate AS (
+    SELECT
+        HOUR :: DATE AS DATE
+    FROM
+        {{ source(
+            'shared2',
+            'hours'
+        ) }}
+    GROUP BY
+        DATE
+),
+all_dates AS (
+    SELECT
+        d.date,
+        A.balance_type,
+        A.address,
+        A.currency,
+        A.decimal
+    FROM
+        ddate d
+        LEFT JOIN address_ranges A
+        ON d.date BETWEEN A.min_block_date
+        AND A.max_block_date
+    WHERE
+        A.address IS NOT NULL
+),
+osmosis_balances AS (
+    SELECT
+        block_timestamp,
+        balance_type,
+        address,
+        balance,
+        currency,
+        DECIMAL
+    FROM
+        base qualify(ROW_NUMBER() over (PARTITION BY block_timestamp :: DATE, address, balance_type, currency
+    ORDER BY
+        block_timestamp DESC)) = 1
+),
 balance_temp AS (
     SELECT
-        d.date, 
-        d.balance_type, 
-        d.address, 
-        b.balance, 
+        d.date,
+        d.balance_type,
+        d.address,
+        b.balance,
         d.currency,
         d.decimal
-
-    FROM 
-        all_dates d 
-    
-    LEFT JOIN osmosis_balances b
-    ON d.date = b.block_timestamp :: date
-    AND d.address = b.address
-    AND d.currency = b.currency
-    AND d.balance_type = b.balance_type
+    FROM
+        all_dates d
+        LEFT JOIN osmosis_balances b
+        ON d.date = b.block_timestamp :: DATE
+        AND d.address = b.address
+        AND d.currency = b.currency
+        AND d.balance_type = b.balance_type
 )
-
 SELECT
-    date, 
-    balance_type, 
-    address, 
-    currency, 
-    decimal, 
+    DATE,
+    balance_type,
+    address,
+    currency,
+    DECIMAL,
     LAST_VALUE(
         balance ignore nulls
     ) over(
-    PARTITION BY address,
-    currency, 
-    balance_type
-    ORDER BY
-      DATE ASC rows unbounded preceding
-    )  AS balance
-FROM 
+        PARTITION BY address,
+        currency,
+        balance_type
+        ORDER BY
+            DATE ASC rows unbounded preceding
+    ) AS balance
+FROM
     balance_temp

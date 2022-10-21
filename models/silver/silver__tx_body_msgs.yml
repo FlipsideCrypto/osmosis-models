@@ -1,14 +1,12 @@
 version: 2
 models:
-  - name: silver__superfluid_staking
-    description: Records of all staking related transactions that have occurred on Osmosis, dating back to the genesis block. These actions include delegate, undelegate, and redelegate.
+  - name: silver__tx_body_msgs
+    description: Records of all messages associated to transactions that have occurred on Osmosis, dating back to the genesis block. 
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
             - MSG_GROUP
-            - LOCK_ID
-            - ACTION
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -24,51 +22,32 @@ models:
           - not_null
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
-              interval: 2
+              interval: 1
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - TIMESTAMP_NTZ
-      - name: BLOCKCHAIN
-        description: "{{ doc('blockchain') }}"
-        tests: 
-          - not_null
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
-          - not_null
+          - not_null 
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
-      - name: TX_STATUS
-        description: "{{ doc('tx_status') }}"
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
         tests: 
           - not_null
-      - name: ACTION
-        description: "{{ doc('action') }}"
-        tests: 
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - STRING    
-                - VARCHAR  
-      - name: DELEGATOR_ADDRESS
-        description: "{{ doc('delegator_address') }}"
-        tests: 
-          - not_null
-      - name: AMOUNT
-        description: "{{ doc('amount') }}"
-        tests:
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
                 - FLOAT  
-      - name: CURRENCY
-        description: "{{ doc('currency') }}"
-      - name: VALIDATOR_ADDRESS
-        description: "{{ doc('validator_address') }}"
-      - name: LOCK_ID
-        description: "{{ doc('lock_id') }}"
+      - name: MSG_TYPE
+        description: "{{ doc('msg_type') }}"
+        tests: 
+          - not_null
+      - name: MSG
+        description: "The underlying json from the message or event within the transactions"
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:

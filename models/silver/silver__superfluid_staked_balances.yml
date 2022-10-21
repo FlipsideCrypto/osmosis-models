@@ -1,0 +1,46 @@
+version: 2
+models:
+  - name: silver__superfluid_staked_balances
+    description: A table of each superfluid staked balance change for wallets on the Osmosis chain. 
+    tests:
+      - compare_model_subset:
+          name: silver__superfluid_staked_balances_business_logic_test
+          compare_model: ref('testing__superfluid_staked_balances')
+          compare_columns: 
+            - block_id
+            - balance_type
+            - address
+            - lock_id
+            - currency
+            - balance
+          model_condition: "where block_timestamp::date = '2022-10-18' 
+                and block_ID IN  (6503532,6503516,6503500,6503499,6503494,6503478,6503466,6503466,6503459,6503453,
+                      6503420,6503420,6503395,6503391,6503389,6503385,6503379,6503375,6503338)"
+    columns:
+      - name: BLOCK_ID 
+        description: "{{ doc('block_id') }}"
+        tests: 
+          - not_null
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests: 
+          - not_null
+      - name: ADDRESS
+        description: "{{ doc('address') }}"
+        tests: 
+          - not_null
+      - name: BALANCE 
+        description: The amount of the currency the wallet held at the given time
+        tests: 
+          - not_null
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - not_null
+      - name: DECIMAL 
+        description: "{{ doc('decimal') }}"
+      - name: _INSERTED_TIMESTAMP
+        description: "{{ doc('ingested_at') }}"
+        tests: 
+          - not_null
+      

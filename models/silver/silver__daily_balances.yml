@@ -9,6 +9,17 @@ models:
             - ADDRESS
             - BALANCE_TYPE
             - CURRENCY
+      - compare_model_subset:
+          name: silver__daily_balances_business_logic_test
+          compare_model: ref('testing__daily_balances')
+          compare_columns: 
+            - date
+            - balance_type
+            - address
+            - currency
+            - balance
+          model_condition: "where date = '2022-10-17' 
+                and ADDRESS IN ('osmo195khh6nr3zsvaxkm53wavkxv46uucdlatdux5m','osmo1ka4zctlzr2uee5s29y9qn2rcer3hcaunxvcptc','osmo1fjh798fyn9vqldc8ru09c99r89v5mt3czu4jfp')"
     columns:
       - name: DATE
         description: The day the balance was recorded on. 
