@@ -28,10 +28,6 @@ base_msg_atts AS (
         A.tx_id,
         'SUCCEEDED' AS tx_status,
         A.msg_group,
-        {# A.msg_sub_group,
-        A.msg_index,
-        #}
-        {# msg_index, #}
         A.msg_type,
         A.attribute_key,
         A.attribute_value,
@@ -137,8 +133,6 @@ tx_msg_flat AS (
         tx_id,
         tx_status,
         msg_group,
-        {# msg_index, #}
-        {# msg_type, #}
         lock_id,
         _inserted_timestamp
 ),
@@ -151,15 +145,13 @@ msg_based AS (
         A.tx_id,
         A.tx_status,
         A.msg_group,
-        {# msg_index, #}
         A.msg_type,
         A.lock_id,
-        {# j, #}
         b.attribute_value AS action,
         CASE
             WHEN b.attribute_value = '/osmosis.lockup.MsgExtendLockup' THEN 'extend lockup'
             WHEN A.msg_type = 'unpool_pool_id' THEN 'unpool'
-            WHEN j :"lock_tokens--duration" IS NOT NULL THEN 'inital lock'
+            WHEN j :"lock_tokens--duration" IS NOT NULL THEN 'initial lock'
             WHEN j :: STRING ILIKE '%unlock%'
             OR j :: STRING ILIKE '%undelegate%'
             OR j :: STRING ILIKE '%unbond%'
@@ -221,7 +213,6 @@ combo_with_super_undel AS (
         A.tx_status,
         A.msg_group,
         A.msg_type,
-        {# NULL :: STRING AS j, #}
         A.lock_id,
         'unlock' AS action,
         'unlock' AS hybrid_action,

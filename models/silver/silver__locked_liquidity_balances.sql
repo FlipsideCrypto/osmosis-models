@@ -15,14 +15,13 @@ WITH all_staked AS (
         currency,
         DECIMAL,
         lock_id,
-        {# is_superfluid, #}
         _inserted_timestamp
     FROM
         {{ ref('silver__locked_liquidity_actions') }}
         s
     WHERE
         msg_action_description IN (
-            'inital lock',
+            'initial lock',
             'add to position'
         )
         AND amount > 0
@@ -113,7 +112,7 @@ undel_bal AS (
         )
         AND A.amount > 0
         AND A.msg_action_description IN (
-            'inital lock',
+            'initial lock',
             'add to position'
         )
     GROUP BY

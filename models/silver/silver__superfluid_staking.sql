@@ -118,7 +118,7 @@ SELECT
     {# msg_action_description, #}
     CASE
         msg_action_description
-        WHEN 'inital lock' THEN 'delegate'
+        WHEN 'initial lock' THEN 'delegate'
         WHEN 'add to position' THEN 'delegate'
         WHEN 'unlock' THEN 'undelegate'
         WHEN 'unpool' THEN 'undelegate'

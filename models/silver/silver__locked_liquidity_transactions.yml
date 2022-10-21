@@ -8,6 +8,7 @@ models:
             - TX_ID
             - MSG_GROUP
             - MSG_SUB_GROUP
+            - LOCK_ID
     columns:
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
