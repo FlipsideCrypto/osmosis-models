@@ -19,9 +19,8 @@ models:
             - lock_id
             - currency
             - balance
-          model_condition: "where block_timestamp::date = '2022-10-20' 
-                and block_ID IN  (6532496,6532489,6532483,6532481,6532478,6532477,6532468,6532463,6532461,
-                    6532457,6532456,6532454,6532451,6532445,6532440,6532438,6532433)"
+          model_condition: "where block_timestamp::date = '2022-07-20' 
+                and block_ID IN  (5230815,5242128,5239892,5238935,5230342,5233986,5234464,5230342,5228474,5229227)"
     columns:
       - name: BLOCK_ID 
         description: "{{ doc('block_id') }}"
