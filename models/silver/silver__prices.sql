@@ -4,7 +4,24 @@
 
 SELECT
     recorded_at,
-    symbol,
+    CASE
+        WHEN symbol IS NOT NULL THEN symbol
+        ELSE CASE
+            asset_id
+            WHEN 'cerberus-2' THEN 'CRBRUS'
+            WHEN 'cheqd-network' THEN 'CHEQ'
+            WHEN 'e-money-eur' THEN 'EEUR'
+            WHEN 'juno-network' THEN 'JUNO'
+            WHEN 'kujira' THEN 'KUJI'
+            WHEN 'medibloc' THEN 'MED'
+            WHEN 'microtick' THEN 'TICK'
+            WHEN 'neta' THEN 'NETA'
+            WHEN 'regen' THEN 'REGEN'
+            WHEN 'sommelier' THEN 'SOMM'
+            WHEN 'terra-luna' THEN 'LUNC'
+            WHEN 'umee' THEN 'UMEE'
+        END
+    END AS symbol,
     price,
     total_supply,
     volume_24h,
@@ -79,8 +96,6 @@ WHERE
             OR asset_id = 'medibloc'
             OR asset_id = 'kujira'
         )
-    )
-
-qualify(ROW_NUMBER() over(PARTITION BY recorded_at, symbol
+    ) qualify(ROW_NUMBER() over(PARTITION BY recorded_at, symbol
 ORDER BY
-  recorded_at DESC)) = 1
+    recorded_at DESC)) = 1

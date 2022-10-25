@@ -414,16 +414,23 @@ combo_all AS (
 ),
 tx_address AS (
     SELECT
-        DISTINCT A.tx_id,
+        A.tx_id,
         SPLIT_PART(
             attribute_value,
             '/',
             0
-        ) AS tx_caller_address
+        ) AS tx_caller_address,
+        SPLIT_PART(
+            attribute_value,
+            '/',
+            1
+        ) AS acc_seq_index
     FROM
         msg_attributes_cte A
     WHERE
-        attribute_key = 'acc_seq'
+        attribute_key = 'acc_seq' qualify(ROW_NUMBER() over (PARTITION BY tx_id
+    ORDER BY
+        acc_seq_index) = 1)
 ),
 prefinal AS (
     SELECT
