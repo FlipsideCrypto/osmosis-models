@@ -8,7 +8,7 @@
 WITH super AS (
 
     SELECT
-        block_id,
+        DISTINCT block_id,
         delegator_address AS address,
         lock_id
     FROM
