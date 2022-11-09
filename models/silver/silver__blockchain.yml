@@ -1,0 +1,27 @@
+version: 2
+models:
+  - name: silver__blockchain
+
+    columns:
+      - name: CHAIN_ID
+        tests:
+          - not_null
+      - name: HEIGHT
+        tests:
+          - not_null
+      - name: BLOCK_TIMESTAMP
+        tests:
+          - not_null
+      - name: BLOCK_SIZE
+        tests:
+          - not_null
+      - name: BLOCK_HEADER
+        tests:
+          - not_null
+      - name: BLOCK_ID
+        tests:
+          - not_null
+          - unique
+      - name: NUM_TXS
+        tests:
+          - not_null
