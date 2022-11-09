@@ -1,6 +1,6 @@
 {% macro get_blockchain_api() %}
   {% set query %}
-  CREATE TABLE if NOT EXISTS bronze.blockchain_api(
+  CREATE TABLE if NOT EXISTS bronze_api.blockchain(
     block_ids ARRAY,
     call STRING,
     DATA variant,
@@ -10,7 +10,7 @@
   {% do run_query(query) %}
   {% set query %}
 INSERT INTO
-  bronze.blockchain_api(
+  bronze_api.blockchain(
     block_ids,
     call,
     DATA,
@@ -52,7 +52,7 @@ INSERT INTO
                 SELECT
                   VALUE
                 FROM
-                  bronze.blockchain_api,
+                  bronze_api.blockchain,
                   LATERAL FLATTEN(block_ids)
               )
             ORDER BY
@@ -62,31 +62,28 @@ INSERT INTO
     GROUP BY
       groupID
     LIMIT
-      20
+      50
   )
 SELECT
   blocks,
   CONCAT(
-    'https://osmosis-coke.allthatnode.com:56657/blockchain?minHeight=',
+    '{ "jsonrpc": "2.0", "id": 1, "method": "blockchain", "params": ["',
     min_block,
-    '&maxHeight=',
-    max_block
+    '","',
+    max_block,
+    '"] }'
   ) AS call,
   ethereum.streamline.udf_api(
-    'GET',
-    CONCAT(
-      'https://osmosis-coke.allthatnode.com:56657/blockchain?minHeight=',
-      min_block,
-      '&maxHeight=',
-      max_block
-    ),{ 'Authorization':(
+    'POST',
+    'https://osmosis-coke.allthatnode.com:56657',{ 'Authorization':(
       SELECT
         key
       FROM
         osmosis._internal.api_keys
       WHERE
         provider = 'allthatnode'
-    ) },{}
+    ) },
+    PARSE_JSON(call)
   ) AS resp,
   SYSDATE()
 FROM
