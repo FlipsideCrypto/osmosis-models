@@ -19,205 +19,116 @@ max_date AS (
 ),
 {% endif %}
 
-message_indexes AS (
+swaps AS (
+  SELECT 
+    block_id, 
+    block_timestamp, 
+    t.blockchain, 
+    chain_id, 
+    tx_id, 
+    tx_status,
+    tx_body,
+    _inserted_timestamp, 
+    ROW_NUMBER() OVER (
+    PARTITION BY tx_id 
+    ORDER BY _inserted_timestamp ASC
+  ) - 1 AS index
+FROM osmosis.silver.transactions t,
+LATERAL FLATTEN (input => tx_body :messages, recursive => TRUE ) b 
+WHERE 
+    key = '@type'
+    AND value :: STRING = '/osmosis.gamm.v1beta1.MsgSwapExactAmountIn'
+    AND tx_status = 'SUCCEEDED'
+
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
     SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
+),
+pre_final AS (
+    SELECT
+        block_id,
+        block_timestamp,
+        blockchain,
+        chain_id,
         tx_id,
-        attribute_key,
-        MIN(msg_index) AS min_index,
-        MAX(msg_index) AS max_index
-    FROM
-        {{ ref('silver__msg_attributes') }}
-    WHERE
-        block_timestamp :: DATE > '2021-09-23'
-        AND msg_type = 'token_swapped'
-        AND (
-            attribute_key = 'tokens_in'
-            OR attribute_key = 'tokens_out'
-        )
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-GROUP BY
-    tx_id,
-    attribute_key
-),
-tokens_in AS (
-    SELECT
-        t.tx_id,
-        SPLIT_PART(
-            TRIM(
-                REGEXP_REPLACE(
-                    attribute_value,
-                    '[^[:digit:]]',
-                    ' '
-                )
-            ),
-            ' ',
-            0
+        tx_status,
+        b.value,
+        b.value :sender :: STRING AS trader,
+        COALESCE(
+            b.value :tokenIn :amount :: NUMBER,
+            b.value :token_in :amount :: NUMBER
         ) AS from_amount,
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS from_currency,
-        l.raw_metadata [1] :exponent AS from_decimal
-    FROM
-        {{ ref('silver__msg_attributes') }}
-        t
-        LEFT OUTER JOIN message_indexes m
-        ON t.tx_id = m.tx_id
-        AND t.attribute_key = m.attribute_key
-        LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
-        l
-        ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
-    WHERE
-        t.block_timestamp :: DATE > '2021-09-23'
-        AND msg_type = 'token_swapped'
-        AND t.attribute_key = 'tokens_in'
-        AND t.msg_index = m.min_index
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-),
-tokens_out AS (
-    SELECT
-        t.tx_id,
-        SPLIT_PART(
-            TRIM(
-                REGEXP_REPLACE(
-                    attribute_value,
-                    '[^[:digit:]]',
-                    ' '
-                )
-            ),
-            ' ',
-            0
+        COALESCE(
+            b.value :tokenIn :denom :: STRING,
+            b.value :token_in :denom :: STRING
+        ) AS from_currency,
+        COALESCE(
+            b.value :tokenOutMinAmount :: NUMBER,
+            b.value :token_out_min_amount :: NUMBER
         ) AS to_amount,
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS to_currency,
-        l.raw_metadata [1] :exponent AS TO_DECIMAL
+        COALESCE(
+            b.value :routes [s.index] :tokenOutDenom :: STRING,
+            b.value :routes [s.index] :token_out_denom :: STRING
+        ) AS to_currency,
+        b.value :routes AS routes,
+        _inserted_timestamp,
+        s.index AS _swap_index
     FROM
-        {{ ref('silver__msg_attributes') }}
-        t
-        LEFT OUTER JOIN message_indexes m
-        ON t.tx_id = m.tx_id
-        AND t.attribute_key = m.attribute_key
-        LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
-        l
-        ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
+        swaps s,
+        TABLE(FLATTEN(tx_body :messages)) b
     WHERE
-        t.block_timestamp :: DATE > '2021-09-23'
-        AND msg_type = 'token_swapped'
-        AND t.attribute_key = 'tokens_out'
-        AND t.msg_index = m.max_index
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
+        s.index = b.index
+        AND from_amount IS NOT NULL
 ),
 pools AS (
     SELECT
         tx_id,
+        _swap_index,
         ARRAY_AGG(
-            attribute_value :: INTEGER
+            r.value :poolId
         ) AS pool_ids
     FROM
-        {{ ref('silver__msg_attributes') }}
-    WHERE
-        block_timestamp :: DATE > '2021-09-23'
-        AND attribute_key = 'pool_id'
-
-{% if is_incremental() %}
-AND _inserted_timestamp :: DATE >= CURRENT_DATE - 2
-{% endif %}
-GROUP BY
-    tx_id
-),
-trader AS (
-    SELECT
+        pre_final p,
+        TABLE(FLATTEN(routes)) r
+    GROUP BY
         tx_id,
-        SPLIT_PART(
-            attribute_value,
-            '/',
-            0
-        ) AS trader
-    FROM
-        {{ ref('silver__msg_attributes') }}
-    WHERE
-        block_timestamp :: DATE > '2021-09-23'
-        AND attribute_key = 'acc_seq'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
+        _swap_index)
     SELECT
-        MAX(
-            _inserted_timestamp
-        )
+        block_id,
+        block_timestamp,
+        p.blockchain,
+        chain_id,
+        p.tx_id,
+        tx_status,
+        trader,
+        from_amount,
+        from_currency,
+        CASE
+            WHEN from_currency LIKE 'gamm/pool/%' THEN 18
+            ELSE l.raw_metadata [1] :exponent
+        END AS from_decimal,
+        to_amount,
+        to_currency,
+        CASE
+            WHEN to_currency LIKE 'gamm/pool/%' THEN 18
+            ELSE A.raw_metadata [1] :exponent
+        END AS TO_DECIMAL,
+        pool_ids,
+        _inserted_timestamp
     FROM
-        max_date
-)
-{% endif %}
-)
-SELECT
-    t.block_id,
-    t.block_timestamp,
-    t.blockchain,
-    t.chain_id,
-    t.tx_id,
-    t.tx_status,
-    s.trader,
-    f.from_amount :: INTEGER AS from_amount,
-    f.from_currency,
-    CASE
-        WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
-        ELSE f.from_decimal
-    END AS from_decimal,
-    tt.to_amount :: INTEGER AS to_amount,
-    tt.to_currency,
-    CASE
-        WHEN tt.to_currency LIKE 'gamm/pool/%' THEN 18
-        ELSE tt.to_decimal
-    END AS TO_DECIMAL,
-    pool_ids,
-    t._inserted_timestamp
-FROM
-    tokens_in f
-    LEFT OUTER JOIN {{ ref('silver__transactions') }}
-    t
-    ON f.tx_id = t.tx_id
-    INNER JOIN tokens_out tt
-    ON f.tx_id = tt.tx_id
-    INNER JOIN trader s
-    ON t.tx_id = s.tx_id
-    INNER JOIN pools p
-    ON t.tx_id = p.tx_id
-
-{% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            max_date
-    )
-{% endif %}
+        pre_final p
+        LEFT OUTER JOIN pools pp
+        ON p.tx_id = pp.tx_id
+        AND p._swap_index = pp._swap_index
+        LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
+        l
+        ON from_currency = l.address
+        LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} A
+        ON to_currency = A.address
