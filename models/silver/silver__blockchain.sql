@@ -47,8 +47,12 @@ fin AS (
                 base
         ),
         LATERAL FLATTEN(
-            DATA :data :result :block_metas
-        )
+            DATA,
+            recursive => TRUE
+        ) b
+    WHERE
+        b.path LIKE 'data%.result.block_metas%'
+        AND INDEX IS NOT NULL
 )
 SELECT
     chain_id,

@@ -1,8 +1,11 @@
 {% macro get_blockchain_api() %}
   {% set query %}
+  CREATE schema if NOT EXISTS bronze_api;
+{% endset %}
+  {% do run_query(query) %}
+  {% set query %}
   CREATE TABLE if NOT EXISTS bronze_api.blockchain(
-    block_ids ARRAY,
-    call STRING,
+    call ARRAY,
     DATA variant,
     _inserted_timestamp timestamp_ntz
   );
@@ -11,83 +14,110 @@
   {% set query %}
 INSERT INTO
   bronze_api.blockchain(
-    block_ids,
     call,
     DATA,
     _inserted_timestamp
   ) WITH base AS (
     SELECT
-      MIN(block_id) min_block,
-      MAX(block_id) max_block,
-      ARRAY_AGG(block_id) blocks
+      *
     FROM
       (
         SELECT
+          *,
           conditional_true_event(
             CASE
-              WHEN rn_mod = 1 THEN TRUE
+              WHEN rn_mod_out = 1 THEN TRUE
               ELSE FALSE
             END
           ) over (
             ORDER BY
-              block_ID
-          ) groupID,
-          block_id
+              min_block
+          ) groupID_out
         FROM
           (
             SELECT
-              block_Id,
+              *,
               MOD(ROW_NUMBER() over(
             ORDER BY
-              block_id), 20) rn_mod
+              min_block), 200) rn_mod_out
             FROM
               (
                 SELECT
-                  DISTINCT block_id
+                  MIN(block_id) min_block,
+                  MAX(block_id) max_block,
+                  ARRAY_AGG(block_id) blocks
                 FROM
-                  bronze.blocks
-                WHERE
-                  block_id > 6300426
-                EXCEPT
-                SELECT
-                  VALUE
-                FROM
-                  bronze_api.blockchain,
-                  LATERAL FLATTEN(block_ids)
+                  (
+                    SELECT
+                      conditional_true_event(
+                        CASE
+                          WHEN rn_mod = 1 THEN TRUE
+                          ELSE FALSE
+                        END
+                      ) over (
+                        ORDER BY
+                          block_ID
+                      ) groupID,
+                      block_id
+                    FROM
+                      (
+                        SELECT
+                          block_Id :: STRING block_Id,
+                          MOD(ROW_NUMBER() over(
+                        ORDER BY
+                          block_id), 20) rn_mod
+                        FROM
+                          (
+                            SELECT
+                              DISTINCT block_id
+                            FROM
+                              silver.blocks
+                            EXCEPT
+                            SELECT
+                              height
+                            FROM
+                              silver.blockchain
+                          )
+                        ORDER BY
+                          block_id
+                      )
+                  )
+                GROUP BY
+                  groupID
               )
-            ORDER BY
-              1
           )
       )
+    WHERE
+      groupID_out < 11
+  ),
+  calls AS (
+    SELECT
+      ARRAY_AGG(
+        { 'jsonrpc': '2.0',
+        'id': min_block :: INT,
+        'method': 'blockchain',
+        'params': [min_block::STRING,max_block::STRING] }
+      ) call
+    FROM
+      base
     GROUP BY
-      groupID
-    LIMIT
-      50
+      groupid_out
   )
 SELECT
-  blocks,
-  CONCAT(
-    '{ "jsonrpc": "2.0", "id": 1, "method": "blockchain", "params": ["',
-    min_block,
-    '","',
-    max_block,
-    '"] }'
-  ) AS call,
-  ethereum.streamline.udf_api(
-    'POST',
-    'https://osmosis-coke.allthatnode.com:56657',{ 'Authorization':(
+  call,
+  ethereum.streamline.udf_json_rpc_call(
+    'https://osmosis-coke.allthatnode.com:56657/',{ 'headers':{ 'x-allthatnode-api-key':(
       SELECT
         key
       FROM
         osmosis._internal.api_keys
       WHERE
         provider = 'allthatnode'
-    ) },
-    PARSE_JSON(call)
-  ) AS resp,
+    ) }},{ 'data' :call }
+  ) AS DATA,
   SYSDATE()
 FROM
-  base;
+  calls;
 {% endset %}
   {% do run_query(query) %}
 {% endmacro %}
