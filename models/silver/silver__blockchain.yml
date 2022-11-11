@@ -6,9 +6,10 @@ models:
       - name: CHAIN_ID
         tests:
           - not_null
-      - name: HEIGHT
+      - name: BLOCK_ID
         tests:
           - not_null
+          - unique
       - name: BLOCK_TIMESTAMP
         tests:
           - not_null
@@ -18,10 +19,9 @@ models:
       - name: BLOCK_HEADER
         tests:
           - not_null
-      - name: BLOCK_ID
+      - name: BLOCK_ID_OBJECT
         tests:
-          - not_null
-          - unique
+          - not_null          
       - name: NUM_TXS
         tests:
           - not_null

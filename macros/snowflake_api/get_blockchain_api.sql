@@ -74,7 +74,7 @@ INSERT INTO
                               silver.blocks
                             EXCEPT
                             SELECT
-                              height
+                              block_id
                             FROM
                               silver.blockchain
                           )
@@ -92,6 +92,7 @@ INSERT INTO
   ),
   calls AS (
     SELECT
+      groupid_out,
       ARRAY_AGG(
         { 'jsonrpc': '2.0',
         'id': min_block :: INT,
@@ -106,14 +107,15 @@ INSERT INTO
 SELECT
   call,
   ethereum.streamline.udf_json_rpc_call(
-    'https://osmosis-coke.allthatnode.com:56657/',{ 'headers':{ 'x-allthatnode-api-key':(
+    'https://osmosis-coke.allthatnode.com:56657/',{ 'x-allthatnode-api-key':(
       SELECT
         key
       FROM
         osmosis._internal.api_keys
       WHERE
         provider = 'allthatnode'
-    ) }},{ 'data' :call }
+    ) },
+    call
   ) AS DATA,
   SYSDATE()
 FROM

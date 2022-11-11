@@ -56,11 +56,11 @@ fin AS (
 )
 SELECT
     chain_id,
-    height,
+    height AS block_id,
     block_timestamp,
     block_size,
     block_header,
-    block_id,
+    block_id AS block_id_object,
     num_txs,
     _inserted_timestamp
 FROM
