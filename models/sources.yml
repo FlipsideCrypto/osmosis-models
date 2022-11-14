@@ -17,6 +17,10 @@ sources:
     schema: redshift
     tables: 
       - name: hours
+  - name: bronze_api
+    schema: bronze_api
+    tables: 
+      - name: blockchain
   - name: osmosis_external
     schema: bronze
     loader: S3
