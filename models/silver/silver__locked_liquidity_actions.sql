@@ -57,9 +57,6 @@ base_msg_atts AS (
             )
             OR A.msg_type IN (
                 'add_tokens_to_lock',
-                'begin_unlock',
-                'begin_unlock_all',
-                {# 'burn', #} --these are just the placeholder osmo we can ignore
                 'lock_tokens',
                 'superfluid_delegate',
                 'superfluid_increase_delegation',
@@ -203,6 +200,11 @@ combo_with_super_undel AS (
         *
     FROM
         msg_based
+    UNION ALL
+    SELECT
+        *
+    FROM
+        {{ ref('silver__locked_liquidity_actions_begin_unlock') }}
     UNION ALL
     SELECT
         A.block_id,

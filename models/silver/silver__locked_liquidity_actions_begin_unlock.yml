@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: silver__locked_liquidity_actions
+  - name: silver__locked_liquidity_actions_begin_unlock
     description: Records of all LP token locking transactions that have occurred on Osmosis, dating back to the genesis block. These actions include lock, unlock, unpool, and all superfluid actions.
     tests:
       - dbt_utils.unique_combination_of_columns:
@@ -8,7 +8,7 @@ models:
             - TX_ID
             - MSG_GROUP
             - LOCK_ID
-            - LOCKER_ADDRESS
+            - LOCKER
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -52,23 +52,12 @@ models:
         description: "{{ doc('msg_type') }}"
         tests: 
           - not_null
-      - name: MSG_ACTION
-        description: "{{ doc('action') }}"
-        tests: 
-          - not_null
-      - name: MSG_ACTION_DESCRIPTION
-        description: "{{ doc('msg_action_description') }}"
-        tests: 
-          - not_null
-      - name: LOCKER_ADDRESS
+      - name: LOCKER
         description: "{{ doc('locker_address') }}"
         tests: 
           - not_null
       - name: LOCK_ID
         description: "{{ doc('lock_id') }}"
-        tests:
-          - not_null:
-              where: msg_type <> 'unpool_pool_id'
       - name: AMOUNT
         description: "{{ doc('amount') }}"
       - name: CURRENCY
@@ -79,12 +68,6 @@ models:
         description: "{{ doc('lock_duration') }}"    
       - name: UNLOCK_TIME
         description: "{{ doc('unlock_time') }}"    
-      - name: IS_SUPERFLUID
-        description: "{{ doc('is_superfluid') }}"  
-        tests: 
-          - not_null
-      - name: UNPOOL_NEW_LOCK_IDS
-        description: "{{ doc('unpool_new_lock_ids') }}"  
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
