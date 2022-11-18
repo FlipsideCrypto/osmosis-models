@@ -192,7 +192,13 @@ msg_based AS (
         LEFT JOIN base_msg_atts b
         ON A.tx_id = b.tx_id
         AND A.msg_group = b.msg_group
-        AND A.lock_id = b.lock_id
+        AND COALESCE(
+            A.lock_id,
+            -1
+        ) = COALESCE(
+            b.lock_id,
+            -1
+        )
         AND b.msg_type = 'message'
 ),
 combo_with_super_undel AS (
