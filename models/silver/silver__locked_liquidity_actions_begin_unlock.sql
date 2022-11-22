@@ -137,75 +137,107 @@ tx_msg_flat AS (
         msg_index,
         lock_id,
         _inserted_timestamp
+),
+FINAL AS (
+    SELECT
+        A.block_id,
+        A.block_timestamp,
+        A.blockchain,
+        A.chain_id,
+        A.tx_id,
+        A.tx_status,
+        A.msg_group,
+        A.msg_type,
+        COALESCE(
+            j :"begin_unlock--period_lock_id",
+            j :"begin_unlock_all--period_lock_id"
+        ) :: INT AS lock_id,
+        b.attribute_value AS action,
+        CASE
+            WHEN b.attribute_value = '/osmosis.lockup.MsgExtendLockup' THEN 'extend lockup'
+            WHEN A.msg_type = 'unpool_pool_id' THEN 'unpool'
+            WHEN j :"lock_tokens--duration" IS NOT NULL THEN 'initial lock'
+            WHEN j :: STRING ILIKE '%unlock%'
+            OR j :: STRING ILIKE '%undelegate%'
+            OR j :: STRING ILIKE '%unbond%'
+            OR action ILIKE '%undelegate%' THEN 'unlock-undelegate'
+            WHEN j :: STRING LIKE '%add%'
+            OR j :: STRING LIKE '%increase%' THEN 'add to position'
+            WHEN j :: STRING ILIKE '%delegate%' THEN 'super upgrade'
+        END hybrid_action,
+        COALESCE(
+            j :"add_tokens_to_lock--amount",
+            j :"lock_tokens--amount",
+            j :"superfluid_increase_delegation--amount",
+            j :"burn--amount",
+            j :"unpool_pool_id--denom"
+        ) :: STRING AS amount,
+        COALESCE(
+            j :"add_tokens_to_lock--owner",
+            j :"lock_tokens--owner",
+            j :"begin_unlock--owner",
+            j :"unlock--owner",
+            j :"burn--burner",
+            j :"unpool_pool_id--sender"
+        ) :: STRING AS locker,
+        COALESCE(
+            j :"lock_tokens--duration",
+            j :"begin_unlock--duration",
+            j :"unlock--duration"
+        ) :: STRING AS DURATION,
+        NULLIF(
+            COALESCE(
+                j :"lock_tokens--unlock_time",
+                j :"begin_unlock--unlock_time",
+                j :"unlock--unlock_time"
+            ) :: STRING,
+            '0001-01-01 00:00:00 +0000 UTC'
+        ) AS unlock_time,
+        j :"unpool_pool_id--new_lock_ids" :: STRING AS new_lock_ids,
+        A._INSERTED_TIMESTAMP
+    FROM
+        tx_msg_flat A
+        JOIN base_msg_atts b
+        ON A.tx_id = b.tx_id
+        AND A.msg_group = b.msg_group
+        AND COALESCE(
+            A.lock_id,
+            -1
+        ) = COALESCE(
+            b.lock_id,
+            -1
+        )
+        AND b.msg_type = 'message'
+    WHERE
+        A.msg_type = 'begin_unlock'
 )
 SELECT
-    A.block_id,
-    A.block_timestamp,
-    A.blockchain,
-    A.chain_id,
-    A.tx_id,
-    A.tx_status,
-    A.msg_group,
-    A.msg_type,
-    COALESCE(
-        j :"begin_unlock--period_lock_id",
-        j :"begin_unlock_all--period_lock_id"
-    ) :: INT AS lock_id,
-    b.attribute_value AS action,
-    CASE
-        WHEN b.attribute_value = '/osmosis.lockup.MsgExtendLockup' THEN 'extend lockup'
-        WHEN A.msg_type = 'unpool_pool_id' THEN 'unpool'
-        WHEN j :"lock_tokens--duration" IS NOT NULL THEN 'initial lock'
-        WHEN j :: STRING ILIKE '%unlock%'
-        OR j :: STRING ILIKE '%undelegate%'
-        OR j :: STRING ILIKE '%unbond%'
-        OR action ILIKE '%undelegate%' THEN 'unlock-undelegate'
-        WHEN j :: STRING LIKE '%add%'
-        OR j :: STRING LIKE '%increase%' THEN 'add to position'
-        WHEN j :: STRING ILIKE '%delegate%' THEN 'super upgrade'
-    END hybrid_action,
-    COALESCE(
-        j :"add_tokens_to_lock--amount",
-        j :"lock_tokens--amount",
-        j :"superfluid_increase_delegation--amount",
-        j :"burn--amount",
-        j :"unpool_pool_id--denom"
-    ) :: STRING AS amount,
-    COALESCE(
-        j :"add_tokens_to_lock--owner",
-        j :"lock_tokens--owner",
-        j :"begin_unlock--owner",
-        j :"unlock--owner",
-        j :"burn--burner",
-        j :"unpool_pool_id--sender"
-    ) :: STRING AS locker,
-    COALESCE(
-        j :"lock_tokens--duration",
-        j :"begin_unlock--duration",
-        j :"unlock--duration"
-    ) :: STRING AS DURATION,
-    NULLIF(
+    block_id,
+    block_timestamp,
+    blockchain,
+    chain_id,
+    tx_id,
+    tx_status,
+    msg_group,
+    msg_type,
+    lock_id,
+    action,
+    hybrid_action,
+    amount,
+    locker,
+    DURATION,
+    unlock_time,
+    new_lock_ids,
+    concat_ws(
+        '-',
+        tx_id,
+        msg_group,
         COALESCE(
-            j :"lock_tokens--unlock_time",
-            j :"begin_unlock--unlock_time",
-            j :"unlock--unlock_time"
-        ) :: STRING,
-        '0001-01-01 00:00:00 +0000 UTC'
-    ) AS unlock_time,
-    j :"unpool_pool_id--new_lock_ids" :: STRING AS new_lock_ids,
-    A._INSERTED_TIMESTAMP
+            lock_id,
+            -1
+        ),
+        locker
+    ) AS _unique_key,
+    _INSERTED_TIMESTAMP
 FROM
-    tx_msg_flat A
-    JOIN base_msg_atts b
-    ON A.tx_id = b.tx_id
-    AND A.msg_group = b.msg_group
-    AND COALESCE(
-        A.lock_id,
-        -1
-    ) = COALESCE(
-        b.lock_id,
-        -1
-    )
-    AND b.msg_type = 'message'
-WHERE
-    A.msg_type = 'begin_unlock'
+    FINAL

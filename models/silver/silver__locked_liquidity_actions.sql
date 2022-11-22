@@ -203,12 +203,44 @@ msg_based AS (
 ),
 combo_with_super_undel AS (
     SELECT
-        *
+        block_id,
+        block_timestamp,
+        blockchain,
+        chain_id,
+        tx_id,
+        tx_status,
+        msg_group,
+        msg_type,
+        lock_id,
+        action,
+        hybrid_action,
+        amount,
+        locker,
+        DURATION,
+        unlock_time,
+        new_lock_ids,
+        _INSERTED_TIMESTAMP
     FROM
         msg_based
     UNION ALL
     SELECT
-        *
+        block_id,
+        block_timestamp,
+        blockchain,
+        chain_id,
+        tx_id,
+        tx_status,
+        msg_group,
+        msg_type,
+        lock_id,
+        action,
+        hybrid_action,
+        amount,
+        locker,
+        DURATION,
+        unlock_time,
+        new_lock_ids,
+        _INSERTED_TIMESTAMP
     FROM
         {{ ref('silver__locked_liquidity_actions_begin_unlock') }}
     UNION ALL
