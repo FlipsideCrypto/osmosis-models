@@ -86,8 +86,10 @@ pools AS (
         tx_id,
         _body_index,
         ARRAY_AGG(
-            r.value :poolId
-        ) AS pool_ids
+            COALESCE(
+                r.value :poolId, 
+                r.value :pool_id
+        )) AS pool_ids
     FROM
         pre_final p,
         TABLE(FLATTEN(routes)) r
