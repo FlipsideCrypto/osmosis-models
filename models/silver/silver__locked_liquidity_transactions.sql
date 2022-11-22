@@ -9,6 +9,9 @@ SELECT
     DISTINCT tx_id,
     msg_group,
     msg_sub_group,
+    CASE
+        WHEN msg_type = 'begin_unlock' THEN msg_index
+    END msg_index,
     attribute_value AS lock_id,
     _inserted_timestamp,
     concat_ws(
