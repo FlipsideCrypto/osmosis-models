@@ -187,7 +187,7 @@ max_idx2 AS (
         ) AS max_msg_index
     FROM
         pre_final p
-        INNER JOIN osmosis_dev.silver.msg_attributes m
+        INNER JOIN {{ ref('silver__msg_attributes') }} m
         ON p.tx_id = m.tx_id
     WHERE
         (
@@ -221,7 +221,7 @@ to_amt AS (
             0
         ) AS to_amount
     FROM
-        osmosis_dev.silver.msg_attributes p
+        {{ ref('silver__msg_attributes') }} p
         INNER JOIN max_idx2 mm
         ON p.tx_id = mm.tx_id
         AND p.msg_group = mm.msg_group
