@@ -12,10 +12,10 @@ WITH swaps AS (
                     block_timestamp
                 ) AS block_hour,
          from_currency,
-         from_amount / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
+         TRY_TO_NUMBER(from_amount) / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
          f.project_name AS from_project_name,
          to_currency,
-         to_amount / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
+         TRY_TO_NUMBER(to_amount) / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
          t.project_name AS to_project_name,
          'osmosis' AS dex
     FROM {{ ref('silver__swaps') }} s 
@@ -27,9 +27,9 @@ WITH swaps AS (
     ON to_currency = t.address
 
     WHERE
-        from_amount > 0
+        TRY_TO_NUMBER(from_amount) > 0
     AND 
-        to_amount > 0
+        TRY_TO_NUMBER(to_amount) > 0
     AND 
         f.raw_metadata[1]:exponent IS NOT NULL
     AND 
