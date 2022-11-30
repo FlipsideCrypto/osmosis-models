@@ -32,6 +32,10 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
       - name: LIQUIDITY_PROVIDER_ADDRESS
         description: "{{ doc('liquidity_provider_address') }}"
         tests: 

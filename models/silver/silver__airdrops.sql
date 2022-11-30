@@ -172,6 +172,7 @@ SELECT
     chain_id,
     r.tx_id,
     tx_status,
+    tx_succeeded,
     'AIRDROP' AS transfer_type,
     r.msg_index,
     sender,

@@ -27,6 +27,10 @@ models:
         description: "{{ doc('tx_status') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
       - name: TX_CALLER_ADDRESS
         description: "{{ doc('tx_caller_address') }}"
         tests: 

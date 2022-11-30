@@ -27,6 +27,7 @@ base_txn AS (
         A.chain_id,
         A.tx_id,
         A.tx_status,
+        A.tx_succeeded,
         A.msg_group,
         A.msg_type,
         A.msg_action_description,
@@ -115,6 +116,7 @@ SELECT
     A.tx_id,
     A.msg_group,
     A.tx_status,
+    A.tx_succeeded,
     {# msg_action_description, #}
     CASE
         msg_action_description

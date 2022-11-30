@@ -440,6 +440,7 @@ prefinal AS (
         b.chain_id,
         A.tx_id,
         b.tx_status,
+        b.tx_succeeded,
         C.tx_caller_address,
         A.action,
         A.msg_group,
@@ -491,6 +492,7 @@ prefinal AS (
                 blockchain,
                 chain_id,
                 tx_status,
+                tx_succeeded,
                 _inserted_timestamp
             FROM
                 {{ ref('silver__transactions') }} A
@@ -517,6 +519,7 @@ GROUP BY
     b.chain_id,
     A.tx_id,
     b.tx_status,
+    b.tx_succeeded,
     C.tx_caller_address,
     A.action,
     A.msg_group,
@@ -537,6 +540,7 @@ SELECT
     A.chain_id,
     A.tx_id,
     A.tx_status,
+    A.tx_succeeded,
     A.tx_caller_address,
     A.action,
     A.msg_group,

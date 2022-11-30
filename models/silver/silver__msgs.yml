@@ -34,8 +34,11 @@ models:
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
-        tests: 
+      - name: TX_SUCCEEDED
+        tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ['TRUE', 'FALSE']
       - name: MSG_GROUP
         description: "{{ doc('silver_msg_group') }}"
       - name: MSG_SUB_GROUP

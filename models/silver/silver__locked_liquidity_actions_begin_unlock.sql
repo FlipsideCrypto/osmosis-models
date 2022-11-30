@@ -27,6 +27,7 @@ base_msg_atts AS (
         A.chain_id,
         A.tx_id,
         'SUCCEEDED' AS tx_status,
+        'TRUE' AS tx_succeeded,
         A.msg_group,
         CASE
             WHEN A.msg_type = 'begin_unlock' THEN A.msg_index
@@ -106,6 +107,7 @@ tx_msg_flat AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_group,
         msg_index,
         lock_id,
@@ -133,6 +135,7 @@ tx_msg_flat AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_group,
         msg_index,
         lock_id,
@@ -146,6 +149,7 @@ FINAL AS (
         A.chain_id,
         A.tx_id,
         A.tx_status,
+        A.tx_succeeded,
         A.msg_group,
         A.msg_type,
         COALESCE(
@@ -218,6 +222,7 @@ SELECT
     chain_id,
     tx_id,
     tx_status,
+    tx_succeeded,
     msg_group,
     msg_type,
     lock_id,

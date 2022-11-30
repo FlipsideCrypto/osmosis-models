@@ -31,9 +31,13 @@ models:
         description: "{{ doc('tx_from') }}"
         tests: 
           - not_null: 
-              where: TX_STATUS = 'SUCCEEDED'
+              where: TX_SUCCEEDED = 'TRUE'
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: CODESPACE
