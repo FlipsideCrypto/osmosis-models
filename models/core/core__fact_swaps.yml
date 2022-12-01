@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_swaps
-    description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. 
+    description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. The columns blockchain, chain_id, and tx_status will be deprecating soon. 
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_governance_votes
-    description: Records of all votes on proposals. 
+    description: Records of all votes on proposals. The columns blockchain, chain_id, and tx_status will be deprecating soon. 
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

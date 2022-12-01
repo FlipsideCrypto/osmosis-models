@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_staking_rewards
-    description: Records of all claimed rewards earned from staking that have occurred on Osmosis, dating back to the genesis block. These actions include claim and withdrawal_rewards.
+    description: Records of all claimed rewards earned from staking that have occurred on Osmosis, dating back to the genesis block. These actions include claim and withdrawal_rewards. The columns blockchain, chain_id, and tx_status will be deprecating soon.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

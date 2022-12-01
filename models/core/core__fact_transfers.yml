@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_transfers
-    description: Records of all transfers on Osmosis, including IBC transfers as on- and off-ramps to Osmosis and wallet to wallet transfers
+    description: Records of all transfers on Osmosis, including IBC transfers as on- and off-ramps to Osmosis and wallet to wallet transfers. The columns blockchain, chain_id, and tx_status will be deprecating soon.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
