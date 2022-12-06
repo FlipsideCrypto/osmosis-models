@@ -14,33 +14,65 @@ models:
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['osmosis']
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: ADDRESS
         description: "{{ doc('address') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: CREATOR
         description: "{{ doc('creator') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: LABEL_TYPE
         description: "{{ doc('label_type') }}"
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['token']
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: LABEL_SUBTYPE
         description: "{{ doc('label_subtype') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: LABEL 
         description: "{{ doc('label') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: PROJECT_NAME
         description: "{{ doc('project_name') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: RAW_METADATA
         description: "{{ doc('raw_metadata') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - OBJECT
+                - ARRAY

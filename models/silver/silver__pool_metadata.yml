@@ -11,11 +11,23 @@ models:
         description: "{{ doc('pool_module') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: POOL_ID
         description: "{{ doc('pool_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: ASSETS
         description: "{{ doc('pool_assets') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - OBJECT
+                - ARRAY
