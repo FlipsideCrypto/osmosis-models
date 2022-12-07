@@ -17,7 +17,7 @@ SELECT
   VALUE :max_rate :: NUMBER AS max_rate,
   VALUE :min_self_delegation :: NUMBER AS min_self_delegation,
   VALUE :rank :: NUMBER AS RANK,
-  VALUE :missed_blocks :: NUMBER AS missed_blocks,
+  VALUE :uptime :missed_blocks :: NUMBER AS missed_blocks,
   VALUE AS raw_metadata, 
   concat_ws(
         '-',

@@ -32,15 +32,15 @@ models:
         tests:
           - dbt_expectations.expect_column_to_exist
       - name: ACCOUNT_ADDRESS
-        description: 
+        description: The osmosis address of the user / entity that operates the validator. 
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: DELEGATOR_SHARES
-        description: 
+        description: The number of tokens staked to the validator. 
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: JAILED
-        description: 'FALSE' when a validator is not jailed, 'TRUE' when a validator is jailed
+        description: FALSE when a validator is not jailed, TRUE when a validator is jailed
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: MAX_CHANGE_RATE
