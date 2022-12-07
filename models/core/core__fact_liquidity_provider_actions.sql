@@ -11,7 +11,7 @@ SELECT
     tx_status,
     liquidity_provider_address,
     action,
-    pool_id,
+    pool_id :: ARRAY as pool_id,
     amount,
     currency,
     DECIMAL
