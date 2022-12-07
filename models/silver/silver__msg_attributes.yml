@@ -30,15 +30,33 @@ models:
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
-          - not_null 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR 
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: MSG_GROUP
         description: "{{ doc('silver_msg_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: MSG_SUB_GROUP
         description: "{{ doc('msg_sub_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: MSG_INDEX
         description: "{{ doc('msg_index') }}"
         tests: 
@@ -51,6 +69,10 @@ models:
         description: "{{ doc('msg_type') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
@@ -62,6 +84,15 @@ models:
         description: "They key from the key-value pair from the message attribute"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: ATTRIBUTE_VALUE
         description: "They value from the key-value pair from the message attribute"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       

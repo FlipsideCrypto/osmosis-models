@@ -302,7 +302,7 @@ SELECT
         WHEN action = 'exit_pool'
         AND what_is_this = 'non lp tokens' THEN 'pool_exited'
     END action,
-    p.pool_id,
+    p.pool_id :: ARRAY AS pool_id,
     d.amount,
     d.currency,
     d.decimal,

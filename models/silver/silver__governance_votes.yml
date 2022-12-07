@@ -30,26 +30,50 @@ models:
         description: "{{ doc('blockchain') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: VOTER
         description: "{{ doc('voter') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: PROPOSAL_ID
         description: "{{ doc('proposal_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: VOTE_OPTION
         description: "{{ doc('vote_option') }}"
         tests: 
@@ -59,14 +83,19 @@ models:
         tests:
           - not_null: 
               store_failures: False
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - TIMESTAMP_NTZ
       - name: _PATH
         description: Internal use for unique key. Path recursive lateral flatten pulls info from. 
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: VOTE_WEIGHT
         description: The percentage of one's delegation put towards a voting option. 1 = 100%, etc. 
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT

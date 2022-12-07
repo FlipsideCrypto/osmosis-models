@@ -14,15 +14,31 @@ models:
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: MSG_GROUP
         description: "{{ doc('msg_group') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: MSG_SUB_GROUP
         description: "{{ doc('msg_sub_group') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: LOCK_ID
         description: "{{ doc('lock_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT

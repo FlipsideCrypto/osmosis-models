@@ -182,17 +182,17 @@ SELECT
     e.tx_id,
     tx_status,
     tt.trader,
-    from_amount,
+    from_amount :: NUMBER AS from_amount,
     from_currency,
     CASE
         WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
-        ELSE f.from_decimal
+        ELSE f.from_decimal :: NUMBER
     END AS from_decimal,
-    to_amount,
+    to_amount :: NUMBER AS to_amount,
     to_currency,
     CASE
         WHEN tok.to_currency LIKE 'gamm/pool/%' THEN 18
-        ELSE tok.to_decimal
+        ELSE tok.to_decimal :: NUMBER
     END AS TO_DECIMAL,
     NULL :: ARRAY AS pool_ids,
     _inserted_timestamp
