@@ -16,18 +16,51 @@ models:
       - name: CURRENCY
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: PRICE_USD
         description: "The price of the asset in USD"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: MIN_PRICE_USD_HOUR
         description: "The lowest price found in the hour in USD"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: MAX_PRICE_USD_HOUR
         description: "The highest price found in the hour in USD"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: VOLATILITY_MEASURE
         description: "The difference between the min and max price for the hour"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: SWAPS_IN_HOUR
         description: "The number of swap transactions in the hour"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: VOLUME_USD_IN_HOUR
         description: "The volume of swap transactions (in USD) in the hour"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
   

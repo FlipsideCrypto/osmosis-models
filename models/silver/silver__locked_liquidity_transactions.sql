@@ -12,7 +12,7 @@ SELECT
     CASE
         WHEN msg_type = 'begin_unlock' THEN msg_index
     END msg_index,
-    attribute_value AS lock_id,
+    attribute_value :: NUMBER AS lock_id,
     _inserted_timestamp,
     concat_ws(
         '-',

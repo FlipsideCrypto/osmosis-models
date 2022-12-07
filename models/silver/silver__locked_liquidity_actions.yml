@@ -32,60 +32,135 @@ models:
         description: "{{ doc('blockchain') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: MSG_GROUP
         description: "{{ doc('msg_group') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: MSG_TYPE
         description: "{{ doc('msg_type') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: MSG_ACTION
         description: "{{ doc('action') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: MSG_ACTION_DESCRIPTION
         description: "{{ doc('msg_action_description') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: LOCKER_ADDRESS
         description: "{{ doc('locker_address') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: osmo1[0-9a-z]{38,38}
       - name: LOCK_ID
         description: "{{ doc('lock_id') }}"
         tests:
           - not_null:
               where: msg_type <> 'unpool_pool_id'
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: AMOUNT
         description: "{{ doc('amount') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: CURRENCY
         description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: POOL_ID
         description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: LOCK_DURATION
-        description: "{{ doc('lock_duration') }}"    
+        description: "{{ doc('lock_duration') }}" 
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR   
       - name: UNLOCK_TIME
-        description: "{{ doc('unlock_time') }}"    
+        description: "{{ doc('unlock_time') }}"  
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR  
       - name: IS_SUPERFLUID
         description: "{{ doc('is_superfluid') }}"  
         tests: 
           - not_null
       - name: UNPOOL_NEW_LOCK_IDS
-        description: "{{ doc('unpool_new_lock_ids') }}"  
+        description: "{{ doc('unpool_new_lock_ids') }}" 
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR 
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ

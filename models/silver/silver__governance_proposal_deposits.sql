@@ -109,7 +109,7 @@ SELECT
     p.tx_id,
     tx_status,
     d.depositor,
-    p.proposal_id,
+    p.proposal_id :: NUMBER as proposal_id,
     v.amount,
     v.currency,
     DECIMAL,
