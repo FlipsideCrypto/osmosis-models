@@ -4,9 +4,7 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - BLOCKCHAIN
-            - CREATOR
-            - ADDRESS
+            - _UNIQUE_KEY
     columns:
       - name: BLOCKCHAIN
         description: "{{ doc('blockchain') }}"
@@ -68,11 +66,22 @@ models:
               column_type_list:
                 - STRING
                 - VARCHAR
-      - name: RAW_METADATA
-        description: "{{ doc('raw_metadata') }}"
+      - name: ALIAS
+        description: A secondary address for the token, where available
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
         tests: 
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
-                - OBJECT
-                - ARRAY
+                - NUMBER    
+                - FLOAT
+      - name: RAW_METADATA
+        description: "{{ doc('raw_metadata') }}"
+        tests: 
+          - not_null
