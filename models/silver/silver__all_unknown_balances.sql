@@ -146,5 +146,3 @@ FROM
     ) }}
 ORDER BY
     block_id
-LIMIT
-    25000

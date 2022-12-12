@@ -31,5 +31,3 @@ FROM
         'bronze_streamline',
         'pool_balances_api'
     ) }}
-LIMIT
-    1000
