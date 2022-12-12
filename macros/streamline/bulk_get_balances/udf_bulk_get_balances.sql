@@ -1,8 +1,8 @@
 {% macro udf_bulk_get_balances() %}
     CREATE
     OR REPLACE EXTERNAL FUNCTION silver.udf_bulk_get_balances() returns text api_integration = aws_osmosis_api_dev AS {% if target.database == 'OSMOSIS' %}
-        'https://k7jc1bnb8i.execute-api.us-east-1.amazonaws.com/prod/bulk_get_balances'
+        'https://r9o2ijlhfc.execute-api.us-east-1.amazonaws.com/prod/bulk_get_balances'
     {% else %}
-        'https://auacbjh2tj.execute-api.us-east-1.amazonaws.com/dev/bulk_get_balances'
+        'https://tirqv0b7h7.execute-api.us-east-1.amazonaws.com/dev/bulk_get_balances'
     {%- endif %}
 {% endmacro %}
