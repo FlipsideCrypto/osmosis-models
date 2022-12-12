@@ -27,6 +27,6 @@ SELECT
     ) AS _unique_key
 FROM
   {{ source(
-    'osmosis_external',
+    'bronze_streamline',
     'validator_metadata_api'
   ) }}

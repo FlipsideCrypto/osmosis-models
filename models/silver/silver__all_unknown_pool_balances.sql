@@ -28,7 +28,7 @@ SELECT
     block_id
 FROM
     {{ source(
-        'osmosis_external',
+        'bronze_streamline',
         'pool_balances_api'
     ) }}
 LIMIT

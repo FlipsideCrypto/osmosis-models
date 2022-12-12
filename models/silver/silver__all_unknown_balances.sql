@@ -141,7 +141,7 @@ SELECT
     address
 FROM
     {{ source(
-        'osmosis_external',
+        'bronze_streamline',
         'balances_api'
     ) }}
 ORDER BY
