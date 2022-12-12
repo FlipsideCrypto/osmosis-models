@@ -20,7 +20,7 @@ WITH base AS (
         ) AS _inserted_timestamp
     FROM
         {{ source(
-            'osmosis_external',
+            'bronze_streamline',
             'balances_api'
         ) }}
         bal

@@ -28,6 +28,6 @@ SELECT
   base AS address
 FROM
   {{ source(
-    'osmosis_external',
+    'bronze_streamline',
     'asset_metadata_api'
   ) }}

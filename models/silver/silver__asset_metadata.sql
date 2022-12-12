@@ -11,7 +11,7 @@ WITH base AS (
     denom_units AS raw_metadata
   FROM
     {{ source(
-      'osmosis_external',
+      'bronze_streamline',
       'asset_metadata_api'
     ) }}
   GROUP BY
