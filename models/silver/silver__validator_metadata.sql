@@ -3,13 +3,13 @@
 ) }}
 
 SELECT
-  operator_address AS address,
+  VALUE: operator_address :: STRING AS address,
   'osmosis' AS blockchain,
   'flipside' AS creator,
   'operator' AS label_type,
   'validator' AS label_subtype,
-  moniker AS label,
-  identity AS project_name,
+  VALUE: moniker :: STRING AS label,
+  VALUE: identity :: STRING AS project_name,
   VALUE :account_address :: STRING AS account_address,
   VALUE :delegator_shares :: NUMBER AS delegator_shares,
   VALUE :jailed :: BOOLEAN AS jailed,
