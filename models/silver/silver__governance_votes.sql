@@ -108,7 +108,7 @@ SELECT
     tx_status, 
     tx_succeeded,
     _path, 
-    b.value :proposal_id :: STRING AS proposal_id, 
+    b.value :proposal_id :: NUMBER AS proposal_id, 
     b.value :voter :: STRING AS voter, 
     CASE
         WHEN o.value :option :: STRING = 'VOTE_OPTION_YES' THEN 1

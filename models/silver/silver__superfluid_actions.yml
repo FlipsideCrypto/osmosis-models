@@ -30,18 +30,34 @@ models:
         description: "{{ doc('blockchain') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: TX_SUCCEEDED
         tests:
           - not_null
@@ -63,6 +79,12 @@ models:
         description: "{{ doc('delegator_address') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: osmo1[0-9a-z]{38,38}
       - name: AMOUNT
         description: "{{ doc('amount') }}"
         tests:
@@ -72,10 +94,27 @@ models:
                 - FLOAT  
       - name: CURRENCY
         description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: VALIDATOR_ADDRESS
         description: "{{ doc('validator_address') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: osmovaloper1[0-9a-z]{38,38}
       - name: LOCK_ID
-        description: An ID corresponding to the locking step of the transaction.  
+        description: An ID corresponding to the locking step of the transaction. 
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT   
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:

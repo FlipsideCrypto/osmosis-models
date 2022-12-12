@@ -176,7 +176,7 @@ SELECT
     'AIRDROP' AS transfer_type,
     r.msg_index,
     sender,
-    amount,
+    amount :: NUMBER as amount,
     currency,
     DECIMAL,
     receiver,

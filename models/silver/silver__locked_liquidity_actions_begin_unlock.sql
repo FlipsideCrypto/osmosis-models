@@ -228,7 +228,7 @@ SELECT
     lock_id,
     action,
     hybrid_action,
-    amount,
+    amount :: NUMBER AS amount,
     locker,
     DURATION,
     unlock_time,

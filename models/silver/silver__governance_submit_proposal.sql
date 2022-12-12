@@ -94,7 +94,7 @@ SELECT
     tx_status,
     tx_succeeded,
     proposer,
-    p.proposal_id,
+    p.proposal_id :: NUMBER AS proposal_id,
     y.proposal_type,
     _inserted_timestamp
 FROM

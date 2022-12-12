@@ -4,47 +4,142 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - CREATOR
-            - ADDRESS
-            - BLOCKCHAIN
+            - _UNIQUE_KEY
     columns:
       - name: ADDRESS
         description: "{{ doc('address') }}"
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: BLOCKCHAIN
         description: "{{ doc('blockchain') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['osmosis']
       - name: CREATOR
         description: "{{ doc('creator') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: LABEL_TYPE
         description: "{{ doc('label_type') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['operator']
       - name: LABEL_SUBTYPE
         description: "{{ doc('label_subtype') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
           - dbt_expectations.expect_column_values_to_be_in_set:
               value_set: ['validator']
       - name: LABEL 
         description: "{{ doc('label') }}" 
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: PROJECT_NAME
         description: "{{ doc('project_name') }}"
         tests:
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+      - name: ACCOUNT_ADDRESS
+        description: The osmosis address of the user / entity that operates the validator. 
         tests: 
           - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+      - name: DELEGATOR_SHARES
+        description: The number of tokens staked to the validator. 
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
+      - name: JAILED
+        description: FALSE when a validator is not jailed, TRUE when a validator is jailed
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - BOOLEAN
+      - name: MAX_CHANGE_RATE
+        description: The maximum rate at which a validator can change their commission per day. 
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
+      - name: MAX_RATE
+        description: The maximum commission rate that the validator can charge
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
+      - name: MIN_SELF_DELEGATION
+        description: The minimum number of OSMO tokens that the operator must be staking with their own validator
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
+      - name: RANK
+        description: The rank of the validator in the validator set. Rank is determined by the number of OSMO tokens staked to the validator
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
+      - name: MISSED_BLOCKS
+        description: The number of blocks the validator has been down for during it's lifetime. 
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
       - name: RAW_METADATA
         description: "{{ doc('raw_metadata') }}"
         tests: 
           - not_null
+      - name: _UNIQUE_KEY
+        description: The unique key of the table
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
