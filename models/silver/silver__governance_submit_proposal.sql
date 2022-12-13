@@ -92,6 +92,7 @@ SELECT
     chain_id,
     p.tx_id,
     tx_status,
+    tx_succeeded,
     proposer,
     p.proposal_id :: NUMBER AS proposal_id,
     y.proposal_type,

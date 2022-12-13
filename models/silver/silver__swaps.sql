@@ -27,6 +27,7 @@ swaps AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         tx_body,
         _inserted_timestamp,
         ROW_NUMBER() OVER (
@@ -45,6 +46,7 @@ swaps AS (
         key = '@type'
         AND VALUE :: STRING = '/osmosis.gamm.v1beta1.MsgSwapExactAmountIn'
         AND tx_status = 'SUCCEEDED'
+        AND tx_succeeded = 'TRUE'
 
 {% if is_incremental() %}
 AND t._inserted_timestamp >= (
@@ -65,6 +67,7 @@ pre_final AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         b.value,
         b.value :sender :: STRING AS trader,
         COALESCE(
@@ -244,6 +247,7 @@ pre_final2 AS (
         chain_id,
         p.tx_id,
         tx_status,
+        tx_succeeded,
         trader,
         f.from_amount,
         f.from_currency,
@@ -284,6 +288,7 @@ SELECT
     chain_id,
     tx_id,
     tx_status,
+    tx_succeeded,
     trader,
     from_amount :: NUMBER AS from_amount,
     from_currency,

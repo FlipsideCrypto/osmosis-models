@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_governance_proposal_deposits
-    description: Records of all proposal deposits that have occurred on Osmosis, dating back to the genesis block. At least 500 OSMO must be deposited for a proposal to be voted on.
+    description: Records of all proposal deposits that have occurred on Osmosis, dating back to the genesis block. At least 500 OSMO must be deposited for a proposal to be voted on. The columns blockchain, chain_id, and tx_status will be deprecating soon.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -25,6 +25,10 @@ models:
           - dbt_expectations.expect_column_to_exist
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: DEPOSITOR 

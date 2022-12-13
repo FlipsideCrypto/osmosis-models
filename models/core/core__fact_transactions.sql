@@ -48,6 +48,7 @@ SELECT
     t.tx_id,
     s.tx_from,
     tx_status,
+    tx_succeeded,
     codespace,
     COALESCE(
         fee,

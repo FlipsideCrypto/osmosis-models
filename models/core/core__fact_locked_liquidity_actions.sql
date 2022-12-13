@@ -9,6 +9,7 @@ SELECT
     A.chain_id,
     A.tx_id,
     A.tx_status,
+    A.tx_succeeded,
     A.msg_group,
     A.msg_type,
     A.msg_action,

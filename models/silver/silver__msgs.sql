@@ -15,6 +15,7 @@ WITH b AS (
     chain_id,
     tx_id,
     tx_status,
+    tx_succeeded,
     INDEX AS msg_index,
     VALUE :type :: STRING AS msg_type,
     VALUE AS msg,
@@ -65,6 +66,7 @@ prefinal AS (
     chain_id,
     tx_id,
     tx_status,
+    tx_succeeded,
     NULLIF(
       (conditional_true_event(is_action) over (PARTITION BY tx_id
       ORDER BY
@@ -118,6 +120,7 @@ SELECT
   chain_id,
   A.tx_id,
   tx_status,
+  tx_succeeded,
   msg_group,
   CASE
     WHEN msg_group IS NULL THEN NULL

@@ -108,6 +108,7 @@ SELECT
     chain_id,
     p.tx_id,
     tx_status,
+    tx_succeeded,
     d.depositor,
     p.proposal_id :: NUMBER as proposal_id,
     v.amount,

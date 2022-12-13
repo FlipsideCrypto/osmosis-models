@@ -72,6 +72,11 @@ models:
               column_type_list:
                 - STRING
                 - VARCHAR
+      - name: TX_SUCCEEDED
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_set:
+              value_set: ['TRUE', 'FALSE']
       - name: TX_CODE
         description: "{{ doc('tx_code') }}"
         tests: 
