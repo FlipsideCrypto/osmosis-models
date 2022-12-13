@@ -377,7 +377,7 @@ SELECT
     'IBC_TRANSFER_IN' AS transfer_type,
     m.msg_index,
     TRY_PARSE_JSON(attribute_value) :sender :: STRING AS sender,
-    C.amount,
+    C.amount :: NUMBER AS amount,
     C.currency,
     raw_metadata [1] :exponent :: INTEGER AS DECIMAL,
     TRY_PARSE_JSON(attribute_value) :receiver :: STRING AS receiver,
