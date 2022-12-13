@@ -34,7 +34,7 @@ FROM
     {{ ref('silver__tx_body_msgs') }} A
     LEFT JOIN (
         SELECT
-            tx_id,
+            DISTINCT tx_id,
             msg_group,
             attribute_value AS lock_id
         FROM
