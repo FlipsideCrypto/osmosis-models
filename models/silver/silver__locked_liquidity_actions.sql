@@ -271,8 +271,18 @@ combo_with_super_undel AS (
         A._INSERTED_TIMESTAMP
     FROM
         {{ ref('silver__superfluid_actions') }} A
+        LEFT JOIN (
+            SELECT
+                DISTINCT tx_id,
+                lock_id
+            FROM
+                {{ ref('silver__locked_liquidity_actions_begin_unlock') }}
+        ) b
+        ON A.tx_id = b.tx_id
+        AND A.lock_id = b.lock_id
     WHERE
         msg_type = '/osmosis.superfluid.MsgSuperfluidUndelegate'
+        AND b.tx_id IS NULL
 ),
 tx_body AS (
     SELECT
@@ -315,7 +325,7 @@ SELECT
     A.chain_id,
     A.tx_id,
     A.tx_status,
-    A.tx_succeeded, 
+    A.tx_succeeded,
     A.msg_group,
     A.msg_type,
     COALESCE(

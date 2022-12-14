@@ -73,6 +73,7 @@ base AS (
             'lock_id',
             'action'
         )
+        AND msg_type <> 'superfluid_undelegate'
         AND A.tx_id NOT IN (
             '523CBB1403A90A2A45A90ADFFC17F72100B99C286BD66DEDF22DD7F8A825127D',
             'B26B72516A670B4FFD31F4F7853E65F7463F7A46BDE61800DC17A41F55AB87A3',
