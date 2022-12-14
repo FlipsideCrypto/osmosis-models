@@ -250,6 +250,7 @@ txn AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         _inserted_timestamp
     FROM
         {{ ref('silver__transactions') }}
@@ -275,6 +276,7 @@ SELECT
     tx.chain_id,
     d.tx_id,
     tx_status,
+    tx_succeeded,
     d.msg_index,
     l.liquidity_provider_address,
     CASE

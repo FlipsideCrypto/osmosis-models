@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_liquidity_provider_actions
-    description: Includes all actions entering and exiting liquidity pools  
+    description: Includes all actions entering and exiting liquidity pools. The columns blockchain, chain_id, and tx_status will be deprecating soon.  
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
@@ -30,6 +30,10 @@ models:
           - dbt_expectations.expect_column_to_exist
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: LIQUIDITY_PROVIDER_ADDRESS

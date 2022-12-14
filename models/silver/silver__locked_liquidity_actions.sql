@@ -27,6 +27,7 @@ base_msg_atts AS (
         A.chain_id,
         A.tx_id,
         'SUCCEEDED' AS tx_status,
+        'TRUE' AS tx_succeeded,
         A.msg_group,
         A.msg_type,
         A.attribute_key,
@@ -104,6 +105,7 @@ tx_msg_flat AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_group,
         _inserted_timestamp,
         LISTAGG(
@@ -129,6 +131,7 @@ tx_msg_flat AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_group,
         lock_id,
         _inserted_timestamp
@@ -141,6 +144,7 @@ msg_based AS (
         A.chain_id,
         A.tx_id,
         A.tx_status,
+        A.tx_succeeded,
         A.msg_group,
         A.msg_type,
         A.lock_id,
@@ -209,12 +213,13 @@ combo_with_super_undel AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_group,
         msg_type,
         lock_id,
         action,
         hybrid_action,
-        amount,
+        amount :: STRING AS amount,
         locker,
         DURATION,
         unlock_time,
@@ -230,12 +235,13 @@ combo_with_super_undel AS (
         chain_id,
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_group,
         msg_type,
         lock_id,
         action,
         hybrid_action,
-        amount,
+        amount :: STRING AS amount,
         locker,
         DURATION,
         unlock_time,
@@ -251,6 +257,7 @@ combo_with_super_undel AS (
         A.chain_id,
         A.tx_id,
         A.tx_status,
+        A.tx_succeeded,
         A.msg_group,
         A.msg_type,
         A.lock_id,
@@ -264,13 +271,24 @@ combo_with_super_undel AS (
         A._INSERTED_TIMESTAMP
     FROM
         {{ ref('silver__superfluid_actions') }} A
+        LEFT JOIN (
+            SELECT
+                DISTINCT tx_id,
+                lock_id
+            FROM
+                {{ ref('silver__locked_liquidity_actions_begin_unlock') }}
+        ) b
+        ON A.tx_id = b.tx_id
+        AND A.lock_id = b.lock_id
     WHERE
         msg_type = '/osmosis.superfluid.MsgSuperfluidUndelegate'
+        AND b.tx_id IS NULL
 ),
 tx_body AS (
     SELECT
         tx_id,
         tx_status,
+        tx_succeeded,
         msg_type,
         msg_group,
         delegator_address,
@@ -307,6 +325,7 @@ SELECT
     A.chain_id,
     A.tx_id,
     A.tx_status,
+    A.tx_succeeded,
     A.msg_group,
     A.msg_type,
     COALESCE(

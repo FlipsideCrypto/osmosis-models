@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_locked_liquidity_actions
-    description: Includes all actions related to locked LP tokens
+    description: Includes all actions related to locked LP tokens. The columns blockchain, chain_id, and tx_status will be deprecating soon.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -25,6 +25,10 @@ models:
           - dbt_expectations.expect_column_to_exist
       - name: TX_STATUS
         description: "{{ doc('tx_status') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: MSG_GROUP

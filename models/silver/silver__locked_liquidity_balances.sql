@@ -58,9 +58,39 @@ undel_base AS (
     WHERE
         msg_action_description IN (
             'unlock',
-            'unlock-undelegate',
-            'unpool'
+            'unlock-undelegate'
         )
+        AND (
+            unlock_time IS NOT NULL
+            OR msg_action = '/osmosis.superfluid.MsgSuperfluidUndelegate'
+        )
+        AND tx_id <> '1A2A80A7112995EA1A22D6EDBFB26AE7B863852A9E7F59779247F8928DA218D6'
+
+{% if is_incremental() %}
+AND block_timestamp :: DATE >=(
+    SELECT
+        DATEADD('day', -2, MAX(block_timestamp))
+    FROM
+        {{ this }})
+    {% endif %}
+),
+unpool_base AS (
+    SELECT
+        block_id,
+        block_timestamp,
+        locker_address AS address,
+        currency,
+        DECIMAL,
+        msg_action_description,
+        tx_id,
+        COALESCE(LAG(block_id) over (
+    ORDER BY
+        block_id), 1) AS lower_bound_unpool,
+        _inserted_timestamp
+    FROM
+        {{ ref('silver__locked_liquidity_actions') }}
+    WHERE
+        msg_action_description = 'unpool'
 
 {% if is_incremental() %}
 AND block_timestamp :: DATE >=(
@@ -73,21 +103,44 @@ AND block_timestamp :: DATE >=(
 unpool_lock_val AS (
     SELECT
         A.lock_id,
+        A.locker_address AS address,
         A.currency,
-        A.locker_address,
+        A.decimal,
         b.block_id,
-        b.tx_id
+        b.tx_id,
+        b.block_timestamp,
+        b._inserted_timestamp,
+        SUM(
+            CASE
+                WHEN A.msg_action_description IN (
+                    'initial lock',
+                    'add to position'
+                ) THEN 1
+                ELSE -1
+            END * amount
+        ) AS unpool_amount
     FROM
         {{ ref('silver__locked_liquidity_actions') }} A
-        JOIN undel_base b
-        ON b.msg_action_description = 'unpool'
-        AND A.locker_address = b.address
+        JOIN unpool_base b
+        ON A.locker_address = b.address
         AND A.currency = b.currency
         AND A.block_id < b.block_id
+        AND A.block_id > lower_bound_unpool
+        LEFT JOIN undel_base C
+        ON A.locker_address = C.address
+        AND A.lock_id = C.lock_id
     WHERE
-        A.lock_id IS NOT NULL qualify(ROW_NUMBER() over(PARTITION BY A.lock_id
-    ORDER BY
-        A.block_id DESC) = 1)
+        A.lock_id IS NOT NULL
+        AND C.tx_id IS NULL
+    GROUP BY
+        A.lock_id,
+        A.locker_address,
+        A.currency,
+        A.decimal,
+        b.block_id,
+        b.tx_id,
+        b.block_timestamp,
+        b._inserted_timestamp
 ),
 undel_bal AS (
     SELECT
@@ -97,20 +150,10 @@ undel_bal AS (
         SUM(COALESCE(amount, 0)) amount
     FROM
         {{ ref('silver__locked_liquidity_actions') }} A
-        LEFT JOIN unpool_lock_val C
-        ON A.locker_address = C.locker_address
-        AND A.currency = C.currency
-        AND A.block_id <= C.block_id
-        LEFT JOIN undel_base b
+        JOIN undel_base b
         ON A.lock_id = b.lock_id
-        LEFT JOIN undel_base bb
-        ON C.tx_id = bb.tx_id
     WHERE
-        (
-            bb.address IS NOT NULL
-            OR b.address IS NOT NULL
-        )
-        AND A.amount > 0
+        A.amount > 0
         AND A.msg_action_description IN (
             'initial lock',
             'add to position'
@@ -138,19 +181,26 @@ combine AS (
         block_timestamp,
         address,
         b.lock_id,
-        -1 * b.amount,
+        -1 * amount,
         b.currency,
         b.decimal,
         _inserted_timestamp
     FROM
         undel_base A
-        LEFT JOIN unpool_lock_val C
-        ON A.tx_id = C.tx_id
         JOIN undel_bal b
-        ON COALESCE(
-            A.lock_id,
-            C.lock_id
-        ) = b.lock_id
+        ON A.lock_id = b.lock_id
+    UNION ALL
+    SELECT
+        block_id,
+        block_timestamp,
+        address,
+        lock_id,
+        -1 * unpool_amount,
+        currency,
+        DECIMAL,
+        _inserted_timestamp
+    FROM
+        unpool_lock_val A
 )
 SELECT
     block_id,

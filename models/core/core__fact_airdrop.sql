@@ -9,6 +9,7 @@ SELECT
     chain_id, 
     tx_id, 
     tx_status, 
+    tx_succeeded,
     transfer_type, 
     sender, 
     amount, 

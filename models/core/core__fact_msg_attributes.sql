@@ -8,6 +8,7 @@ SELECT
     blockchain,
     chain_id,
     tx_id,
+    tx_succeeded,
     CONCAT(
         msg_group,
         ':',

@@ -9,7 +9,7 @@ SELECT
     chain_id,
     tx_id,
     tx_status,
-    {# tx_caller_address,  #}
+    tx_succeeded,
     action,
     delegator_address,
     amount,
