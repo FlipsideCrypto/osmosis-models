@@ -5,10 +5,7 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - TX_ID
-            - MSG_GROUP
-            - MSG_SUB_GROUP
-            - LOCK_ID
+            - _UNIQUE_KEY
     columns:
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
@@ -20,14 +17,6 @@ models:
                 - VARCHAR
       - name: MSG_GROUP
         description: "{{ doc('msg_group') }}"
-        tests: 
-          - not_null
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER
-                - FLOAT
-      - name: MSG_SUB_GROUP
-        description: "{{ doc('msg_sub_group') }}"
         tests: 
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_type_list:
