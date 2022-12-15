@@ -107,7 +107,14 @@ INSERT INTO
 SELECT
   call,
   ethereum.streamline.udf_json_rpc_call(
-    'https://osmosis-coke.allthatnode.com:56657/',{ 'x-allthatnode-api-key':(
+    (
+      SELECT
+        rpc_url
+      FROM
+        osmosis._internal.api_keys
+      WHERE
+        provider = 'allthatnode'
+    ),{ 'x-allthatnode-api-key':(
       SELECT
         key
       FROM
