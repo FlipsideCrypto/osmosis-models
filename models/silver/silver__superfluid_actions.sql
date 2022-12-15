@@ -71,7 +71,7 @@ WHERE
         '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
     )
     AND tx_status = 'SUCCEEDED'
-    AND tx_succeeded = 'TRUE'
+    AND tx_succeeded
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
