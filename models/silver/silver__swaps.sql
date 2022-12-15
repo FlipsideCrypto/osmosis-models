@@ -46,7 +46,7 @@ swaps AS (
         key = '@type'
         AND VALUE :: STRING = '/osmosis.gamm.v1beta1.MsgSwapExactAmountIn'
         AND tx_status = 'SUCCEEDED'
-        AND tx_succeeded = 'TRUE'
+        AND tx_succeeded
 
 {% if is_incremental() %}
 AND t._inserted_timestamp >= (
