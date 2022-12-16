@@ -27,7 +27,7 @@ base_msg_atts AS (
         A.chain_id,
         A.tx_id,
         'SUCCEEDED' AS tx_status,
-        'TRUE' AS tx_succeeded,
+        TRUE AS tx_succeeded,
         A.msg_group,
         A.msg_type,
         A.attribute_key,

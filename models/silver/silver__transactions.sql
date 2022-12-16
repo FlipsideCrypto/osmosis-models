@@ -19,8 +19,8 @@ SELECT
     ELSE 'FAILED'
   END AS tx_status,
   CASE
-    WHEN tx :tx_result :code :: INT = 0 THEN 'TRUE'
-    ELSE 'FALSE'
+    WHEN tx :tx_result :code :: INT = 0 THEN TRUE
+    ELSE FALSE
   END AS tx_succeeded,
   tx :tx_result :code :: INT tx_code,
   tx :tx_result :events AS msgs,
