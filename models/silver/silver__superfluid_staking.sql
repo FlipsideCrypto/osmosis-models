@@ -23,10 +23,7 @@ base_txn AS (
     SELECT
         A.block_id,
         A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
         A.tx_id,
-        A.tx_status,
         A.tx_succeeded,
         A.msg_group,
         A.msg_type,
@@ -111,13 +108,9 @@ ORDER BY
 SELECT
     A.block_id,
     A.block_timestamp,
-    A.blockchain,
-    chain_id,
     A.tx_id,
     A.msg_group,
-    A.tx_status,
     A.tx_succeeded,
-    {# msg_action_description, #}
     CASE
         msg_action_description
         WHEN 'initial lock' THEN 'delegate'

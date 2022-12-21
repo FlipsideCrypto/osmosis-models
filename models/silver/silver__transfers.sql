@@ -272,10 +272,7 @@ AND _inserted_timestamp >= (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     r.tx_id,
-    tx_status,
     t.tx_succeeded,
     'IBC_TRANSFER_OUT' AS transfer_type,
     r.msg_index,
@@ -320,10 +317,7 @@ UNION ALL
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     r.tx_id,
-    tx_status,
     t.tx_succeeded,
     'OSMOSIS' AS transfer_type,
     r.msg_index,
@@ -369,10 +363,7 @@ UNION ALL
 SELECT
     m.block_id,
     m.block_timestamp,
-    m.blockchain,
-    m.chain_id,
     s.tx_id,
-    tx_status,
     m.tx_succeeded,
     'IBC_TRANSFER_IN' AS transfer_type,
     m.msg_index,

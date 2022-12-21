@@ -168,10 +168,7 @@ AND _inserted_timestamp >= (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     r.tx_id,
-    tx_status,
     tx_succeeded,
     'AIRDROP' AS transfer_type,
     r.msg_index,

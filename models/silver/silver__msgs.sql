@@ -11,10 +11,7 @@ WITH b AS (
   SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     INDEX AS msg_index,
     VALUE :type :: STRING AS msg_type,
@@ -62,10 +59,7 @@ prefinal AS (
   SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     NULLIF(
       (conditional_true_event(is_action) over (PARTITION BY tx_id
@@ -116,10 +110,7 @@ grp AS (
 SELECT
   block_id,
   block_timestamp,
-  blockchain,
-  chain_id,
   A.tx_id,
-  tx_status,
   tx_succeeded,
   msg_group,
   CASE

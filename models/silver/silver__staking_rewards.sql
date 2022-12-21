@@ -436,10 +436,7 @@ prefinal AS (
     SELECT
         b.block_id,
         b.block_timestamp,
-        b.blockchain,
-        b.chain_id,
         A.tx_id,
-        b.tx_status,
         b.tx_succeeded,
         C.tx_caller_address,
         A.action,
@@ -489,9 +486,6 @@ prefinal AS (
                 tx_ID,
                 block_id,
                 block_timestamp,
-                blockchain,
-                chain_id,
-                tx_status,
                 tx_succeeded,
                 _inserted_timestamp
             FROM
@@ -515,10 +509,7 @@ ON A.tx_id = C.tx_id
 GROUP BY
     b.block_id,
     b.block_timestamp,
-    b.blockchain,
-    b.chain_id,
     A.tx_id,
-    b.tx_status,
     b.tx_succeeded,
     C.tx_caller_address,
     A.action,
@@ -536,10 +527,7 @@ GROUP BY
 SELECT
     block_id,
     A.block_timestamp,
-    A.blockchain,
-    A.chain_id,
     A.tx_id,
-    A.tx_status,
     A.tx_succeeded,
     A.tx_caller_address,
     A.action,

@@ -10,10 +10,7 @@ WITH b AS (
   SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     INDEX AS msg_group,
     VALUE :"@type" :: STRING AS msg_type,
@@ -40,10 +37,7 @@ WHERE
 SELECT
   block_id,
   block_timestamp,
-  blockchain,
-  chain_id,
   tx_id,
-  tx_status,
   tx_succeeded,
   msg_group,
   msg_type,

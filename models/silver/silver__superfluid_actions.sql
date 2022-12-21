@@ -8,10 +8,7 @@
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     A.tx_id,
-    A.tx_status,
     A.tx_succeeded,
     A.msg_type,
     A.msg_group,
@@ -70,8 +67,7 @@ WHERE
         '/osmosis.superfluid.MsgSuperfluidDelegate',
         '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
     )
-    AND tx_status = 'SUCCEEDED'
-    AND tx_succeeded
+    AND tx_succeeded = TRUE
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
