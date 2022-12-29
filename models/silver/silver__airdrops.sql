@@ -138,7 +138,7 @@ aamount AS (
             0
         ) AS amount,
         RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency,
-        l.raw_metadata [1] :exponent AS DECIMAL
+        l.decimal AS DECIMAL
     FROM
         tx_ids o
         LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}

@@ -363,7 +363,7 @@ SELECT
     A.completion_time,
     CASE
         WHEN A.currency LIKE 'gamm/pool/%' THEN 18
-        ELSE amd.raw_metadata [1] :exponent
+        ELSE amd.decimal
     END AS DECIMAL,
     A._inserted_timestamp,
     concat_ws(

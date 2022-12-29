@@ -95,7 +95,7 @@ coin_sent_ibc AS (
             RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))),
             TRY_PARSE_JSON(attribute_value) [1] :denom
         ) AS currency,
-        l.raw_metadata [1] :exponent AS DECIMAL
+        l.decimal AS DECIMAL
     FROM
         {{ ref('silver__msg_attributes') }} A
         LEFT OUTER JOIN message_index_ibc m
@@ -242,7 +242,7 @@ osmo_amount AS (
             0
         ) AS amount,
         RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency,
-        l.raw_metadata [1] :exponent AS DECIMAL
+        l.decimal AS DECIMAL
     FROM
         osmo_tx_ids o
         LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
@@ -370,7 +370,7 @@ SELECT
     TRY_PARSE_JSON(attribute_value) :sender :: STRING AS sender,
     C.amount :: NUMBER AS amount,
     C.currency,
-    raw_metadata [1] :exponent :: INTEGER AS DECIMAL,
+    A.DECIMAL,
     TRY_PARSE_JSON(attribute_value) :receiver :: STRING AS receiver,
     m._inserted_timestamp,
     concat_ws(

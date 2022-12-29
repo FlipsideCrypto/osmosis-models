@@ -243,13 +243,13 @@ pre_final2 AS (
         f.from_currency,
         CASE
             WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
-            ELSE l.raw_metadata [1] :exponent
+            ELSE l.decimal
         END AS from_decimal,
         tt.to_amount,
         tt.to_currency,
         CASE
             WHEN tt.to_currency LIKE 'gamm/pool/%' THEN 18
-            ELSE A.raw_metadata [1] :exponent
+            ELSE A.decimal
         END AS TO_DECIMAL,
         pool_ids,
         _inserted_timestamp,

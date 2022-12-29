@@ -536,7 +536,7 @@ SELECT
     A.amount,
     A.currency,
     A.validator_address,
-    amd.raw_metadata [1] :exponent :: INT AS DECIMAL,
+    amd.decimal AS DECIMAL,
     A._inserted_timestamp,
     concat_ws(
         '-',

@@ -223,7 +223,7 @@ decimals AS (
         currency,
         CASE
             WHEN currency LIKE '%pool%' THEN 18
-            ELSE raw_metadata [1] :exponent
+            ELSE decimal
         END AS DECIMAL,
         block_timestamp
     FROM
