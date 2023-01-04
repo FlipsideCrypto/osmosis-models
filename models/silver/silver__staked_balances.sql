@@ -14,7 +14,7 @@ WITH all_staked AS (
         currency,
         CASE
             WHEN currency LIKE 'gamm/pool/%' THEN 18
-            ELSE raw_metadata [1] :exponent
+            ELSE A.decimal
         END AS DECIMAL,
         _inserted_timestamp
     FROM
@@ -40,7 +40,7 @@ AND block_timestamp :: DATE >=(
         currency,
         CASE
             WHEN currency LIKE 'gamm/pool/%' THEN 18
-            ELSE raw_metadata [1] :exponent
+            ELSE A.decimal
         END AS DECIMAL,
         _inserted_timestamp
     FROM

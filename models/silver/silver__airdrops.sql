@@ -138,7 +138,7 @@ aamount AS (
             0
         ) AS amount,
         RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency,
-        l.raw_metadata [1] :exponent AS DECIMAL
+        l.decimal AS DECIMAL
     FROM
         tx_ids o
         LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
@@ -168,10 +168,7 @@ AND _inserted_timestamp >= (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     r.tx_id,
-    tx_status,
     tx_succeeded,
     'AIRDROP' AS transfer_type,
     r.msg_index,

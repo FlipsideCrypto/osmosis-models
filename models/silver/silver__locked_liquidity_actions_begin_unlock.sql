@@ -23,10 +23,7 @@ base_msg_atts AS (
     SELECT
         DISTINCT A.block_id,
         A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
         A.tx_id,
-        'SUCCEEDED' AS tx_status,
         TRUE AS tx_succeeded,
         A.msg_group,
         CASE
@@ -103,10 +100,7 @@ tx_msg_flat AS (
     SELECT
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_group,
         msg_index,
@@ -131,10 +125,7 @@ tx_msg_flat AS (
     GROUP BY
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_group,
         msg_index,
@@ -145,10 +136,7 @@ FINAL AS (
     SELECT
         A.block_id,
         A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
         A.tx_id,
-        A.tx_status,
         A.tx_succeeded,
         A.msg_group,
         A.msg_type,
@@ -218,10 +206,7 @@ FINAL AS (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     msg_group,
     msg_type,

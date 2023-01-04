@@ -23,10 +23,7 @@ swaps AS (
     SELECT
         block_id,
         block_timestamp,
-        t.blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         tx_body,
         _inserted_timestamp,
@@ -45,8 +42,7 @@ swaps AS (
     WHERE
         key = '@type'
         AND VALUE :: STRING = '/osmosis.gamm.v1beta1.MsgSwapExactAmountIn'
-        AND tx_status = 'SUCCEEDED'
-        AND tx_succeeded
+        AND tx_succeeded = TRUE
 
 {% if is_incremental() %}
 AND t._inserted_timestamp >= (
@@ -63,10 +59,7 @@ pre_final AS (
     SELECT
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         b.value,
         b.value :sender :: STRING AS trader,
@@ -243,23 +236,20 @@ pre_final2 AS (
     SELECT
         block_id,
         block_timestamp,
-        p.blockchain,
-        chain_id,
         p.tx_id,
-        tx_status,
         tx_succeeded,
         trader,
         f.from_amount,
         f.from_currency,
         CASE
             WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
-            ELSE l.raw_metadata [1] :exponent
+            ELSE l.decimal
         END AS from_decimal,
         tt.to_amount,
         tt.to_currency,
         CASE
             WHEN tt.to_currency LIKE 'gamm/pool/%' THEN 18
-            ELSE A.raw_metadata [1] :exponent
+            ELSE A.decimal
         END AS TO_DECIMAL,
         pool_ids,
         _inserted_timestamp,
@@ -284,10 +274,7 @@ pre_final2 AS (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     trader,
     from_amount :: NUMBER AS from_amount,

@@ -23,10 +23,7 @@ base_msg_atts AS (
     SELECT
         A.block_id,
         A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
         A.tx_id,
-        'SUCCEEDED' AS tx_status,
         TRUE AS tx_succeeded,
         A.msg_group,
         A.msg_type,
@@ -78,7 +75,7 @@ base_msg_atts AS (
                 'denom',
                 'new_lock_ids'
             )
-        ) --weird transactions that break the logic
+        ) -- weird transactions that break THE logic
         AND A.tx_id NOT IN (
             '523CBB1403A90A2A45A90ADFFC17F72100B99C286BD66DEDF22DD7F8A825127D',
             'B26B72516A670B4FFD31F4F7853E65F7463F7A46BDE61800DC17A41F55AB87A3',
@@ -101,10 +98,7 @@ tx_msg_flat AS (
     SELECT
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_group,
         _inserted_timestamp,
@@ -127,10 +121,7 @@ tx_msg_flat AS (
     GROUP BY
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_group,
         lock_id,
@@ -140,10 +131,7 @@ msg_based AS (
     SELECT
         A.block_id,
         A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
         A.tx_id,
-        A.tx_status,
         A.tx_succeeded,
         A.msg_group,
         A.msg_type,
@@ -209,10 +197,7 @@ combo_with_super_undel AS (
     SELECT
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_group,
         msg_type,
@@ -231,10 +216,7 @@ combo_with_super_undel AS (
     SELECT
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_group,
         msg_type,
@@ -253,10 +235,7 @@ combo_with_super_undel AS (
     SELECT
         A.block_id,
         A.block_timestamp,
-        A.blockchain,
-        A.chain_id,
         A.tx_id,
-        A.tx_status,
         A.tx_succeeded,
         A.msg_group,
         A.msg_type,
@@ -287,7 +266,6 @@ combo_with_super_undel AS (
 tx_body AS (
     SELECT
         tx_id,
-        tx_status,
         tx_succeeded,
         msg_type,
         msg_group,
@@ -321,10 +299,7 @@ all_super_pools AS (
 SELECT
     A.block_id,
     A.block_timestamp,
-    A.blockchain,
-    A.chain_id,
     A.tx_id,
-    A.tx_status,
     A.tx_succeeded,
     A.msg_group,
     A.msg_type,
@@ -352,46 +327,42 @@ SELECT
             ' ',
             0
         )
-    END :: INT {# / pow(
-    10,
-    18
-) #}
-AS amount,
-CASE
-    WHEN A.amount LIKE 'gamm%' THEN A.amount
-    WHEN A.amount LIKE '%uosmo' THEN 'uosmo'
-    ELSE RIGHT(A.amount, LENGTH(A.amount) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(A.amount, '[^[:digit:]]', ' ')), ' ', 0)))
-END AS currency,
-CASE
-    WHEN A.amount LIKE '%uosmo' THEN 6
-    ELSE 18
-END AS DECIMAL,
-COALESCE(
-    b.pool_id,
+    END :: INT AS amount,
     CASE
-        WHEN A.amount LIKE '%pool%' THEN RIGHT(A.amount, len(A.amount) - POSITION('pool', A.amount) -4)
-    END :: INT
-) AS pool_id,
-A.duration AS lock_duration,
-A.unlock_time AS unlock_time,
-CASE
-    WHEN b.tx_id IS NOT NULL
-    OR C.lock_id IS NOT NULL
-    AND A.block_id >= C.block_id THEN TRUE
-    ELSE FALSE
-END is_superfluid,
-A.new_lock_ids AS unpool_new_lock_ids,
-concat_ws(
-    '-',
-    A.tx_id,
-    A.msg_group,
+        WHEN A.amount LIKE 'gamm%' THEN A.amount
+        WHEN A.amount LIKE '%uosmo' THEN 'uosmo'
+        ELSE RIGHT(A.amount, LENGTH(A.amount) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(A.amount, '[^[:digit:]]', ' ')), ' ', 0)))
+    END AS currency,
+    CASE
+        WHEN A.amount LIKE '%uosmo' THEN 6
+        ELSE 18
+    END AS DECIMAL,
     COALESCE(
-        A.lock_id,
-        -1
-    ),
-    A.locker
-) AS _unique_key,
-A._INSERTED_TIMESTAMP
+        b.pool_id,
+        CASE
+            WHEN A.amount LIKE '%pool%' THEN RIGHT(A.amount, len(A.amount) - POSITION('pool', A.amount) -4)
+        END :: INT
+    ) AS pool_id,
+    A.duration AS lock_duration,
+    A.unlock_time AS unlock_time,
+    CASE
+        WHEN b.tx_id IS NOT NULL
+        OR C.lock_id IS NOT NULL
+        AND A.block_id >= C.block_id THEN TRUE
+        ELSE FALSE
+    END is_superfluid,
+    A.new_lock_ids AS unpool_new_lock_ids,
+    concat_ws(
+        '-',
+        A.tx_id,
+        A.msg_group,
+        COALESCE(
+            A.lock_id,
+            -1
+        ),
+        A.locker
+    ) AS _unique_key,
+    A._INSERTED_TIMESTAMP
 FROM
     combo_with_super_undel A
     LEFT JOIN tx_body b

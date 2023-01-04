@@ -5,10 +5,7 @@
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     liquidity_provider_address,
     action,
@@ -22,10 +19,7 @@ UNION ALL
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     tx_id,
-    tx_status,
     tx_succeeded,
     liquidity_provider_address,
     action,

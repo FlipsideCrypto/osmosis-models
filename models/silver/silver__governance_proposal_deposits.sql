@@ -53,9 +53,9 @@ deposit_value AS (
             ),
             ' ',
             0
-        ) / pow(10, COALESCE(raw_metadata [1] :exponent, 0)) AS amount,
+        ) / pow(10, COALESCE(A.decimal, 0)) AS amount,
         RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS currency,
-        raw_metadata [1] :exponent AS DECIMAL
+        A.decimal AS DECIMAL
     FROM
         {{ ref('silver__msg_attributes') }}
         m
@@ -104,10 +104,7 @@ AND _inserted_timestamp >= (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
-    chain_id,
     p.tx_id,
-    tx_status,
     tx_succeeded,
     d.depositor,
     p.proposal_id :: NUMBER as proposal_id,

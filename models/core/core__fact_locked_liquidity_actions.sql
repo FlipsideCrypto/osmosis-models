@@ -5,10 +5,7 @@
 SELECT
     A.block_id,
     A.block_timestamp,
-    A.blockchain,
-    A.chain_id,
     A.tx_id,
-    A.tx_status,
     A.tx_succeeded,
     A.msg_group,
     A.msg_type,

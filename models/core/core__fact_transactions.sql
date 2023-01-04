@@ -43,11 +43,8 @@ ORDER BY
 SELECT
     t.block_id,
     t.block_timestamp,
-    t.blockchain,
-    t.chain_id,
     t.tx_id,
     s.tx_from,
-    tx_status,
     tx_succeeded,
     codespace,
     COALESCE(

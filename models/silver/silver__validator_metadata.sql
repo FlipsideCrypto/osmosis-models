@@ -24,9 +24,14 @@ SELECT
         address, 
         creator, 
         blockchain
-    ) AS _unique_key
+    ) AS _unique_key, 
+  VALUE :update_time :: TIMESTAMP AS _inserted_timestamp
 FROM
   {{ source(
     'bronze_streamline',
     'validator_metadata_api'
   ) }}
+
+  qualify(ROW_NUMBER() over(PARTITION BY blockchain, creator, address
+ORDER BY
+  _inserted_timestamp DESC)) = 1

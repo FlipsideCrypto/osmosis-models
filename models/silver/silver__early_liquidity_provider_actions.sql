@@ -239,7 +239,7 @@ decimals AS (
         currency,
         CASE
             WHEN currency LIKE '%pool%' THEN 18
-            ELSE raw_metadata [1] :exponent
+            ELSE decimal
         END AS DECIMAL,
         action,
         block_timestamp
@@ -263,10 +263,7 @@ txn AS (
     SELECT
         block_id,
         block_timestamp,
-        blockchain,
-        chain_id,
         tx_id,
-        tx_status,
         tx_succeeded,
         _inserted_timestamp
     FROM
@@ -287,10 +284,7 @@ WHERE
 SELECT
     tx.block_id,
     tx.block_timestamp,
-    tx.blockchain,
-    tx.chain_id,
     tx.tx_id,
-    tx.tx_status,
     tx.tx_succeeded,
     d.msg_index,
     l.liquidity_provider_address,

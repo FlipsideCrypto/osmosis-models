@@ -11,14 +11,6 @@ models:
         description: "{{ doc('block_timestamp') }}"
         tests:
           - dbt_expectations.expect_column_to_exist
-      - name: BLOCKCHAIN
-        description: "{{ doc('blockchain') }}"
-        tests: 
-          - dbt_expectations.expect_column_to_exist
-      - name: CHAIN_ID
-        description: "{{ doc('chain_id') }}"
-        tests:
-          - dbt_expectations.expect_column_to_exist
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 

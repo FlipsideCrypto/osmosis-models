@@ -194,7 +194,7 @@ SELECT
     ) AS _inserted_timestamp,
     CASE
         WHEN currency LIKE 'gamm/pool/%' THEN 18
-        ELSE b.raw_metadata [1] :exponent
+        ELSE b.decimal
     END AS DECIMAL
 FROM
     joined A
