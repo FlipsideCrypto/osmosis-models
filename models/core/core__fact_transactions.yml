@@ -23,7 +23,7 @@ models:
         description: "{{ doc('tx_from') }}"
         tests: 
           - not_null: 
-              where: TX_SUCCEEDED = TRUE
+              where: tx_succeeded = 'TRUE'
       - name: TX_SUCCEEDED
         description: "{{ doc('tx_succeeded') }}"
         tests: 
