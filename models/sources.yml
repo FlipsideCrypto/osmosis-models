@@ -29,3 +29,16 @@ sources:
       - name: asset_metadata_api
       - name: balances_api
       - name: pool_balances_api
+  - name: crosschain_silver
+    database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
+    schema: silver
+    tables:
+      - name: asset_metadata_coin_market_cap
+      - name: asset_metadata_coin_gecko
+      - name: hourly_prices_coin_market_cap
+      - name: hourly_prices_coin_gecko
+  - name: crosschain
+    database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
+    schema: core
+    tables:
+      - name: dim_date_hours
