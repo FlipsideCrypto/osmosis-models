@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp::DATE'],
+    cluster_by = ['block_timestamp::DATE']
 ) }}
 
 WITH
@@ -31,7 +31,8 @@ base AS (
         msg_type IN (
             'delegate',
             'redelegate',
-            'unbond'
+            'unbond',
+            'create_validator'
         )
         AND attribute_value NOT IN (
             'superfluid_delegate',
@@ -57,7 +58,11 @@ msg_attr AS (
         A.attribute_value,
         A.msg_index,
         A.msg_type,
-        A.msg_group
+        A.msg_group,
+        block_id,
+        block_timestamp,
+        tx_succeeded,
+        _inserted_timestamp
     FROM
         {{ ref('silver__msg_attributes') }} A
         JOIN (
@@ -73,14 +78,15 @@ msg_attr AS (
             FROM
                 base
         ) b
-        ON A.tx_ID = b.tx_ID
+        ON A.tx_id = b.tx_id
         AND A.msg_index = b.msg_index
     WHERE
         A.msg_type IN (
             'delegate',
             'message',
             'redelegate',
-            'unbond'
+            'unbond',
+            'create_validator'
         )
 
 {% if is_incremental() %}
@@ -114,7 +120,7 @@ tx_address AS (
             FROM
                 base
         ) b
-        ON A.tx_ID = b.tx_ID
+        ON A.tx_id = b.tx_id
     WHERE
         attribute_key = 'acc_seq'
 
@@ -214,7 +220,7 @@ ctime AS (
 ),
 prefinal AS (
     SELECT
-        A.tx_ID,
+        A.tx_id,
         A.msg_group,
         b.sender AS delegator_address,
         d.amount,
@@ -229,27 +235,31 @@ prefinal AS (
                 msg_group,
                 msg_index,
                 REPLACE(
-                    msg_type,
-                    'unbond',
-                    'undelegate'
+                    REPLACE(
+                        msg_type,
+                        'unbond',
+                        'undelegate'
+                    ),
+                    'create_validator',
+                    'delegate'
                 ) msg_type
             FROM
                 base
         ) A
         JOIN sendr b
-        ON A.tx_ID = b.tx_ID
+        ON A.tx_id = b.tx_id
         AND A.msg_group = b.msg_group
         AND A.msg_index + 1 = b.msg_index
         JOIN valid C
-        ON A.tx_ID = C.tx_ID
+        ON A.tx_id = C.tx_id
         AND A.msg_group = C.msg_group
         AND A.msg_index = C.msg_index
         JOIN amount d
-        ON A.tx_ID = d.tx_ID
+        ON A.tx_id = d.tx_id
         AND A.msg_group = d.msg_group
         AND A.msg_index = d.msg_index
         LEFT JOIN ctime e
-        ON A.tx_ID = e.tx_ID
+        ON A.tx_id = e.tx_id
         AND A.msg_group = e.msg_group
         AND A.msg_index = e.msg_index
 ),
@@ -292,7 +302,7 @@ add_dec AS (
     FROM
         (
             SELECT
-                p.tx_Id,
+                p.tx_id,
                 p.action,
                 p.msg_group,
                 p.delegator_address,
@@ -309,43 +319,31 @@ add_dec AS (
         ) A
         JOIN (
             SELECT
-                tx_ID,
+                DISTINCT tx_id,
                 block_id,
                 block_timestamp,
                 tx_succeeded,
                 _inserted_timestamp
             FROM
-                {{ ref('silver__transactions') }}
-
-{% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            max_date
-    )
-{% endif %}
-) b
-ON A.tx_Id = b.tx_ID
-JOIN tx_address C
-ON A.tx_id = C.tx_id
-GROUP BY
-    b.block_id,
-    b.block_timestamp,
-    A.tx_id,
-    b.tx_succeeded,
-    C.tx_caller_address,
-    A.action,
-    A.msg_group,
-    A.delegator_address,
-    currency,
-    A.validator_address,
-    A.redelegate_source_validator_address,
-    completion_time,
-    b._inserted_timestamp
+                msg_attr
+        ) b
+        ON A.tx_id = b.tx_id
+        JOIN tx_address C
+        ON A.tx_id = C.tx_id
+    GROUP BY
+        b.block_id,
+        b.block_timestamp,
+        A.tx_id,
+        b.tx_succeeded,
+        C.tx_caller_address,
+        A.action,
+        A.msg_group,
+        A.delegator_address,
+        currency,
+        A.validator_address,
+        A.redelegate_source_validator_address,
+        completion_time,
+        b._inserted_timestamp
 )
 SELECT
     block_id,
