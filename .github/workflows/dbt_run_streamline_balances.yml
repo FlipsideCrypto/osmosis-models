@@ -37,4 +37,4 @@ jobs:
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt run-operation run_sp_bulk_get_validator_metadata -t prod
+          dbt run-operation run_sp_bulk_get_balances
