@@ -60,6 +60,17 @@ max_block_id_per_date AS (
     GROUP BY
         1
 ),
+max_block_id_per_date_all AS (
+    SELECT
+        block_timestamp :: DATE AS block_timestamp_date,
+        MAX(block_id) AS max_block_id
+    FROM
+        base
+    WHERE
+        block_id > 2383300
+    GROUP BY
+        1
+),
 unique_address_per_block_date AS (
     SELECT
         DISTINCT max_block_id,
@@ -128,6 +139,18 @@ possible_balances_needed AS (
                 DISTINCT max_block_id
             FROM
                 unique_address_per_block_date
+        )
+    UNION
+    SELECT
+        max_block_id,
+        address
+    FROM
+        {{ ref('bronze__balance_addresses_everyday') }}
+        CROSS JOIN (
+            SELECT
+                DISTINCT max_block_id
+            FROM
+                max_block_id_per_date_all
         )
 )
 SELECT
