@@ -39,6 +39,7 @@ models:
 
 vars:
   "dbt_date:time_zone": GMT
+  "UPDATE_SNOWFLAKE_TAGS": TRUE
 
 tests:
   +store_failures: true # all tests
@@ -50,3 +51,6 @@ on-run-start:
   - '{{sp_create_bulk_get_balances()}}'
   - '{{sp_create_bulk_get_validator_metadata()}}'
   - '{{sp_create_bulk_get_pool_balances()}}'
+
+on-run-end:
+  - '{{ apply_meta_as_tags(results) }}'
