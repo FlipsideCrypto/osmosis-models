@@ -5,20 +5,48 @@
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH
+WITH base_atts AS (
+
+    SELECT
+        block_id,
+        block_timestamp,
+        tx_id,
+        tx_succeeded,
+        msg_index,
+        msg_index,
+        msg_type,
+        attribute_key,
+        attribute_value,
+        _inserted_timestamp
+    FROM
+        {{ ref('silver__msg_attributes') }}
+    WHERE
+        (
+            attribute_key IN (
+                'acc_seq',
+                'amount'
+            )
+            OR msg_type IN (
+                'coin_spent',
+                'transfer',
+                'message',
+                'claim',
+                'ibc_transfer',
+                'write_acknowledgement'
+            )
+        )
 
 {% if is_incremental() %}
-max_date AS (
-
+AND _inserted_timestamp >= (
     SELECT
         MAX(
             _inserted_timestamp
-        ) _inserted_timestamp
+        )
     FROM
         {{ this }}
-),
+)
 {% endif %}
-
+),
 sender AS (
     SELECT
         tx_id,
@@ -29,20 +57,9 @@ sender AS (
             0
         ) AS sender
     FROM
-        {{ ref('silver__msg_attributes') }}
+        base_atts
     WHERE
         attribute_key = 'acc_seq'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
 ),
 message_index_ibc AS (
     SELECT
@@ -51,28 +68,18 @@ message_index_ibc AS (
             att.msg_index
         ) AS max_index
     FROM
-        {{ ref('silver__msg_attributes') }}
-        att
+        base_atts att
         INNER JOIN sender s
         ON att.tx_id = s.tx_id
     WHERE
-        msg_type = 'coin_spent'
-        OR msg_type = 'transfer'
+        (
+            msg_type = 'coin_spent'
+            OR msg_type = 'transfer'
+        )
         AND attribute_key = 'amount'
         AND att.msg_index > s.msg_index
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-GROUP BY
-    att.tx_id
+    GROUP BY
+        att.tx_id
 ),
 coin_sent_ibc AS (
     SELECT
@@ -97,7 +104,7 @@ coin_sent_ibc AS (
         ) AS currency,
         l.decimal AS DECIMAL
     FROM
-        {{ ref('silver__msg_attributes') }} A
+        base_atts A
         LEFT OUTER JOIN message_index_ibc m
         ON A.tx_id = m.tx_id
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
@@ -106,17 +113,6 @@ coin_sent_ibc AS (
     WHERE
         A.msg_index = m.max_index
         AND A.attribute_key = 'amount'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
 ),
 receiver_ibc AS (
     SELECT
@@ -127,30 +123,19 @@ receiver_ibc AS (
         ) AS receiver,
         MAX(msg_index) AS msg_index
     FROM
-        {{ ref('silver__msg_attributes') }}
+        base_atts
     WHERE
         msg_type = 'ibc_transfer'
         AND attribute_key = 'receiver'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-GROUP BY
-    tx_id,
-    receiver
+    GROUP BY
+        tx_id,
+        receiver
 ),
 osmo_tx_ids AS (
     SELECT
         DISTINCT tx_id
     FROM
-        {{ ref('silver__msg_attributes') }}
+        base_atts
     WHERE
         (
             msg_type = 'message'
@@ -158,17 +143,6 @@ osmo_tx_ids AS (
             AND attribute_value = 'bank'
         )
         OR msg_type = 'claim'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
 ),
 message_indexes_osmo AS (
     SELECT
@@ -177,8 +151,7 @@ message_indexes_osmo AS (
         m.msg_index
     FROM
         osmo_tx_ids v
-        LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
-        m
+        LEFT OUTER JOIN base_atts m
         ON v.tx_id = m.tx_id
         INNER JOIN sender s
         ON v.tx_id = s.tx_id
@@ -186,17 +159,6 @@ message_indexes_osmo AS (
         msg_type = 'transfer'
         AND attribute_key = 'amount'
         AND m.msg_index > s.msg_index
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
 ),
 osmo_receiver AS (
     SELECT
@@ -205,8 +167,7 @@ osmo_receiver AS (
         attribute_value AS receiver
     FROM
         osmo_tx_ids o
-        LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
-        m
+        LEFT OUTER JOIN base_atts m
         ON o.tx_id = m.tx_id
         LEFT OUTER JOIN message_indexes_osmo idx
         ON idx.tx_id = m.tx_id
@@ -214,17 +175,6 @@ osmo_receiver AS (
         m.msg_type = 'transfer'
         AND m.attribute_key = 'recipient'
         AND idx.msg_index = m.msg_index
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
 ),
 osmo_amount AS (
     SELECT
@@ -245,8 +195,7 @@ osmo_amount AS (
         l.decimal AS DECIMAL
     FROM
         osmo_tx_ids o
-        LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
-        m
+        LEFT OUTER JOIN base_atts m
         ON o.tx_id = m.tx_id
         LEFT OUTER JOIN message_indexes_osmo idx
         ON idx.tx_id = m.tx_id
@@ -257,167 +206,156 @@ osmo_amount AS (
         m.msg_type = 'transfer'
         AND m.attribute_key = 'amount'
         AND idx.msg_index = m.msg_index
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
+),
+fin AS (
     SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-)
-SELECT
-    block_id,
-    block_timestamp,
-    r.tx_id,
-    t.tx_succeeded,
-    'IBC_TRANSFER_OUT' AS transfer_type,
-    r.msg_index,
-    sender,
-    amount,
-    currency,
-    DECIMAL,
-    receiver,
-    _inserted_timestamp,
-    concat_ws(
-        '-',
+        block_id,
+        block_timestamp,
         r.tx_id,
+        t.tx_succeeded,
+        'IBC_TRANSFER_OUT' AS transfer_type,
         r.msg_index,
-        currency
-    ) AS _unique_key
-FROM
-    receiver_ibc r
-    LEFT OUTER JOIN coin_sent_ibc C
-    ON r.tx_id = C.tx_id
-    LEFT OUTER JOIN sender s
-    ON r.tx_id = s.tx_id
-    LEFT OUTER JOIN {{ ref('silver__transactions') }}
-    t
-    ON r.tx_id = t.tx_id
-WHERE
-    (
-        amount IS NOT NULL
-        OR currency IS NOT NULL
-    )
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
+        sender,
+        amount,
+        currency,
+        DECIMAL,
+        receiver,
+        _inserted_timestamp,
+        concat_ws(
+            '-',
+            r.tx_id,
+            r.msg_index,
+            currency
+        ) AS _unique_key
     FROM
-        max_date
-)
-{% endif %}
-UNION ALL
-SELECT
-    block_id,
-    block_timestamp,
-    r.tx_id,
-    t.tx_succeeded,
-    'OSMOSIS' AS transfer_type,
-    r.msg_index,
-    sender,
-    amount,
-    currency,
-    DECIMAL,
-    receiver,
-    _inserted_timestamp,
-    concat_ws(
-        '-',
+        receiver_ibc r
+        LEFT OUTER JOIN coin_sent_ibc C
+        ON r.tx_id = C.tx_id
+        LEFT OUTER JOIN sender s
+        ON r.tx_id = s.tx_id
+        JOIN (
+            SELECT
+                DISTINCT block_id,
+                block_timestamp,
+                tx_succeeded,
+                tx_id,
+                _inserted_timestamp
+            FROM
+                base_atts
+        ) t
+        ON r.tx_id = t.tx_id
+    WHERE
+        (
+            amount IS NOT NULL
+            OR currency IS NOT NULL
+        )
+    UNION ALL
+    SELECT
+        block_id,
+        block_timestamp,
         r.tx_id,
+        t.tx_succeeded,
+        'OSMOSIS' AS transfer_type,
         r.msg_index,
-        currency
-    ) AS _unique_key
-FROM
-    osmo_receiver r
-    LEFT OUTER JOIN osmo_amount C
-    ON r.tx_id = C.tx_id
-    AND r.msg_index = C.msg_index
-    LEFT OUTER JOIN sender s
-    ON r.tx_id = s.tx_id
-    LEFT OUTER JOIN {{ ref('silver__transactions') }}
-    t
-    ON r.tx_id = t.tx_id
-WHERE
-    (
-        amount IS NOT NULL
-        OR currency IS NOT NULL
-    )
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
+        sender,
+        amount,
+        currency,
+        DECIMAL,
+        receiver,
+        _inserted_timestamp,
+        concat_ws(
+            '-',
+            r.tx_id,
+            r.msg_index,
+            currency
+        ) AS _unique_key
     FROM
-        max_date
-)
-{% endif %}
-UNION ALL
-SELECT
-    m.block_id,
-    m.block_timestamp,
-    s.tx_id,
-    m.tx_succeeded,
-    'IBC_TRANSFER_IN' AS transfer_type,
-    m.msg_index,
-    TRY_PARSE_JSON(attribute_value) :sender :: STRING AS sender,
-    C.amount :: NUMBER AS amount,
-    C.currency,
-    A.DECIMAL,
-    TRY_PARSE_JSON(attribute_value) :receiver :: STRING AS receiver,
-    m._inserted_timestamp,
-    concat_ws(
-        '-',
+        osmo_receiver r
+        LEFT OUTER JOIN osmo_amount C
+        ON r.tx_id = C.tx_id
+        AND r.msg_index = C.msg_index
+        LEFT OUTER JOIN sender s
+        ON r.tx_id = s.tx_id
+        JOIN (
+            SELECT
+                DISTINCT block_id,
+                block_timestamp,
+                tx_succeeded,
+                tx_id,
+                _inserted_timestamp
+            FROM
+                base_atts
+        ) t
+        ON r.tx_id = t.tx_id
+    WHERE
+        (
+            amount IS NOT NULL
+            OR currency IS NOT NULL
+        )
+    UNION ALL
+    SELECT
+        m.block_id,
+        m.block_timestamp,
         s.tx_id,
+        m.tx_succeeded,
+        'IBC_TRANSFER_IN' AS transfer_type,
         m.msg_index,
-        currency
-    ) AS _unique_key
+        TRY_PARSE_JSON(attribute_value) :sender :: STRING AS sender,
+        C.amount :: NUMBER AS amount,
+        C.currency,
+        A.decimal,
+        TRY_PARSE_JSON(attribute_value) :receiver :: STRING AS receiver,
+        m._inserted_timestamp,
+        concat_ws(
+            '-',
+            s.tx_id,
+            m.msg_index,
+            currency
+        ) AS _unique_key
+    FROM
+        sender s
+        JOIN base_atts m
+        ON s.tx_id = m.tx_id
+        LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} A
+        ON TRY_PARSE_JSON(attribute_value) :denom :: STRING = COALESCE(
+            raw_metadata [0] :aliases [0] :: STRING,
+            raw_metadata [0] :denom :: STRING
+        )
+        JOIN (
+            SELECT
+                DISTINCT block_id,
+                block_timestamp,
+                tx_succeeded,
+                tx_id,
+                _inserted_timestamp
+            FROM
+                base_atts
+        ) t
+        ON s.tx_id = t.tx_id
+        INNER JOIN coin_sent_ibc C
+        ON s.tx_id = C.tx_id
+    WHERE
+        TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
+        AND m.msg_type = 'write_acknowledgement'
+        AND m.attribute_key = 'packet_data'
+        AND (
+            amount IS NOT NULL
+            OR currency IS NOT NULL
+        )
+),
+SELECT
+    block_id,
+    block_timestamp,
+    tx_id,
+    tx_succeeded,
+    transfer_type,
+    msg_index,
+    sender,
+    amount,
+    currency,
+    DECIMAL,
+    receiver,
+    _inserted_timestamp,
+    _unique_key
 FROM
-    sender s
-    LEFT OUTER JOIN {{ ref('silver__msg_attributes') }}
-    m
-    ON s.tx_id = m.tx_id
-    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} A
-    ON TRY_PARSE_JSON(attribute_value) :denom :: STRING = COALESCE(
-        raw_metadata [0] :aliases [0] :: STRING,
-        raw_metadata [0] :denom :: STRING
-    )
-    LEFT OUTER JOIN {{ ref('silver__transactions') }}
-    t
-    ON s.tx_id = t.tx_id
-    INNER JOIN coin_sent_ibc C
-    ON s.tx_id = C.tx_id
-WHERE
-    TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
-    AND m.msg_type = 'write_acknowledgement'
-    AND m.attribute_key = 'packet_data'
-    AND (
-        amount IS NOT NULL
-        OR currency IS NOT NULL
-    )
-
-{% if is_incremental() %}
-AND m._inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-AND t._inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
+    fin

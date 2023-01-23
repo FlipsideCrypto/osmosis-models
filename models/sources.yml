@@ -42,3 +42,8 @@ sources:
     schema: core
     tables:
       - name: dim_date_hours
+  - name: axelar
+    database: "{{ 'axelar' if target.database == 'OSMOSIS' else 'axelar_dev' }}"
+    schema: silver
+    tables:
+      - name: link_events
