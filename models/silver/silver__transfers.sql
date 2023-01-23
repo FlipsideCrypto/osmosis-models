@@ -47,6 +47,7 @@ AND _inserted_timestamp >= (
 message_index_ibc AS (
     SELECT
         att.tx_id,
+        msg_group,
         MAX(
             att.msg_index
         ) AS max_index
@@ -60,6 +61,7 @@ message_index_ibc AS (
         OR msg_type = 'transfer'
         AND attribute_key = 'amount'
         AND att.msg_index > s.msg_index
+        AND msg_group is not NULL
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -72,11 +74,13 @@ AND _inserted_timestamp >= (
 )
 {% endif %}
 GROUP BY
-    att.tx_id
+    att.tx_id, 
+    msg_group
 ),
 coin_sent_ibc AS (
     SELECT
         A.tx_id,
+        A.msg_group,
         COALESCE(
             SPLIT_PART(
                 TRIM(
@@ -100,6 +104,7 @@ coin_sent_ibc AS (
         {{ ref('silver__msg_attributes') }} A
         LEFT OUTER JOIN message_index_ibc m
         ON A.tx_id = m.tx_id
+        AND A.msg_group = m.msg_group
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
@@ -121,6 +126,7 @@ AND _inserted_timestamp >= (
 receiver_ibc AS (
     SELECT
         tx_id,
+        msg_group,
         COALESCE(
             attribute_value,
             TRY_PARSE_JSON(attribute_value) :receiver
@@ -144,6 +150,7 @@ AND _inserted_timestamp >= (
 {% endif %}
 GROUP BY
     tx_id,
+    msg_group,
     receiver
 ),
 osmo_tx_ids AS (
@@ -201,6 +208,7 @@ AND _inserted_timestamp >= (
 osmo_receiver AS (
     SELECT
         o.tx_id,
+        m.msg_group,
         m.msg_index,
         attribute_value AS receiver
     FROM
@@ -285,6 +293,7 @@ SELECT
     concat_ws(
         '-',
         r.tx_id,
+        r.msg_group,
         r.msg_index,
         currency
     ) AS _unique_key
@@ -292,6 +301,7 @@ FROM
     receiver_ibc r
     LEFT OUTER JOIN coin_sent_ibc C
     ON r.tx_id = C.tx_id
+    AND r.msg_group = C.msg_group
     LEFT OUTER JOIN sender s
     ON r.tx_id = s.tx_id
     LEFT OUTER JOIN {{ ref('silver__transactions') }}
@@ -330,6 +340,7 @@ SELECT
     concat_ws(
         '-',
         r.tx_id,
+        r.msg_group,
         r.msg_index,
         currency
     ) AS _unique_key
@@ -376,6 +387,7 @@ SELECT
     concat_ws(
         '-',
         s.tx_id,
+        m.msg_group,
         m.msg_index,
         currency
     ) AS _unique_key
@@ -394,6 +406,7 @@ FROM
     ON s.tx_id = t.tx_id
     INNER JOIN coin_sent_ibc C
     ON s.tx_id = C.tx_id
+    AND m.msg_group = C.msg_group
 WHERE
     TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
     AND m.msg_type = 'write_acknowledgement'
