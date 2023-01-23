@@ -1,0 +1,33 @@
+version: 2
+models:
+  - name: core__dim_icns_names
+    description: Contains token and validator labels for Osmosis.
+    columns:
+      - name: ADDRESS
+        description: "{{ doc('address') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCKCHAIN
+        description: "{{ doc('blockchain') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: CREATOR
+        description: "{{ doc('creator') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TAG_NAME
+        description: Tag name (sub-category).
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TAG_TYPE
+        description: Tag type (high-level category).
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: START_DATE
+        description: Date the tag first applies. For tags that are permanent, this might be the date the address had its first behavior that warrants its tag, or the addresses' first transaction.
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: END_DATE
+        description: Date the tag no longer applies (for tags that are permanent or currently active, end_date can be NULL).
+        tests:
+          - dbt_expectations.expect_column_to_exist

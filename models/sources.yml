@@ -42,3 +42,4 @@ sources:
     schema: core
     tables:
       - name: dim_date_hours
+      - name: address_tags
