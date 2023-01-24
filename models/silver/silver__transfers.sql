@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp::DATE'],
+    cluster_by = ['block_timestamp::DATE']
 ) }}
 
 WITH base_atts AS (
@@ -12,7 +12,7 @@ WITH base_atts AS (
         block_timestamp,
         tx_id,
         tx_succeeded,
-        msg_index,
+        msg_group,
         msg_index,
         msg_type,
         attribute_key,
@@ -44,7 +44,7 @@ AND _inserted_timestamp >= (
         )
     FROM
         {{ this }}
-)
+) - INTERVAL '48 HOURS'
 {% endif %}
 ),
 sender AS (
@@ -64,6 +64,7 @@ sender AS (
 message_index_ibc AS (
     SELECT
         att.tx_id,
+        msg_group,
         MAX(
             att.msg_index
         ) AS max_index
@@ -78,12 +79,15 @@ message_index_ibc AS (
         )
         AND attribute_key = 'amount'
         AND att.msg_index > s.msg_index
+        AND msg_group IS NOT NULL
     GROUP BY
-        att.tx_id
+        att.tx_id,
+        msg_group
 ),
 coin_sent_ibc AS (
     SELECT
         A.tx_id,
+        A.msg_group,
         COALESCE(
             SPLIT_PART(
                 TRIM(
@@ -107,6 +111,7 @@ coin_sent_ibc AS (
         base_atts A
         LEFT OUTER JOIN message_index_ibc m
         ON A.tx_id = m.tx_id
+        AND A.msg_group = m.msg_group
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
@@ -117,6 +122,7 @@ coin_sent_ibc AS (
 receiver_ibc AS (
     SELECT
         tx_id,
+        msg_group,
         COALESCE(
             attribute_value,
             TRY_PARSE_JSON(attribute_value) :receiver
@@ -129,7 +135,8 @@ receiver_ibc AS (
         AND attribute_key = 'receiver'
     GROUP BY
         tx_id,
-        receiver
+        receiver,
+        msg_group
 ),
 osmo_tx_ids AS (
     SELECT
@@ -163,6 +170,7 @@ message_indexes_osmo AS (
 osmo_receiver AS (
     SELECT
         o.tx_id,
+        m.msg_group,
         m.msg_index,
         attribute_value AS receiver
     FROM
@@ -231,6 +239,7 @@ fin AS (
         receiver_ibc r
         LEFT OUTER JOIN coin_sent_ibc C
         ON r.tx_id = C.tx_id
+        AND r.msg_group = C.msg_group
         LEFT OUTER JOIN sender s
         ON r.tx_id = s.tx_id
         JOIN (
@@ -334,6 +343,7 @@ fin AS (
         ON s.tx_id = t.tx_id
         INNER JOIN coin_sent_ibc C
         ON s.tx_id = C.tx_id
+        AND m.msg_group = C.msg_group
     WHERE
         TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
         AND m.msg_type = 'write_acknowledgement'
@@ -343,19 +353,105 @@ fin AS (
             OR currency IS NOT NULL
         )
 ),
+links AS (
+    SELECT
+        tx_id,
+        deposit_address,
+        destination_address,
+        destination_chain,
+        module
+    FROM
+        {{ source(
+            'axelar_silver',
+            'link_events'
+        ) }}
+
+{% if is_incremental() %}
+WHERE
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            {{ this }}
+    ) - INTERVAL '72 HOURS'
+{% endif %}
+),
+axl_tran AS (
+    SELECT
+        tx_id,
+        block_timestamp,
+        amount,
+        A.currency,
+        foreign_address,
+        sender,
+        foreign_chain,
+        receiver,
+        b.address
+    FROM
+        {{ source(
+            'axelar_silver',
+            'transfers'
+        ) }} A
+        LEFT JOIN {{ ref('silver__asset_metadata') }}
+        b
+        ON A.currency = b.alias
+    WHERE
+        foreign_address IS NOT NULL
+
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        {{ this }}
+) - INTERVAL '72 HOURS'
+{% endif %}
+)
 SELECT
-    block_id,
-    block_timestamp,
-    tx_id,
-    tx_succeeded,
-    transfer_type,
-    msg_index,
-    sender,
-    amount,
-    currency,
-    DECIMAL,
-    receiver,
-    _inserted_timestamp,
-    _unique_key
+    A.block_id,
+    A.block_timestamp,
+    A.tx_id,
+    A.tx_succeeded,
+    A.transfer_type,
+    A.msg_index,
+    A.sender,
+    A.amount,
+    A.currency,
+    A.decimal,
+    A.receiver,
+    COALESCE(
+        b.destination_address,
+        C.sender
+    ) AS foreign_address,
+    COALESCE(
+        b.destination_chain,
+        C.foreign_chain
+    ) AS foreign_chain,
+    A._inserted_timestamp,
+    A._unique_key
 FROM
-    fin
+    fin A
+    LEFT JOIN links b
+    ON A.receiver = b.deposit_address
+    LEFT JOIN axl_tran C
+    ON A.receiver = C.foreign_address
+    AND A.currency = COALESCE(
+        C.address,
+        C.currency
+    )
+    AND ABS(
+        DATEDIFF(
+            MINUTE,
+            A.block_timestamp,
+            C.block_timestamp
+        )
+    ) < 15
+    AND A.transfer_type = 'IBC_TRANSFER_IN'
+    AND A.block_timestamp >= C.block_timestamp
+    AND A.amount <= C.amount qualify(ROW_NUMBER() over(PARTITION BY A.tx_id, A.msg_index
+ORDER BY
+    ABS(A.amount - COALESCE(C.amount, 0))) = 1)
