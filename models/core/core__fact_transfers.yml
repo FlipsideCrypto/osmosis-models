@@ -41,3 +41,11 @@ models:
         description: "{{ doc('receiver') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: FOREIGN_ADDRESS
+        description: "{{ doc('foreign_address') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: FOREIGN_CHAIN
+        description: "{{ doc('foreign_chain') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

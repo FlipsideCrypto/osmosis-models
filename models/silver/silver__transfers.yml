@@ -83,6 +83,10 @@ models:
               column_type_list:
                 - STRING
                 - VARCHAR
+      - name: FOREIGN_ADDRESS
+        description: "{{ doc('foreign_address') }}"
+      - name: FOREIGN_CHAIN
+        description: "{{ doc('foreign_chain') }}"
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
