@@ -1,12 +1,13 @@
 version: 2
 models:
-  - name: core__dim_address_tags
+  - name: core__ez_icns
     description: Contains address tags for Osmosis and other IBC chains. 
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - ADDRESS
             - START_DATE
+            - LABEL
     columns:
       - name: ADDRESS
         description: "{{ doc('address') }}"
@@ -20,19 +21,19 @@ models:
         description: "{{ doc('creator') }}"
         tests:
           - dbt_expectations.expect_column_to_exist
-      - name: TAG_NAME
-        description: Tag name (sub-category).
+      - name: LABEL
+        description: The ICNS name of the address.
         tests:
           - dbt_expectations.expect_column_to_exist
-      - name: TAG_TYPE
-        description: Tag type (high-level category).
+      - name: PROJECT_NAME
+        description: The name of the project the name was purchased from. 
         tests:
           - dbt_expectations.expect_column_to_exist
       - name: START_DATE
-        description: Date the tag first applies. For tags that are permanent, this might be the date the address had its first behavior that warrants its tag, or the addresses' first transaction.
+        description: Date the ICNS name first applies to the wallet. 
         tests: 
           - dbt_expectations.expect_column_to_exist
       - name: END_DATE
-        description: Date the tag no longer applies (for tags that are permanent or currently active, end_date can be NULL).
+        description: Date the ICNS tag expires or no longer represents the wallet.
         tests:
           - dbt_expectations.expect_column_to_exist

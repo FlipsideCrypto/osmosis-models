@@ -6,8 +6,8 @@ SELECT
     blockchain,
     creator,
     address,
-    tag_name,
-    tag_type,
+    tag_name as label,
+    tag_type as project_name,
     start_date,
     end_date
 FROM
