@@ -42,6 +42,7 @@ sources:
     schema: core
     tables:
       - name: dim_date_hours
+      - name: address_tags
   - name: axelar_silver
     database: "{{ 'axelar' if target.database == 'OSMOSIS' else 'axelar_dev' }}"
     schema: silver
