@@ -2,10 +2,12 @@
     materialized = 'incremental',
     unique_key = ["pool_id","block_id"],
     incremental_strategy = 'merge',
+    cluster_by = ['block_timestamp']
 ) }}
 
 SELECT
-    block_id,
+    A.block_id,
+    C.block_timestamp,
     b.value :"@type" :: STRING AS pool_type,
     b.value :address :: STRING AS pool_address,
     b.value :future_pool_governor :: STRING AS future_pool_governor,
@@ -97,8 +99,12 @@ FROM
     {{ source(
         'bronze_streamline',
         'pool_balances_api'
-    ) }} A,
-    LATERAL FLATTEN(A.pools) b
+    ) }} A
+    JOIN LATERAL FLATTEN(
+        A.pools
+    ) b
+    JOIN {{ ref('silver__blocks') }} C
+    ON A.block_id = C.block_id
 
 {% if is_incremental() %}
 WHERE

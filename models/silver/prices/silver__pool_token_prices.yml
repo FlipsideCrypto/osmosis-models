@@ -1,0 +1,40 @@
+version: 2
+models:
+  - name: silver__pool_token_prices
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - BLOCK_ID
+            - TOKEN_ADDRESS
+            - POOL_ID
+    columns:
+      - name: BLOCK_ID
+        tests:
+          - not_null
+      - name: BLOCK_TIMESTAMP
+        tests:
+          - not_null
+      - name: TOKEN_ADDRESS
+        tests:
+          - not_null
+      - name: PRICE
+        tests:
+          - not_null
+      - name: PRICE_DENOM
+        description: the denomination price is listed in
+        tests:
+          - not_null
+      - name: POOL_ID
+        tests:
+          - not_null
+      - name: POOL_TOTAL
+        description: total assets in the pool 
+        tests:
+          - not_null
+      - name: TOKEN_POOL_RANK
+        description: rank of the pool by token -- allows for filtering out low liquidity pools in pricing
+        tests:
+          - not_null
+      - name: _INSERTED_TIMESTAMP
+        tests:
+          - not_null

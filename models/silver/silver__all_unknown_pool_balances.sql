@@ -8,7 +8,7 @@ WITH last_block_of_hour AS (
     SELECT
         DATE_TRUNC(
             'hour',
-            recorded_at
+            block_timestamp
         ) AS block_hour,
         MAX(block_id) AS block_id
     FROM
@@ -33,3 +33,5 @@ FROM
         'bronze_streamline',
         'pool_balances_api'
     ) }}
+ORDER BY
+    block_id DESC

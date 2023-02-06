@@ -1,0 +1,95 @@
+version: 2
+models:
+  - name: silver__token_swapped
+    description: Records of token_swapped events
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - TX_ID
+            - MSG_INDEX
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+      - name: TX_SUCCEEDED
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - BOOLEAN
+      - name: TRADER
+        description: "{{ doc('trader') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: osmo1[0-9a-z]{38,38}
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - not_null
+      - name: FROM_CURRENCY
+        description: "{{ doc('from_currency') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+      - name: FROM_AMOUNT
+        description: "{{ doc('from_amount') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT 
+      - name: TO_CURRENCY
+        description: "{{ doc('to_currency') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
+      - name: TO_AMOUNT
+        description: "{{ doc('to_amount') }}"
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT 
+      - name: _INSERTED_TIMESTAMP
+        description: "{{ doc('inserted_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
