@@ -15,7 +15,7 @@ models:
         tests: 
           - not_null
       - name: BALANCE_TYPE
-        description: Either "staked" or "liquid" corresponding to how the currency is in the wallet. 
+        description: One of "staked", "liquid", "locked liquidity", "superfluid staked" or "pool" corresponding to how the currency is in the wallet. 
         tests: 
           - not_null
       - name: ADDRESS
