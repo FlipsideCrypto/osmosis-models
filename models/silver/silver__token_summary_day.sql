@@ -1,6 +1,6 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = ["token_address","block_date"],
+    unique_key = ["currency","block_date"],
     incremental_strategy = 'merge',
     cluster_by = ['block_date']
 ) }}
@@ -20,7 +20,7 @@ WITH last_block_of_day AS (
 SELECT
     blc.block_id,
     blc.block_date,
-    token_0_denom AS token_address,
+    token_0_denom AS currency,
     NULL AS market_Cap,
     AVG(
         twap
