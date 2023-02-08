@@ -61,6 +61,10 @@ AND A._inserted_timestamp >= (
         {{ this }}
 )
 {% endif %}
+qualify(ROW_NUMBER() OVER(partition by   DATE_TRUNC(
+            'hour',
+            block_timestamp
+        ), pool_id order by block_id desc) =1)
 ),
 fin AS (
     SELECT

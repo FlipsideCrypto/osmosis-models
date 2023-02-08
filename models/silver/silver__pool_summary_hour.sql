@@ -288,6 +288,10 @@ WHERE
             {{ this }}
     ) - INTERVAL '7 days'
 {% endif %}
+qualify(ROW_NUMBER() OVER(partition by   DATE_TRUNC(
+            'hour',
+            block_timestamp
+        ), pool_id order by block_id desc) =1)
 )
 SELECT
     A.block_id,
