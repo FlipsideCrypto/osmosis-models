@@ -1,0 +1,28 @@
+version: 2
+models:
+  - name: silver__token_summary_day
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - BLOCK_ID
+            - CURRENCY
+    columns:
+      - name: BLOCK_ID
+        tests:
+          - not_null
+      - name: BLOCK_DATE
+        tests:
+          - not_null
+      - name: CURRENCY
+        tests:
+          - not_null
+      - name: PRICE
+      - name: PRICE_USD
+      - name: LIQUIDITY
+      - name: LIQUIDITY_USD   
+      - name: VOLUME
+      - name: VOLUME_USD   
+      - name: TOKEN_3_AMOUNT
+      - name: _INSERTED_TIMESTAMP
+        tests:
+          - not_null

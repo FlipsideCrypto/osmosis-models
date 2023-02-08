@@ -1,12 +1,6 @@
 {{ config(
     materialized = 'view',
-      meta={
-        'database_tags':{
-            'table': {
-                'PURPOSE': 'PRICES'
-            }
-        }
-      }
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }}}
 ) }}
 
 SELECT
@@ -38,3 +32,19 @@ SELECT
     'swaps' AS provider
 FROM
     {{ ref('silver__prices_swaps') }}
+UNION ALL
+SELECT
+    DATE_TRUNC(
+        'hour',
+        block_timestamp
+    ) AS recorded_at,
+    project_name AS symbol,
+    price_usd AS price,
+    NULL AS total_supply,
+    NULL AS volume_24h,
+    'pool balance' AS provider
+FROM
+    {{ ref('silver__pool_token_prices_usd') }} A
+    LEFT JOIN {{ ref('silver__asset_metadata') }}
+    b
+    ON A.token_address = b.address

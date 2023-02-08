@@ -1,0 +1,34 @@
+version: 2
+models:
+  - name: core__fact_pool_fee_day
+    description: The table is an daily summary of fees accumulated each pool within Osmosis
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_DATE
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description: "The currency the fee was paid in"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: FEES
+        description: "The decimal adjusted amount of the fee paid"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: FEES_USD
+        description: "The USD amount of the fee paid"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: FEE_TYPE
+        description: "The type of fee paid. Will be either 'swap' or 'exit'"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+  

@@ -1,6 +1,6 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', date, address, balance_type, currency)",
+    unique_key = ["date", "address", "balance_type", "currency"],
     incremental_strategy = 'delete+insert',
     cluster_by = ['date'],
 ) }}
@@ -301,3 +301,111 @@ SELECT
     ) AS balance
 FROM
     balance_temp
+WHERE
+    balance_type <> 'pool'
+UNION ALL
+SELECT
+    A.block_timestamp :: DATE AS DATE,
+    'pool' AS balance_type,
+    A.pool_address AS address,
+    token_0_denom currency,
+    DECIMAL,
+    token_0_amount balance
+FROM
+    {{ ref('silver__pool_balances') }} A
+    LEFT JOIN {{ ref('silver__asset_metadata') }}
+    am
+    ON A.token_0_denom = am.address
+
+{% if is_incremental() %}
+WHERE
+    A.block_timestamp :: DATE >= (
+        SELECT
+            DATEADD('day', -1, MAX(DATE))
+        FROM
+            {{ this }})
+        {% endif %}
+
+        qualify(ROW_NUMBER() over(PARTITION BY block_timestamp :: DATE, pool_id, token_0_denom
+        ORDER BY
+            block_timestamp DESC) = 1)
+        UNION ALL
+        SELECT
+            A.block_timestamp :: DATE AS DATE,
+            'pool' AS balance_type,
+            A.pool_address AS address,
+            token_1_denom currency,
+            DECIMAL,
+            token_1_amount balance
+        FROM
+            {{ ref('silver__pool_balances') }} A
+            LEFT JOIN {{ ref('silver__asset_metadata') }}
+            am
+            ON A.token_1_denom = am.address
+
+{% if is_incremental() %}
+WHERE
+    A.block_timestamp :: DATE >= (
+        SELECT
+            DATEADD('day', -1, MAX(DATE))
+        FROM
+            {{ this }})
+        {% endif %}
+
+        qualify(ROW_NUMBER() over(PARTITION BY block_timestamp :: DATE, pool_id, token_1_denom
+        ORDER BY
+            block_timestamp DESC) = 1)
+        UNION ALL
+        SELECT
+            A.block_timestamp :: DATE AS DATE,
+            'pool' AS balance_type,
+            A.pool_address AS address,
+            token_2_denom currency,
+            DECIMAL,
+            token_2_amount balance
+        FROM
+            {{ ref('silver__pool_balances') }} A
+            LEFT JOIN {{ ref('silver__asset_metadata') }}
+            am
+            ON A.token_2_denom = am.address
+        WHERE
+            token_2_denom IS NOT NULL
+
+{% if is_incremental() %}
+AND A.block_timestamp :: DATE >= (
+    SELECT
+        DATEADD('day', -1, MAX(DATE))
+    FROM
+        {{ this }})
+    {% endif %}
+
+    qualify(ROW_NUMBER() over(PARTITION BY block_timestamp :: DATE, pool_id, token_2_denom
+    ORDER BY
+        block_timestamp DESC) = 1)
+    UNION ALL
+    SELECT
+        A.block_timestamp :: DATE AS DATE,
+        'pool' AS balance_type,
+        A.pool_address AS address,
+        token_3_denom currency,
+        DECIMAL,
+        token_3_amount balance
+    FROM
+        {{ ref('silver__pool_balances') }} A
+        LEFT JOIN {{ ref('silver__asset_metadata') }}
+        am
+        ON A.token_3_denom = am.address
+    WHERE
+        token_3_denom IS NOT NULL
+
+{% if is_incremental() %}
+AND A.block_timestamp :: DATE >= (
+    SELECT
+        DATEADD('day', -1, MAX(DATE))
+    FROM
+        {{ this }})
+    {% endif %}
+
+    qualify(ROW_NUMBER() over(PARTITION BY block_timestamp :: DATE, pool_id, token_3_denom
+    ORDER BY
+        block_timestamp DESC) = 1)

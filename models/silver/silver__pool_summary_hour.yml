@@ -1,0 +1,42 @@
+version: 2
+models:
+  - name: silver__pool_hour_summary
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - BLOCK_ID
+            - POOL_ID
+    columns:
+      - name: BLOCK_ID
+        tests:
+          - not_null
+      - name: POOL_ID
+        tests:
+          - not_null
+      - name: TOKEN_0_DENOM
+        tests:
+          - not_null
+      - name: TOKEN_0_AMOUNT
+        tests:
+          - not_null
+      - name: TOKEN_1_DENOM
+        tests:
+          - not_null
+      - name: TOKEN_1_AMOUNT
+        tests:
+          - not_null
+      - name: PRICE
+      - name: PRICE_USD
+      - name: TWAP
+      - name: TWAP_USD    
+      - name: LIQUIDITY
+      - name: LIQUIDITY_USD   
+      - name: VOLUME
+      - name: VOLUME_USD   
+      - name: TOKEN_2_DENOM
+      - name: TOKEN_2_AMOUNT
+      - name: TOKEN_3_DENOM
+      - name: TOKEN_3_AMOUNT
+      - name: _INSERTED_TIMESTAMP
+        tests:
+          - not_null

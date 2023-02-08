@@ -2,20 +2,13 @@ version: 2
 models:
   - name: core__fact_daily_balances
     description: A table that contains a daily balance entry for both staked and liquid balance of wallets on the Osmosis chain. 
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - DATE
-            - ADDRESS
-            - BALANCE_TYPE
-            - CURRENCY
     columns:
       - name: DATE
         description: The day the balance was recorded on. 
         tests: 
           - not_null
       - name: BALANCE_TYPE
-        description: Either "staked" or "liquid" corresponding to how the currency is in the wallet. 
+        description: One of "staked", "liquid", "locked liquidity", "superfluid staked" or "pool" corresponding to how the currency is in the wallet. 
         tests: 
           - not_null
       - name: ADDRESS

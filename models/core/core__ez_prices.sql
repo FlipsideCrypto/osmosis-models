@@ -1,12 +1,6 @@
 {{ config(
     materialized = 'view',
-      meta={
-        'database_tags':{
-            'table': {
-                'PURPOSE': 'PRICES'
-            }
-        }
-      }
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }}}
 ) }}
 
 WITH p_base AS (
@@ -25,7 +19,8 @@ WITH p_base AS (
             A.provider
             WHEN 'coin gecko' THEN 1
             WHEN 'coin market cap' THEN 2
-            ELSE 3
+            WHEN 'pool balances' THEN 3
+            ELSE 4
         END AS pro_rank
     FROM
         {{ ref('core__dim_prices') }} A qualify(ROW_NUMBER() over(PARTITION BY recorded_hour, UPPER(symbol)
