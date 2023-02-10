@@ -22,7 +22,7 @@ There is more information on how to use dbt docs in the last section of this doc
 **Dimension Tables:**
 - [dim_labels](#!/model/model.osmosis_models.core__dim_labels)
 - [dim_liquidity_pools](#!/model/model.osmosis_models.core__dim_liquidity_pools)
-- [dim_prices ](#!/model/model.osmosis_models.core__dim_prices )
+- [dim_prices ](#!/model/model.osmosis_models.core__dim_prices)
 - [dim_tokens](#!/model/model.osmosis_models.core__dim_tokens)
 - [dim_dim_vote_options](#!/model/model.osmosis_models.core__dim_vote_options)
 
