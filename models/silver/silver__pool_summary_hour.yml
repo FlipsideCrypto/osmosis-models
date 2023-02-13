@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: silver__pool_hour_summary
+  - name: silver__pool_summary_hour
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
