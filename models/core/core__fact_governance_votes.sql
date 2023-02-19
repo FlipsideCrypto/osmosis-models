@@ -17,5 +17,6 @@ SELECT
     voter, 
     proposal_id, 
     vote_option, 
-    vote_weight
+    vote_weight, 
+    memo
 FROM {{ ref('silver__governance_votes') }}

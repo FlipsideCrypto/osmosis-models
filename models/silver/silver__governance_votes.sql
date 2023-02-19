@@ -18,7 +18,23 @@ max_date AS (
         {{ this }}
 ),
 {% endif %}
-
+memo_text AS (
+    SELECT 
+        tx_id, 
+        tx_body :memo :: STRING as memo
+    FROM 
+        {{ ref('silver__transactions') }}
+    {% if is_incremental() %}
+    WHERE _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
+    {% endif %}
+),
 weighted_votes AS (
     SELECT
         block_id,
@@ -48,83 +64,101 @@ AND _inserted_timestamp >= (
         max_date
 )
 {% endif %}
-)
-SELECT
-    block_id,
-    block_timestamp,
-    tx_id,
-    tx_succeeded,
-    path :: STRING AS _path,
-    this :proposal_id :: STRING AS proposal_id,
-    this :voter :: STRING AS voter,
-    CASE
-        WHEN this :option :: STRING = 'VOTE_OPTION_YES' THEN 1
-        WHEN this :option :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
-        WHEN this :option :: STRING = 'VOTE_OPTION_NO' THEN 3
-        WHEN this :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
-        ELSE this :option
-    END AS vote_option,
-    1.000 AS vote_weight,
-    _inserted_timestamp,
-    concat_ws(
-        '-',
-        tx_id,
-        proposal_id,
-        voter,
-        vote_option,
-        _path
-    ) AS _unique_key
-FROM
-    {{ ref('silver__transactions') }},
-    LATERAL FLATTEN (
-        input => tx_body :messages,
-        recursive => TRUE
-    ) b
-WHERE
-    key = '@type'
-    AND VALUE :: STRING = '/cosmos.gov.v1beta1.MsgVote'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
+), 
+pre_final AS (
     SELECT
-        MAX(
-            _inserted_timestamp
-        )
+        block_id,
+        block_timestamp,
+        tx_id,
+        tx_succeeded,
+        path :: STRING AS _path,
+        this :proposal_id :: STRING AS proposal_id,
+        this :voter :: STRING AS voter,
+        CASE
+            WHEN this :option :: STRING = 'VOTE_OPTION_YES' THEN 1
+            WHEN this :option :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
+            WHEN this :option :: STRING = 'VOTE_OPTION_NO' THEN 3
+            WHEN this :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
+            ELSE this :option
+        END AS vote_option,
+        1.000 AS vote_weight,
+        _inserted_timestamp,
+        concat_ws(
+            '-',
+            tx_id,
+            proposal_id,
+            voter,
+            vote_option,
+            _path
+        ) AS _unique_key
     FROM
-        max_date
+        {{ ref('silver__transactions') }},
+        LATERAL FLATTEN (
+            input => tx_body :messages,
+            recursive => TRUE
+        ) b
+    WHERE
+        key = '@type'
+        AND VALUE :: STRING = '/cosmos.gov.v1beta1.MsgVote'
+
+    {% if is_incremental() %}
+    AND _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
+    {% endif %}
+    UNION ALL
+    SELECT
+        block_id,
+        block_timestamp,
+        tx_id,
+        tx_succeeded,
+        _path,
+        b.value :proposal_id :: NUMBER AS proposal_id,
+        b.value :voter :: STRING AS voter,
+        CASE
+            WHEN o.value :option :: STRING = 'VOTE_OPTION_YES' THEN 1
+            WHEN o.value :option :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
+            WHEN o.value :option :: STRING = 'VOTE_OPTION_NO' THEN 3
+            WHEN o.value :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
+            ELSE o.value :option
+        END AS vote_option,
+        o.value :weight :: FLOAT AS vote_weight,
+        _inserted_timestamp,
+        concat_ws(
+            '-',
+            tx_id,
+            proposal_id,
+            voter,
+            vote_option,
+            _path
+        ) AS _unique_key
+    FROM
+        weighted_votes,
+        LATERAL FLATTEN (
+            input => tx_body :messages
+        ) b,
+        LATERAL FLATTEN (
+            input => b.value :options
+        ) o
 )
-{% endif %}
-UNION ALL
-SELECT
+SELECT 
     block_id,
     block_timestamp,
-    tx_id,
+    m.tx_id,
     tx_succeeded,
     _path,
-    b.value :proposal_id :: NUMBER AS proposal_id,
-    b.value :voter :: STRING AS voter,
-    CASE
-        WHEN o.value :option :: STRING = 'VOTE_OPTION_YES' THEN 1
-        WHEN o.value :option :: STRING = 'VOTE_OPTION_ABSTAIN' THEN 2
-        WHEN o.value :option :: STRING = 'VOTE_OPTION_NO' THEN 3
-        WHEN o.value :option :: STRING = 'VOTE_OPTION_NO_WITH_VETO' THEN 4
-        ELSE o.value :option
-    END AS vote_option,
-    o.value :weight :: FLOAT AS vote_weight,
+    proposal_id,
+    voter,
+    vote_option,
+    vote_weight,
+    memo, 
     _inserted_timestamp,
-    concat_ws(
-        '-',
-        tx_id,
-        proposal_id,
-        voter,
-        vote_option,
-        _path
-    ) AS _unique_key
-FROM
-    weighted_votes,
-    LATERAL FLATTEN (
-        input => tx_body :messages
-    ) b,
-    LATERAL FLATTEN (
-        input => b.value :options
-    ) o
+    _unique_key
+FROM pre_final p 
+LEFT OUTER JOIN memo_text m 
+ON p.tx_id = m.tx_id
