@@ -1,0 +1,49 @@
+version: 2
+models:
+  - name: mars__ez_redbank_reward_claims
+    description: Records of all reward claim actions that occured within MARS red bank on osmosis
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests: 
+         - dbt_expectations.expect_column_to_exist
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MSG_SUB_GROUP
+        description: "{{ doc('msg_sub_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MSG_INDEX
+        description: "{{ doc('msg_index') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CONTRACT_NAME
+        description: The name of the contract that was interacted with
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: ACTION
+        description: The action that took place in the transaction. This will always be claim_rewards.
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: USER
+        description: The address that the reward claim is relevant for
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MARS_REWARDS
+        description: The amount of rewards that were claimed
+        tests: 
+          - dbt_expectations.expect_column_to_exist

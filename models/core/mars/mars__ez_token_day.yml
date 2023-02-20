@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: mars__ez_token_day
+    description: The table is an daily summary of each asset within Osmosis
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_DATE
+        description: The block 
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description:  "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: SYMBOL
+        description:  The token symbol
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE
+        description: "The price of the token as denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE_USD
+        description: "The price of the token in USD"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY
+        description: "The total value of tokens within the pools, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY_USD
+        description: "The total value of tokens within the pools, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOLUME
+        description: "The total value of tokens swapped in and out of the pools, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOLUME_USD
+        description:  "The total value of tokens swapped in and out of the pools, denominated in USD"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

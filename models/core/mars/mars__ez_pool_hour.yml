@@ -1,0 +1,73 @@
+version: 2
+models:
+  - name: mars__ez_pool_hour
+    description:  "The table is an hourly summary of each pool within Osmosis. The table is currently limited to show at most four tokens. For pools that contain more than four tokens, those tokens are omitted."
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_0_CURRENCY
+        description: "The first token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_0_SYMBOL
+        description: "The token symbol of first token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist            
+      - name: TOKEN_0_AMOUNT
+        description: "The decimal adjusted amount of the first token within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_1_CURRENCY
+        description: "The second token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_1_SYMBOL
+        description: "The token symbol of second token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist      
+      - name: TOKEN_1_AMOUNT
+        description: "The decimal adjusted amount of the second token within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE
+        description: "The price of the first token as denominated in the token_1_currency. This only applies to two-token pools where one of the tokens is osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE_USD
+        description: "The price of the token in USD"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TWAP
+        description: "The time weighted asset price, denominated in osmos. This is calculated by averaging the high, low, open, and close of the day"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TWAP_USD
+        description: The time weighted asset price, denominated in USD. This is calculated by averaging the high, low, open, and close of the day
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY
+        description: "The total value of tokens within the pool, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY_USD
+        description: "The total value of tokens within the pool, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOLUME
+        description: "The total value of tokens swapped in and out of the pool, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOLUME_USD
+        description:  "The total value of tokens swapped in and out of the pool, denominated in USD"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

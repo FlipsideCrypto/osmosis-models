@@ -1,0 +1,50 @@
+version: 2
+models:
+  - name: mars__ez_liquidity_provider_actions
+    description: Includes all actions entering and exiting liquidity mars pools. 
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - TX_ID
+            - CURRENCY
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY_PROVIDER_ADDRESS
+        description: "{{ doc('liquidity_provider_address') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: ACTION
+        description: "{{ doc('action') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: SYMBOL
+        description: The token symbol.
+        tests: 
+          - dbt_expectations.expect_column_to_exist
