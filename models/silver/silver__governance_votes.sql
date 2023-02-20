@@ -5,35 +5,39 @@
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
-WITH
-
-{% if is_incremental() %}
-max_date AS (
+WITH base_tx AS (
 
     SELECT
-        MAX(
-            _inserted_timestamp
-        ) _inserted_timestamp
+        block_id,
+        block_timestamp,
+        tx_id,
+        tx_succeeded,
+        tx_body :memo :: STRING AS memo,
+        tx_body :messages AS messages,
+        _inserted_timestamp
     FROM
-        {{ this }}
-),
-{% endif %}
-memo_text AS (
-    SELECT 
-        tx_id, 
-        tx_body :memo :: STRING as memo
-    FROM 
         {{ ref('silver__transactions') }}
-    {% if is_incremental() %}
-    WHERE _inserted_timestamp >= (
+
+{% if is_incremental() %}
+WHERE
+    _inserted_timestamp >= (
         SELECT
             MAX(
                 _inserted_timestamp
             )
         FROM
-            max_date
+            {{ this }}
     )
-    {% endif %}
+{% endif %}
+),
+memo_text AS (
+    SELECT
+        tx_id,
+        memo
+    FROM
+        base_tx
+    WHERE
+        memo IS NOT NULL
 ),
 weighted_votes AS (
     SELECT
@@ -41,30 +45,19 @@ weighted_votes AS (
         block_timestamp,
         tx_id,
         tx_succeeded,
-        tx_body,
+        messages,
         path :: STRING AS _path,
         _inserted_timestamp
     FROM
-        {{ ref('silver__transactions') }},
+        base_tx,
         LATERAL FLATTEN (
-            input => tx_body :messages,
+            input => messages,
             recursive => TRUE
         ) b
     WHERE
         key = '@type'
         AND VALUE :: STRING = '/cosmos.gov.v1beta1.MsgVoteWeighted'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-), 
+),
 pre_final AS (
     SELECT
         block_id,
@@ -92,25 +85,14 @@ pre_final AS (
             _path
         ) AS _unique_key
     FROM
-        {{ ref('silver__transactions') }},
+        base_tx,
         LATERAL FLATTEN (
-            input => tx_body :messages,
+            input => messages,
             recursive => TRUE
         ) b
     WHERE
         key = '@type'
         AND VALUE :: STRING = '/cosmos.gov.v1beta1.MsgVote'
-
-    {% if is_incremental() %}
-    AND _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            max_date
-    )
-    {% endif %}
     UNION ALL
     SELECT
         block_id,
@@ -140,13 +122,13 @@ pre_final AS (
     FROM
         weighted_votes,
         LATERAL FLATTEN (
-            input => tx_body :messages
+            input => messages
         ) b,
         LATERAL FLATTEN (
             input => b.value :options
         ) o
 )
-SELECT 
+SELECT
     block_id,
     block_timestamp,
     m.tx_id,
@@ -156,9 +138,10 @@ SELECT
     voter,
     vote_option,
     vote_weight,
-    memo, 
+    memo,
     _inserted_timestamp,
     _unique_key
-FROM pre_final p 
-LEFT OUTER JOIN memo_text m 
-ON p.tx_id = m.tx_id
+FROM
+    pre_final p
+    LEFT OUTER JOIN memo_text m
+    ON p.tx_id = m.tx_id
