@@ -123,7 +123,8 @@ first_agg AS (
             AND msg_type = 'transfer' THEN 'sent'
             WHEN msg_type = 'wasm' THEN 'liq'
             WHEN abc IS NOT NULL THEN 'rec'
-        END msg_index_desc
+        END msg_index_desc,
+        _inserted_timestamp
     FROM
         filter_msgs A
     GROUP BY
@@ -133,7 +134,8 @@ first_agg AS (
         tx_succeeded,
         msg_group,
         msg_index,
-        msg_type
+        msg_type,
+        _inserted_timestamp
 )
 SELECT
     A.block_id,
@@ -154,7 +156,8 @@ SELECT
     recipient,
     USER,
     liq_rec_payment,
-    liq_rec_sender
+    liq_rec_sender,
+    _inserted_timestamp
 FROM
     first_agg A
     JOIN (
