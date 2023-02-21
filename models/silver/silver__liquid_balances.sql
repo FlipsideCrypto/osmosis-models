@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "CONCAT_WS('-', block_id, address, currency)",
     incremental_strategy = 'delete+insert',
-    cluster_by = ['block_timestamp'],
+    cluster_by = ['block_timestamp::DATE'],
 ) }}
 
 WITH base AS (
@@ -10,7 +10,6 @@ WITH base AS (
     SELECT
         bal.block_id,
         bl.block_timestamp,
-        'liquid' AS balance_type,
         bal.address,
         b.value :denom :: STRING AS currency,
         b.value :amount :: INT AS balance,
@@ -31,14 +30,14 @@ WITH base AS (
 
 {% if is_incremental() %}
 WHERE
-    _inserted_timestamp >= (
+    block_timestamp::DATE >= (
         SELECT
-            MAX(
-                _inserted_timestamp
-            )
+            DATEADD('day', -1,   MAX(
+                block_timestamp::DATE
+            ))
         FROM
             {{ this }}
-    )
+    )    
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY bal.block_id, bal.address, currency
@@ -49,12 +48,12 @@ tbl AS (
 
 {% if is_incremental() %}
 SELECT
-    address, balance, balance_type, block_id, block_timestamp, currency, _inserted_timestamp
+    address, balance, block_id, block_timestamp, currency, _inserted_timestamp
 FROM
     base
 UNION
 SELECT
-    address, balance, balance_type, block_id, block_timestamp, currency, _inserted_timestamp
+    address, balance, block_id, block_timestamp, currency, _inserted_timestamp
 FROM
     silver.latest_liquid_balances
 WHERE
@@ -65,7 +64,7 @@ FROM
     base)
 {% else %}
 SELECT
-    address, balance, balance_type, block_id, block_timestamp, currency, _inserted_timestamp
+    address, balance, block_id, block_timestamp, currency, _inserted_timestamp
 FROM
     base
 {% endif %}),
@@ -76,36 +75,44 @@ all_currency AS (
     FROM
         tbl
 ),
+all_bts AS (
+    SELECT
+        DISTINCT address,
+        block_timestamp,
+        block_id,
+        _inserted_timestamp
+    FROM
+        tbl
+),
 tmp AS (
     SELECT
-        A.address,
+        ab.address,
         COALESCE(
-            A.balance,
+            bal.balance,
             0
         ) AS balance,
-        A.balance_type,
-        A.block_id,
-        A.block_timestamp,
-        COALESCE(
-            A.currency,
-            b.currency
-        ) AS currency,
-        A._inserted_timestamp
+        ab.block_id,
+        ab.block_timestamp,
+        ac.currency,
+        ab._inserted_timestamp
     FROM
-        tbl A
-        LEFT JOIN all_currency b
-        ON A.currency IS NULL
-        AND A.address = b.address qualify(ROW_NUMBER() over(PARTITION BY A.address, balance_type, block_id, COALESCE(A.currency, b.currency)
+        all_bts ab
+        JOIN all_currency ac
+        ON ab.address = ac.address
+        LEFT JOIN tbl bal
+        ON ab.address = bal.address
+        AND ab.block_timestamp = bal.block_timestamp
+        AND ac.currency = bal.currency
+         qualify(ROW_NUMBER() over(PARTITION BY ab.address, ab.block_id, ac.currency
     ORDER BY
-        _inserted_timestamp DESC)) = 1
+        ab._inserted_timestamp DESC)) = 1
 ),
 dense_tmp AS (
     SELECT
         *,
         DENSE_RANK() over(
             PARTITION BY address,
-            currency,
-            balance_type
+            currency
             ORDER BY
                 block_id ASC
         ) AS rn
@@ -116,14 +123,12 @@ joined AS (
     SELECT
         t.address AS t_address,
         t.balance AS t_balance,
-        t.balance_type AS t_balance_type,
         t.block_id AS t_block_id,
         t.block_timestamp AS t_block_timestamp,
         t.currency AS t_currency,
         t._inserted_timestamp AS t_inserted_timestamp,
         t2.address AS t2_address,
         t2.balance AS t2_balance,
-        t2.balance_type AS t2_balance_type,
         t2.block_id AS t2_block_id,
         t2.block_timestamp AS t2_block_timestamp,
         t2.currency AS t2_currency,
@@ -154,12 +159,11 @@ joined AS (
         t2.rn AS t2_rn,
         MAX(
             t2.rn
-        ) over(PARTITION BY COALESCE(t.address, t2.address), COALESCE(t.balance_type, t2.balance_type), COALESCE(t.currency, t2.currency)) AS max_t2_rn
+        ) over(PARTITION BY COALESCE(t.address, t2.address), COALESCE(t.currency, t2.currency)) AS max_t2_rn
     FROM
         dense_tmp t full
         OUTER JOIN dense_tmp t2
         ON t.address = t2.address
-        AND t.balance_type = t2.balance_type
         AND t.currency = t2.currency
         AND t.rn = t2.rn - 1
 )
@@ -172,10 +176,7 @@ SELECT
         t2_balance,
         0
     ) AS balance,
-    COALESCE(
-        t2_balance_type,
-        t_balance_type
-    ) AS balance_type,
+    'liquid' AS balance_type,
     COALESCE(
         t2_currency,
         t_currency

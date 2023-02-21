@@ -1,6 +1,6 @@
 {{ config(
   materialized = 'incremental',
-  unique_key = "CONCAT_WS('-', address, balance_type, block_id, currency)",
+  unique_key = "address",
   incremental_strategy = 'delete+insert',
   cluster_by = ['block_timestamp::date']
 ) }}
