@@ -148,49 +148,36 @@ msg_based AS (
         A.msg_type,
         A.lock_id,
         b.attribute_value AS action,
-        {# CASE
-        WHEN b.attribute_value = '/osmosis.lockup.MsgExtendLockup' THEN 'extend lockup'
-        WHEN A.msg_type = 'unpool_pool_id' THEN 'unpool'
-        WHEN j :"lock_tokens--duration" IS NOT NULL THEN 'initial lock'
-        WHEN j :: STRING ILIKE '%unlock%'
-        OR j :: STRING ILIKE '%undelegate%'
-        OR j :: STRING ILIKE '%unbond%'
-        OR action ILIKE '%undelegate%' THEN 'unlock-undelegate'
-        WHEN j :: STRING LIKE '%add%'
-        OR j :: STRING LIKE '%increase%' THEN 'add to position'
-        WHEN j :: STRING ILIKE '%delegate%' THEN 'super upgrade'
-END hybrid_action,
-#}
-NULL AS hybrid_action,
-COALESCE(
-    j :"amount",
-    j :"denom"
-) :: STRING AS amount,
-COALESCE(
-    j :"owner",
-    j :"burner",
-    j :"sender"
-) :: STRING AS locker,
-j :"duration" :: STRING AS DURATION,
-NULLIF(
-    j :"unlock_time" :: STRING,
-    '0001-01-01 00:00:00 +0000 UTC'
-) AS unlock_time,
-j :"new_lock_ids" :: STRING AS new_lock_ids,
-A._INSERTED_TIMESTAMP
-FROM
-    tx_msg_flat A
-    LEFT JOIN base_msg_atts b
-    ON A.tx_id = b.tx_id
-    AND A.msg_group = b.msg_group
-    AND COALESCE(
-        A.lock_id,
-        -1
-    ) = COALESCE(
-        b.lock_id,
-        -1
-    )
-    AND b.msg_type = 'message'
+        NULL AS hybrid_action,
+        COALESCE(
+            j :"amount",
+            j :"denom"
+        ) :: STRING AS amount,
+        COALESCE(
+            j :"owner",
+            j :"burner",
+            j :"sender"
+        ) :: STRING AS locker,
+        j :"duration" :: STRING AS DURATION,
+        NULLIF(
+            j :"unlock_time" :: STRING,
+            '0001-01-01 00:00:00 +0000 UTC'
+        ) AS unlock_time,
+        j :"new_lock_ids" :: STRING AS new_lock_ids,
+        A._INSERTED_TIMESTAMP
+    FROM
+        tx_msg_flat A
+        LEFT JOIN base_msg_atts b
+        ON A.tx_id = b.tx_id
+        AND A.msg_group = b.msg_group
+        AND COALESCE(
+            A.lock_id,
+            -1
+        ) = COALESCE(
+            b.lock_id,
+            -1
+        )
+        AND b.msg_type = 'message'
 ),
 combo_with_super_undel AS (
     SELECT
