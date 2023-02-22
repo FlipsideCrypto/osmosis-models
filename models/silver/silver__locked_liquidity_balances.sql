@@ -63,6 +63,7 @@ undel_base AS (
         AND (
             unlock_time IS NOT NULL
             OR msg_action = '/osmosis.superfluid.MsgSuperfluidUndelegate'
+            OR msg_type = '/osmosis.superfluid.MsgSuperfluidUndelegate'
         )
         AND tx_id <> '1A2A80A7112995EA1A22D6EDBFB26AE7B863852A9E7F59779247F8928DA218D6'
 

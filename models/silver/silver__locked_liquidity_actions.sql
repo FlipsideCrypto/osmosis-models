@@ -27,8 +27,7 @@ base_msg_atts AS (
         TRUE AS tx_succeeded,
         A.msg_group,
         CASE
-            WHEN A.msg_type = 'message' THEN A.msg_type
-            WHEN b.tx_id IS NOT NULL THEN b.msg_type
+            WHEN A.msg_type = 'message' THEN A.msg_type {# WHEN b.tx_id IS NOT NULL THEN b.msg_type #}
             ELSE 'not'
         END msg_type,
         A.attribute_key,
