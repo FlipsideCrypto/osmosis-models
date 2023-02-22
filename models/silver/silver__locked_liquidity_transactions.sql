@@ -45,6 +45,7 @@ base AS (
         CASE
             WHEN id_count > 1 THEN msg_index
         END msg_index_gp,
+        id_count,
         _inserted_timestamp,
         OBJECT_AGG(
             CASE
@@ -97,7 +98,6 @@ GROUP BY
     A.msg_group,
     A.msg_sub_group,
     msg_index_gp,
-    msg_type,
     id_count,
     _inserted_timestamp
 )
@@ -106,8 +106,8 @@ SELECT
     msg_group,
     msg_index_gp AS msg_index,
     lock_id,
-    id_count,<<<<<<< head {# msg_type, #}
-    ======= msg_type,>>>>>>> main _inserted_timestamp,
+    id_count,
+    _inserted_timestamp,
     concat_ws(
         '-',
         tx_id,
@@ -120,8 +120,7 @@ WHERE
     (
         j :: STRING LIKE '%action%'
         OR id_count > 1
-    ) <<<<<<< head
-    AND lock_id IS NOT NULL qualify(ROW_NUMBER() over(PARTITION BY tx_id, COALESCE(msg_group, -1), lock_id =======
-    AND lock_id IS NOT NULL qualify(ROW_NUMBER() over(PARTITION BY tx_id, msg_group, lock_id >>>>>>> main
+    )
+    AND lock_id IS NOT NULL qualify(ROW_NUMBER() over(PARTITION BY tx_id, COALESCE(msg_group, -1), lock_id
 ORDER BY
     msg_index_gp DESC) = 1)
