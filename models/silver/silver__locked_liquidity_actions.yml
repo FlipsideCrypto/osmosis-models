@@ -88,7 +88,7 @@ models:
         description: "{{ doc('lock_id') }}"
         tests:
           - not_null:
-              where: msg_type <> 'unpool_pool_id'
+              where: MSG_ACTION_DESCRIPTION <> 'unpool'
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
