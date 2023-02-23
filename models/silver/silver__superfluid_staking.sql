@@ -112,11 +112,12 @@ SELECT
     A.msg_group,
     A.tx_succeeded,
     CASE
-        msg_action_description
-        WHEN 'initial lock' THEN 'delegate'
-        WHEN 'add to position' THEN 'delegate'
-        WHEN 'unlock' THEN 'undelegate'
-        WHEN 'unpool' THEN 'undelegate'
+        WHEN msg_action_description = 'initial lock' THEN 'delegate'
+        WHEN msg_action_description = 'add to position' THEN 'delegate'
+        WHEN msg_action_description = 'unlock' THEN 'undelegate'
+        WHEN msg_action_description = 'unpool' THEN 'undelegate'
+        WHEN msg_action_description LIKE '%ulock%'
+        OR msg_action_description LIKE '%undelegate%' THEN 'undelegate'
     END AS action,
     A.locker_address AS delegator_address,
     A.amount,
