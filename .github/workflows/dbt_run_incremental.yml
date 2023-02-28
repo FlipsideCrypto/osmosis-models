@@ -39,5 +39,5 @@ jobs:
       - name: Run DBT Jobs
         run: |
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
-          dbt run -s ./models
+          dbt run -s ./models --exclude models/silver/mars/silver__red_bank_liquidations.sql
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
