@@ -103,9 +103,15 @@ AND _inserted_timestamp >= (
 tx_address AS (
     SELECT
         A.tx_id,
-        OBJECT_AGG(
-            attribute_key :: STRING,
-            attribute_value :: variant
+        FIRST_VALUE(
+            OBJECT_AGG(
+                attribute_key :: STRING,
+                attribute_value :: variant
+            ) IGNORE NULLS
+        ) OVER (
+            PARTITION BY A.tx_id
+            ORDER BY
+                A.msg_index ASC
         ) AS j,
         SPLIT_PART(
             j :acc_seq :: STRING,
@@ -136,6 +142,7 @@ AND _inserted_timestamp >= (
 {% endif %}
 GROUP BY
     A.tx_id,
+    msg_index,
     msg_group
 ),
 valid AS (
