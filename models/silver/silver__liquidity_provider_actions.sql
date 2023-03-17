@@ -129,7 +129,7 @@ AND _inserted_timestamp >= (
 {% endif %}
 ),
 lper AS (
-    SELECT
+    SELECT DISTINCT
         tx_id,
         SPLIT_PART(
             attribute_value,
