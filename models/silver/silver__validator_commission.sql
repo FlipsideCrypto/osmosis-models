@@ -56,6 +56,7 @@ msg_attributes_base AS (
         AND msg_type || attribute_key IN (
             'withdraw_commissionamount',
             'transferrecipient',
+            'transferamount',
             'messagesender',
             'txacc_seq'
         )
@@ -84,7 +85,6 @@ combo AS (
             attribute_key :: STRING,
             attribute_value :: variant
         ) AS j,
-        j :recipient :: STRING AS validator_address_reward,
         j :sender :: STRING AS validator_address_operator,
         j :amount :: STRING AS amount
     FROM
@@ -92,13 +92,42 @@ combo AS (
     WHERE
         msg_type IN (
             'withdraw_commission',
-            'transfer',
             'message'
         )
     GROUP BY
         tx_id,
         msg_group,
         msg_sub_group
+),
+recipient_msg_index AS (
+    SELECT
+        A.tx_id,
+        A.msg_group,
+        A.msg_sub_group,
+        A.msg_index
+    FROM
+        msg_attributes_base A
+        JOIN combo b
+        ON A.tx_id = b.tx_id
+        AND A.msg_group = b.msg_group
+        AND A.msg_sub_group = b.msg_sub_group
+    WHERE
+        A.msg_type = 'transfer'
+        AND A.attribute_value = b.amount
+),
+recipient AS (
+    SELECT
+        A.tx_id,
+        A.msg_group,
+        A.msg_sub_group,
+        A.attribute_value AS validator_address_reward
+    FROM
+        msg_attributes_base A
+        JOIN recipient_msg_index b
+        ON A.tx_id = b.tx_id
+        AND A.msg_index = b.msg_index
+    WHERE
+        A.attribute_key = 'recipient'
 ),
 tx_address AS (
     SELECT
@@ -156,7 +185,7 @@ SELECT
         ELSE 'uosmo'
     END AS currency,
     A.validator_address_operator,
-    A.validator_address_reward,
+    d.validator_address_reward,
     b._inserted_timestamp
 FROM
     combo A
@@ -168,3 +197,7 @@ FROM
     ON A.tx_id = b.tx_id
     JOIN tx_address C
     ON A.tx_id = C.tx_id
+    JOIN recipient d
+    ON A.tx_id = d.tx_id
+    AND A.msg_group = d.msg_group
+    AND A.msg_sub_group = d.msg_sub_group
