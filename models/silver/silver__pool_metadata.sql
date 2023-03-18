@@ -64,6 +64,7 @@ b AS (
                 AND ARRAY_SIZE(SPLIT(attribute_value, ',')) :: NUMBER > 1
             )
         )
+        AND attribute_value <> 'poolmanager'
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -85,7 +86,15 @@ C AS (
             attribute_value :: variant
         ) AS obj
     FROM
-        b
+        (
+            SELECT
+                DISTINCT tx_id,
+                attribute_key,
+                attribute_value,
+                _inserted_timestamp
+            FROM
+                b
+        )
     GROUP BY
         tx_id,
         _inserted_timestamp
