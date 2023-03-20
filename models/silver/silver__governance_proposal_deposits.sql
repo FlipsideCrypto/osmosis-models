@@ -1,7 +1,7 @@
 {{ config(
     materialized = 'incremental',
     unique_key = "tx_id",
-    incremental_strategy = 'merge',
+    incremental_strategy = 'delete+insert',
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
@@ -9,7 +9,6 @@ WITH
 
 {% if is_incremental() %}
 max_date AS (
-
     SELECT
         MAX(
             _inserted_timestamp
