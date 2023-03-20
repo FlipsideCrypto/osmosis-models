@@ -59,7 +59,9 @@ sender AS (
     FROM
         base_atts
     WHERE
-        attribute_key = 'acc_seq'
+        attribute_key = 'acc_seq' qualify(ROW_NUMBER() over(PARTITION BY tx_id
+    ORDER BY
+        msg_index)) = 1
 ),
 message_index_ibc AS (
     SELECT

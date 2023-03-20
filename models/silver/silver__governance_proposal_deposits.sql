@@ -100,6 +100,10 @@ AND _inserted_timestamp >= (
         {{ this }}
 )
 {% endif %}
+
+qualify(ROW_NUMBER() over(PARTITION BY tx_id
+ORDER BY
+    msg_index)) = 1
 )
 SELECT
     block_id,
@@ -107,7 +111,7 @@ SELECT
     p.tx_id,
     tx_succeeded,
     d.depositor,
-    p.proposal_id :: NUMBER as proposal_id,
+    p.proposal_id :: NUMBER AS proposal_id,
     v.amount,
     v.currency,
     DECIMAL,

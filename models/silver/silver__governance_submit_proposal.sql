@@ -84,6 +84,10 @@ AND _inserted_timestamp >= (
         max_date
 )
 {% endif %}
+
+qualify(ROW_NUMBER() over(PARTITION BY tx_id
+ORDER BY
+    msg_index)) = 1
 )
 SELECT
     block_id,
