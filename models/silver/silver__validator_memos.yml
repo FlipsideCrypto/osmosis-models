@@ -1,0 +1,29 @@
+version: 2
+models:
+  - name: silver__validator_memos
+    tests: 
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - PROPOSAL_ID
+            - VALIDATOR_ADDRESS
+    columns:
+      - name: PROPOSAL_ID
+        tests:
+          - not_null
+      - name: VALIDATOR_ADDRESS
+        tests:
+          - not_null
+      - name: MEMO
+      - name: VOTE
+        tests:
+          - not_null
+      - name: VOTING_POWER
+      - name: VERSION
+        tests:
+          - not_null         
+      - name: CREATED_AT
+        tests:
+          - not_null
+      - name: UPDATED_AT
+        tests:
+          - not_null

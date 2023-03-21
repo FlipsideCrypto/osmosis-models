@@ -6,34 +6,39 @@
 ) }}
 
 WITH swaps AS (
+
     SELECT
         DATE_TRUNC(
-                    'HOUR',
-                    block_timestamp
-                ) AS block_hour,
-         from_currency,
-         TRY_TO_NUMBER(from_amount) / POW(10, f.raw_metadata[1]:exponent) AS from_amount,
-         f.project_name AS from_project_name,
-         to_currency,
-         TRY_TO_NUMBER(to_amount) / POW(10, t.raw_metadata[1]:exponent) AS to_amount,
-         t.project_name AS to_project_name,
-         'osmosis' AS dex
-    FROM {{ ref('silver__swaps') }} s 
-
-    INNER JOIN {{ ref('silver__asset_metadata')}} f 
-    ON from_currency = f.address
-
-    INNER JOIN {{ ref('silver__asset_metadata') }} t 
-    ON to_currency = t.address
-
+            'HOUR',
+            block_timestamp
+        ) AS block_hour,
+        from_currency,
+        TRY_TO_NUMBER(from_amount) / pow(
+            10,
+            f.raw_metadata [1] :exponent
+        ) AS from_amount,
+        f.project_name AS from_project_name,
+        to_currency,
+        TRY_TO_NUMBER(to_amount) / pow(
+            10,
+            t.raw_metadata [1] :exponent
+        ) AS to_amount,
+        t.project_name AS to_project_name,
+        'osmosis' AS dex
+    FROM
+        {{ ref('silver__swaps') }}
+        s
+        INNER JOIN {{ ref('silver__asset_metadata') }}
+        f
+        ON from_currency = f.address
+        INNER JOIN {{ ref('silver__asset_metadata') }}
+        t
+        ON to_currency = t.address
     WHERE
         TRY_TO_NUMBER(from_amount) > 0
-    AND 
-        TRY_TO_NUMBER(to_amount) > 0
-    AND 
-        f.raw_metadata[1]:exponent IS NOT NULL
-    AND 
-        t.raw_metadata[1]:exponent IS NOT NULL  
+        AND TRY_TO_NUMBER(to_amount) > 0
+        AND f.raw_metadata [1] :exponent IS NOT NULL
+        AND t.raw_metadata [1] :exponent IS NOT NULL
 
 {% if is_incremental() %}
 AND block_hour >=(
@@ -47,9 +52,7 @@ AND block_hour >=(
 qualify(RANK() over(
 ORDER BY
     block_hour DESC)) <> 1
-  
-), 
-
+),
 swap_range AS (
     SELECT
         MIN(
@@ -60,8 +63,7 @@ swap_range AS (
         ) max_date
     FROM
         swaps
-), 
-
+),
 usd AS (
     SELECT
         block_hour,
@@ -71,10 +73,10 @@ usd AS (
         CASE
             WHEN from_currency IN (
                 'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
+                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
                 'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-            ) THEN 1 
+            ) THEN 1
             ELSE to_amount / NULLIF(
                 from_amount,
                 0
@@ -86,8 +88,8 @@ usd AS (
         CASE
             WHEN to_currency IN (
                 'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
+                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
                 'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
             ) THEN 1
             ELSE from_amount / NULLIF(
@@ -96,10 +98,9 @@ usd AS (
             )
         END AS to_usd,
         dex
-    
-    FROM swaps A
-), 
-
+    FROM
+        swaps A
+),
 usd_2 AS (
     SELECT
         block_hour,
@@ -111,13 +112,11 @@ usd_2 AS (
     WHERE
         to_currency IN (
             'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
-                'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-        ) 
-  
+            'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+            'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
+            'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
+        )
     UNION ALL
-  
     SELECT
         block_hour,
         to_currency AS currency,
@@ -128,21 +127,18 @@ usd_2 AS (
     WHERE
         from_currency IN (
             'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-            'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-            'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
+            'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+            'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
             'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-        )  
-), 
-
+        )
+),
 usd_3 AS (
     SELECT
         block_hour,
         currency,
         project_name,
-        price, 
-        STDDEV(
-            TO_NUMERIC(price)
-        ) over (
+        price,
+        STDDEV(TO_NUMERIC(price)) over (
             PARTITION BY currency,
             block_hour
         ) stddev_price -- TO_NUMERIC USED TO FIX ERROR RELATED TO TOO BIG OF INTEGER
@@ -150,8 +146,7 @@ usd_3 AS (
         usd_2
     WHERE
         currency = 'uosmo'
-), 
-
+),
 usd_4 AS (
     SELECT
         block_hour,
@@ -170,7 +165,6 @@ usd_4 AS (
     FROM
         usd_3
 ),
-
 osmo_price_hour AS (
     SELECT
         block_hour,
@@ -183,8 +177,7 @@ osmo_price_hour AS (
         usd_4
     GROUP BY
         block_hour
-), 
-
+),
 osmo AS (
     SELECT
         A.block_hour,
@@ -193,7 +186,7 @@ osmo AS (
         from_amount,
         CASE
             WHEN to_currency = 'uosmo' THEN (
-                to_amount  * prices.price
+                to_amount * prices.price
             ) / NULLIF(
                 from_amount,
                 0
@@ -211,11 +204,10 @@ osmo AS (
             )
         END AS to_usd,
         dex
-    FROM swaps A
-  
-    LEFT JOIN osmo_price_hour prices
-    ON A.block_hour = prices.block_hour
-  
+    FROM
+        swaps A
+        LEFT JOIN osmo_price_hour prices
+        ON A.block_hour = prices.block_hour
     WHERE
         (
             A.from_currency = 'uosmo'
@@ -225,8 +217,7 @@ osmo AS (
             A.from_currency = 'uosmo'
             AND A.to_currency = 'uosmo'
         )
-), 
-
+),
 combo_1 AS (
     SELECT
         block_hour,
@@ -240,13 +231,11 @@ combo_1 AS (
     WHERE
         to_currency IN (
             'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-            'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-            'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
+            'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+            'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
             'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-        ) 
-        
+        )
     UNION ALL
-    
     SELECT
         block_hour,
         to_currency AS currency,
@@ -258,14 +247,12 @@ combo_1 AS (
         usd
     WHERE
         from_currency IN (
-          'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-          'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-          'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
-          'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-        )  
-  
+            'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
+            'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+            'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
+            'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
+        )
     UNION ALL
-    
     SELECT
         block_hour,
         to_currency AS currency,
@@ -273,10 +260,10 @@ combo_1 AS (
         CASE
             WHEN to_currency IN (
                 'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
+                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
                 'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-            ) THEN 1  
+            ) THEN 1
             ELSE to_usd
         END price,
         dex,
@@ -285,9 +272,7 @@ combo_1 AS (
         osmo
     WHERE
         from_currency = 'uosmo'
-  
     UNION ALL
-    
     SELECT
         block_hour,
         from_currency AS currency,
@@ -295,10 +280,10 @@ combo_1 AS (
         CASE
             WHEN from_currency IN (
                 'ibc/9F9B07EF9AD291167CF5700628145DE1DEB777C2CFC7907553B24446515F6D0E',
-                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4', 
-                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858', 
+                'ibc/8242AD24008032E457D2E12D46588FD39FB54FB29680C6C7663D296B383C37C4',
+                'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858',
                 'ibc/0CD3A0285E1341859B5E86B6AB7682F023D03E97607CCC1DC95706411D866DF7'
-            ) THEN 1 
+            ) THEN 1
             ELSE from_usd
         END price,
         dex,
@@ -307,8 +292,7 @@ combo_1 AS (
         osmo
     WHERE
         to_currency = 'uosmo'
-), 
-
+),
 combo_2 AS (
     SELECT
         block_hour,
@@ -325,8 +309,7 @@ combo_2 AS (
         amount
     FROM
         combo_1
-), 
-
+),
 combo_3 AS (
     SELECT
         block_hour,
@@ -348,8 +331,7 @@ combo_3 AS (
         amount
     FROM
         combo_2
-), 
-
+),
 final_dex AS (
     SELECT
         block_hour,
@@ -393,8 +375,7 @@ final_dex AS (
         currency,
         project_name,
         dex
-), 
-
+),
 FINAL AS (
     SELECT
         A.block_hour,
@@ -406,7 +387,7 @@ FINAL AS (
         SUM(swaps_in_hour) AS swaps_in_hour,
         SUM(total_amount) AS volume_in_hour,
         SUM(
-            avg_price_usd_hour_excludes 
+            avg_price_usd_hour_excludes
         ) AS price
     FROM
         (
@@ -425,7 +406,6 @@ FINAL AS (
             FROM
                 final_dex
         ) A
-        
     GROUP BY
         A.block_hour,
         A.currency,
@@ -433,7 +413,6 @@ FINAL AS (
 )
 
 {% if is_incremental() %},
-
 not_in_final AS (
     SELECT
         DATEADD(
@@ -460,7 +439,6 @@ not_in_final AS (
         )
 )
 {% endif %},
-
 fill_in_the_blanks_temp AS (
     SELECT
         A.hour AS block_hour,
@@ -475,11 +453,11 @@ fill_in_the_blanks_temp AS (
     FROM
         (
             SELECT
-                HOUR
+                date_hour AS HOUR
             FROM
                 {{ source(
-                    'shared2',
-                    'hours'
+                    'crosschain',
+                    'dim_date_hours'
                 ) }} A
 
 {% if is_incremental() %}
@@ -496,15 +474,12 @@ WHERE
         FROM
             swap_range
     )
-
 {% else %}
     JOIN swap_range b
     ON A.hour BETWEEN b.min_date
     AND max_date
-{% endif %}  
-
+{% endif %}
 ) A
-  
 CROSS JOIN (
     SELECT
         DISTINCT currency,
@@ -520,9 +495,7 @@ SELECT
 FROM
     {{ this }}
 {% endif %}
-
 ) b
-  
 LEFT JOIN (
     SELECT
         *
@@ -531,20 +504,15 @@ LEFT JOIN (
 
 {% if is_incremental() %}
 UNION ALL
-
 SELECT
     *
 FROM
     not_in_final
 {% endif %}
-
 ) C
-
 ON A.hour = C.block_hour
 AND b.currency = C.currency
-
 )
-
 SELECT
     block_hour,
     currency,
@@ -562,22 +530,22 @@ SELECT
     swaps_in_hour,
     volume_in_hour * price AS volume_usd_in_hour
 FROM
-    fill_in_the_blanks_temp 
-    
-WHERE project_name IN ('axlUSDC',
-                       'axlWBTC', 
-                       'gWETH',  
-                       'MARBLE', 
-                       'axlFRAX', 
-                       'gUSDC', 
-                       'axlUSDT', 
-                       'ASVT', 
-                       'axlDAI', 
-                       'axlWETH', 
-                       'RAW', 
-                       'gDAI', 
-                       'ION')
-
-qualify(LAST_VALUE(price ignore nulls) over(PARTITION BY currency
+    fill_in_the_blanks_temp
+WHERE
+    project_name IN (
+        'axlUSDC',
+        'axlWBTC',
+        'gWETH',
+        'MARBLE',
+        'axlFRAX',
+        'gUSDC',
+        'axlUSDT',
+        'ASVT',
+        'axlDAI',
+        'axlWETH',
+        'RAW',
+        'gDAI',
+        'ION'
+    ) qualify(LAST_VALUE(price ignore nulls) over(PARTITION BY currency
 ORDER BY
     block_hour ASC rows unbounded preceding)) IS NOT NULL
