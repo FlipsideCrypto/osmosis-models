@@ -12,11 +12,6 @@ sources:
     schema: silver
     tables:
       - name: prices_v2
-  - name: shared2 
-    database: flipside_prod_db 
-    schema: redshift
-    tables: 
-      - name: hours
   - name: bronze_api
     schema: bronze_api
     tables: 
@@ -43,6 +38,7 @@ sources:
     tables:
       - name: dim_date_hours
       - name: address_tags
+      - name: dim_dates
   - name: axelar_silver
     database: "{{ 'axelar' if target.database == 'OSMOSIS' else 'axelar_dev' }}"
     schema: silver

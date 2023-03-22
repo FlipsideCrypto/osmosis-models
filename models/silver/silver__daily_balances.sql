@@ -231,11 +231,11 @@ address_ranges AS (
 ),
 ddate AS (
     SELECT
-        HOUR :: DATE AS DATE
+        date_day :: DATE AS DATE
     FROM
         {{ source(
-            'shared2',
-            'hours'
+            'crosschain',
+            'dim_dates'
         ) }}
     GROUP BY
         DATE
