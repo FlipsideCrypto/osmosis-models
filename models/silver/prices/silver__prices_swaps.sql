@@ -476,7 +476,7 @@ WHERE
     )
 {% else %}
     JOIN swap_range b
-    ON A.hour BETWEEN b.min_date
+    ON A.date_hour BETWEEN b.min_date
     AND max_date
 {% endif %}
 ) A
