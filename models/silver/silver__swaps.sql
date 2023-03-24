@@ -27,7 +27,7 @@ swaps AS (
         tx_succeeded,
         tx_body,
         _inserted_timestamp,
-        ROW_NUMBER() OVER (
+        ROW_NUMBER() over (
             PARTITION BY tx_id
             ORDER BY
                 _inserted_timestamp ASC
@@ -53,6 +53,29 @@ AND t._inserted_timestamp >= (
     FROM
         max_date
 )
+{% endif %}
+),
+msg_atts AS (
+    SELECT
+        tx_id,
+        msg_group,
+        msg_index,
+        msg_type,
+        attribute_key,
+        attribute_value
+    FROM
+        {{ ref('silver__msg_attributes') }}
+
+{% if is_incremental() %}
+WHERE
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
 {% endif %}
 ),
 pre_final AS (
@@ -83,9 +106,10 @@ pools AS (
         _body_index,
         ARRAY_AGG(
             COALESCE(
-                r.value :poolId, 
+                r.value :poolId,
                 r.value :pool_id
-        )) AS pool_ids
+            )
+        ) AS pool_ids
     FROM
         pre_final p,
         TABLE(FLATTEN(routes)) r
@@ -101,103 +125,145 @@ pools AS (
                 ) AS min_msg_index
             FROM
                 pre_final p
-                INNER JOIN {{ ref('silver__msg_attributes') }}
-                m
+                INNER JOIN msg_atts m
                 ON p.tx_id = m.tx_id
             WHERE
                 (
-                    msg_type = 'token_swapped'
-                    AND attribute_key = 'tokens_in'
+                    (
+                        msg_type = 'token_swapped'
+                        AND attribute_key = 'tokens_in'
+                    )
+                    OR (
+                        msg_type = 'transfer'
+                        AND attribute_key = 'amount'
+                    )
                 )
-
-{% if is_incremental() %}
-AND m._inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
+                AND msg_group IS NOT NULL
+            GROUP BY
+                p.tx_id,
+                msg_group
+        ),
+        from_amt AS (
+            SELECT
+                m.tx_id,
+                p.msg_index,
+                m.msg_group,
+                RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS from_currency,
+                SPLIT_PART(
+                    TRIM(
+                        REGEXP_REPLACE(
+                            attribute_value,
+                            '[^[:digit:]]',
+                            ' '
+                        )
+                    ),
+                    ' ',
+                    0
+                ) AS from_amount
+            FROM
+                msg_atts p
+                INNER JOIN msg_idx m
+                ON p.tx_id = m.tx_id
+                AND p.msg_group = m.msg_group
+                AND p.msg_index = min_msg_index
+            WHERE
+                (
+                    (
+                        msg_type = 'token_swapped'
+                        AND attribute_key = 'tokens_in'
+                    )
+                    OR (
+                        msg_type = 'transfer'
+                        AND attribute_key = 'amount'
+                    )
+                )
+        ) {# ,
+        fee_rec AS (
+            SELECT
+                p.tx_id,
+                m.sender,
+                m.recipient
+            FROM
+                pre_final p
+                INNER JOIN (
+                    SELECT
+                        tx_id,
+                        OBJECT_AGG(
+                            attribute_key :: STRING,
+                            attribute_value :: variant
+                        ) AS j,
+                        j :sender :: STRING AS sender,
+                        j :recipient :: STRING AS recipient
+                    FROM
+                        msg_atts
+                    WHERE
+                        msg_type = 'transfer'
+                        AND attribute_key IN (
+                            'recipient',
+                            'sender'
+                        )
+                        AND msg_group IS NULL
+                    GROUP BY
+                        tx_id
+                ) m
+                ON p.tx_id = m.tx_id
+                AND p.trader = sender
+        ),
+        ex_protorev AS (
+            SELECT
+                A.tx_id,
+                msg_index
+            FROM
+                msg_atts A
+                JOIN fee_rec b
+                ON A.tx_id = b.tx_id
+                AND A.attribute_value = b.recipient
+            WHERE
+                msg_type = 'transfer'
+                AND attribute_key = 'recipient'
+        ) #},
+        rel_to_transfers AS (
+            SELECT
+                A.tx_id,
+                A.msg_index
+            FROM
+                msg_atts A
+                JOIN pre_final b
+                ON A.tx_id = b.tx_id
+                AND A.attribute_value = b.trader
+            WHERE
+                msg_type = 'transfer'
+                AND attribute_key = 'recipient'
+        ),
+        max_idx2 AS (
+            SELECT
+                p.tx_id,
+                msg_group,
+                MAX(
+                    m.msg_index
+                ) AS max_msg_index
+            FROM
+                pre_final p
+                INNER JOIN msg_atts m
+                ON p.tx_id = m.tx_id
+                JOIN rel_to_transfers ex
+                ON m.tx_id = ex.tx_id
+                AND m.msg_index = ex.msg_index
+            WHERE
+                (
+                    {# (
+                    msg_type = 'token_swapped'
+                    AND attribute_key = 'tokens_out'
+                )
+                OR #}(
+                msg_type = 'transfer'
+                AND attribute_key = 'amount'
         )
-    FROM
-        max_date
 )
-{% endif %}
-OR (
-    msg_type = 'transfer'
-    AND attribute_key = 'amount'
-)
-AND msg_group IS NOT NULL
+AND msg_group IS NOT NULL {# AND ex.tx_id IS NULL #}
 GROUP BY
     p.tx_id,
     msg_group
-),
-from_amt AS (
-    SELECT
-        m.tx_id,
-        p.msg_index,
-        m.msg_group,
-        RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) AS from_currency,
-        SPLIT_PART(
-            TRIM(
-                REGEXP_REPLACE(
-                    attribute_value,
-                    '[^[:digit:]]',
-                    ' '
-                )
-            ),
-            ' ',
-            0
-        ) AS from_amount
-    FROM
-        {{ ref('silver__msg_attributes') }}
-        p
-        INNER JOIN msg_idx m
-        ON p.tx_id = m.tx_id
-        AND p.msg_group = m.msg_group
-        AND p.msg_index = min_msg_index
-    WHERE
-        (
-            msg_type = 'token_swapped'
-            AND attribute_key = 'tokens_in'
-        )
-
-{% if is_incremental() %}
-AND p._inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-OR (
-    msg_type = 'transfer'
-    AND attribute_key = 'amount'
-)
-),
-max_idx2 AS (
-    SELECT
-        p.tx_id,
-        msg_group,
-        MAX(
-            m.msg_index
-        ) AS max_msg_index
-    FROM
-        pre_final p
-        INNER JOIN {{ ref('silver__msg_attributes') }} m
-        ON p.tx_id = m.tx_id
-    WHERE
-        (
-            msg_type = 'token_swapped'
-            AND attribute_key = 'tokens_out'
-        )
-        OR (
-            msg_type = 'transfer'
-            AND attribute_key = 'amount'
-        )
-        AND msg_group IS NOT NULL
-    GROUP BY
-        p.tx_id,
-        msg_group
 ),
 to_amt AS (
     SELECT
@@ -217,19 +283,21 @@ to_amt AS (
             0
         ) AS to_amount
     FROM
-        {{ ref('silver__msg_attributes') }} p
+        msg_atts p
         INNER JOIN max_idx2 mm
         ON p.tx_id = mm.tx_id
         AND p.msg_group = mm.msg_group
         AND p.msg_index = max_msg_index
     WHERE
         (
-            msg_type = 'token_swapped'
-            AND attribute_key = 'tokens_out'
-        )
-        OR (
-            msg_type = 'transfer'
-            AND attribute_key = 'amount'
+            (
+                msg_type = 'token_swapped'
+                AND attribute_key = 'tokens_out'
+            )
+            OR (
+                msg_type = 'transfer'
+                AND attribute_key = 'amount'
+            )
         )
 ),
 pre_final2 AS (
