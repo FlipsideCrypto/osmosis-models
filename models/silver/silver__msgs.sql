@@ -86,7 +86,8 @@ exec_actions AS (
   WHERE
     msg_type = 'message'
     AND attribute_key = 'action'
-    AND LOWER(attribute_value) LIKE '%exec%'
+     AND (LOWER(attribute_value) LIKE '%exec%'
+    OR attribute_value = '/ibc.core.channel.v1.MsgRecvPacket')
 ),
 grp AS (
   SELECT
