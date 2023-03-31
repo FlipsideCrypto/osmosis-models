@@ -86,58 +86,58 @@ exec_actions AS (
   WHERE
     msg_type = 'message'
     AND attribute_key = 'action'
-    AND LOWER(attribute_value) LIKE '%exec%'
-),
-grp AS (
+    AND (LOWER(attribute_value) LIKE '%exec%'
+    OR attribute_value = '/ibc.core.channel.v1.MsgRecvPacket')),
+    grp AS (
+      SELECT
+        A.tx_id,
+        A.msg_index,
+        RANK() over(
+          PARTITION BY A.tx_id,
+          A.msg_group
+          ORDER BY
+            A.msg_index
+        ) -1 msg_sub_group
+      FROM
+        prefinal A
+        JOIN exec_actions b
+        ON A.tx_id = b.tx_id
+        AND A.msg_group = b.msg_group
+      WHERE
+        A.is_module = TRUE
+        AND A.msg_type = 'message'
+    )
   SELECT
+    block_id,
+    block_timestamp,
     A.tx_id,
+    tx_succeeded,
+    msg_group,
+    CASE
+      WHEN msg_group IS NULL THEN NULL
+      ELSE COALESCE(
+        LAST_VALUE(
+          b.msg_sub_group ignore nulls
+        ) over(
+          PARTITION BY A.tx_id,
+          msg_group
+          ORDER BY
+            A.msg_index DESC rows unbounded preceding
+        ),
+        0
+      )
+    END AS msg_sub_group,
     A.msg_index,
-    RANK() over(
-      PARTITION BY A.tx_id,
-      A.msg_group
-      ORDER BY
-        A.msg_index
-    ) -1 msg_sub_group
+    msg_type,
+    msg,
+    _inserted_timestamp,
+    concat_ws(
+      '-',
+      A.tx_id,
+      A.msg_index
+    ) AS _unique_key
   FROM
     prefinal A
-    JOIN exec_actions b
+    LEFT JOIN grp b
     ON A.tx_id = b.tx_id
-    AND A.msg_group = b.msg_group
-  WHERE
-    A.is_module = TRUE
-    AND A.msg_type = 'message'
-)
-SELECT
-  block_id,
-  block_timestamp,
-  A.tx_id,
-  tx_succeeded,
-  msg_group,
-  CASE
-    WHEN msg_group IS NULL THEN NULL
-    ELSE COALESCE(
-      LAST_VALUE(
-        b.msg_sub_group ignore nulls
-      ) over(
-        PARTITION BY A.tx_id,
-        msg_group
-        ORDER BY
-          A.msg_index DESC rows unbounded preceding
-      ),
-      0
-    )
-  END AS msg_sub_group,
-  A.msg_index,
-  msg_type,
-  msg,
-  _inserted_timestamp,
-  concat_ws(
-    '-',
-    A.tx_id,
-    A.msg_index
-  ) AS _unique_key
-FROM
-  prefinal A
-  LEFT JOIN grp b
-  ON A.tx_id = b.tx_id
-  AND A.msg_index = b.msg_index
+    AND A.msg_index = b.msg_index
