@@ -167,16 +167,27 @@ usd_4 AS (
 ),
 osmo_price_hour AS (
     SELECT
-        block_hour,
-        AVG(
-            CASE
-                WHEN exclude_from_pricing = FALSE THEN price
-            END
-        ) price
+        DATE_TRUNC(
+            'HOUR',
+            block_timestamp
+        ) AS block_hour,
+        AVG(price) AS price
     FROM
-        usd_4
-    GROUP BY
-        block_hour
+        {{ ref('silver__pool_token_prices') }} A
+    WHERE
+        price_denom = 'uosmo'
+        AND token_address = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858' --axUSDC
+
+{% if is_incremental() %}
+AND block_hour >=(
+    SELECT
+        DATEADD('day', -1, MAX(block_hour :: DATE))
+    FROM
+        {{ this }}
+)
+{% endif %}
+GROUP BY
+    block_hour
 ),
 osmo AS (
     SELECT
