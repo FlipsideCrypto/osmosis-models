@@ -24,7 +24,8 @@ base AS (
         A.tx_id,
         A.msg_type,
         A.msg_index,
-        msg_group
+        msg_group,
+        msg_sub_group
     FROM
         {{ ref('silver__msg_attributes') }} A
     WHERE
@@ -59,6 +60,7 @@ msg_attr AS (
         A.msg_index,
         A.msg_type,
         A.msg_group,
+        A.msg_sub_group,
         block_id,
         block_timestamp,
         tx_succeeded,
@@ -107,8 +109,8 @@ tx_address AS (
             OBJECT_AGG(
                 attribute_key :: STRING,
                 attribute_value :: variant
-            ) IGNORE NULLS
-        ) OVER (
+            ) ignore nulls
+        ) over (
             PARTITION BY A.tx_id
             ORDER BY
                 A.msg_index ASC
@@ -142,13 +144,14 @@ AND _inserted_timestamp >= (
 {% endif %}
 GROUP BY
     A.tx_id,
-    msg_index,
-    msg_group
+    A.msg_group,
+    A.msg_index
 ),
 valid AS (
     SELECT
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index,
         OBJECT_AGG(
             attribute_key :: STRING,
@@ -166,12 +169,14 @@ valid AS (
     GROUP BY
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index
 ),
 sendr AS (
     SELECT
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index,
         OBJECT_AGG(
             attribute_key :: STRING,
@@ -185,12 +190,14 @@ sendr AS (
     GROUP BY
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index
 ),
 amount AS (
     SELECT
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index,
         OBJECT_AGG(
             attribute_key :: STRING,
@@ -204,12 +211,14 @@ amount AS (
     GROUP BY
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index
 ),
 ctime AS (
     SELECT
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index,
         OBJECT_AGG(
             attribute_key :: STRING,
@@ -223,12 +232,14 @@ ctime AS (
     GROUP BY
         tx_id,
         msg_group,
+        msg_sub_group,
         msg_index
 ),
 prefinal AS (
     SELECT
         A.tx_id,
         A.msg_group,
+        A.msg_sub_group,
         b.sender AS delegator_address,
         d.amount,
         A.msg_type AS action,
@@ -240,6 +251,7 @@ prefinal AS (
             SELECT
                 DISTINCT tx_id,
                 msg_group,
+                msg_sub_group,
                 msg_index,
                 REPLACE(
                     REPLACE(
@@ -279,6 +291,7 @@ add_dec AS (
         C.tx_caller_address,
         A.action,
         A.msg_group,
+        A.msg_sub_group,
         A.delegator_address,
         SUM(
             CASE
@@ -312,6 +325,7 @@ add_dec AS (
                 p.tx_id,
                 p.action,
                 p.msg_group,
+                p.msg_sub_group,
                 p.delegator_address,
                 p.validator_address,
                 p.redelegate_source_validator_address,
@@ -345,6 +359,7 @@ add_dec AS (
         C.tx_caller_address,
         A.action,
         A.msg_group,
+        A.msg_sub_group,
         A.delegator_address,
         currency,
         A.validator_address,
@@ -360,6 +375,7 @@ SELECT
     A.tx_caller_address,
     A.action,
     A.msg_group,
+    A.msg_sub_group,
     A.delegator_address,
     A.amount,
     A.currency,
@@ -375,6 +391,7 @@ SELECT
         '-',
         tx_id,
         msg_group,
+        msg_sub_group,
         action,
         currency,
         delegator_address,
