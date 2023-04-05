@@ -31,3 +31,11 @@ models:
         description: "{{ doc('proposal_type') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: PROPOSAL_TITLE
+        description: "{{ doc('proposal_title') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PROPOSAL_DESCRIPTION
+        description: "{{ doc('proposal_description') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

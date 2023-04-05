@@ -16,5 +16,7 @@ SELECT
     tx_succeeded,
     proposer, 
     proposal_id, 
-    proposal_type
+    proposal_type, 
+    proposal_title, 
+    proposal_description
 FROM {{ ref('silver__governance_submit_proposal') }}
