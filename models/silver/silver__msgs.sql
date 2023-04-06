@@ -69,6 +69,13 @@ prefinal AS (
     ) AS msg_group,
     msg_index,
     msg_type,
+    LAST_VALUE(
+      msg_type
+    ) over(
+      PARTITION BY tx_id
+      ORDER BY
+        msg_index
+    ) AS last_msg_type,
     msg,
     is_module,
     attribute_key,
@@ -86,12 +93,14 @@ exec_actions AS (
   WHERE
     msg_type = 'message'
     AND attribute_key = 'action'
-    AND LOWER(attribute_value) LIKE '%exec%'
+    AND (LOWER(attribute_value) LIKE '%exec%'
+    OR attribute_value IN ('/ibc.core.channel.v1.MsgRecvPacket', '/ibc.applications.transfer.v1.MsgTransfer'))
 ),
 grp AS (
   SELECT
     A.tx_id,
     A.msg_index,
+    is_module,
     RANK() over(
       PARTITION BY A.tx_id,
       A.msg_group
@@ -113,20 +122,23 @@ SELECT
   A.tx_id,
   tx_succeeded,
   msg_group,
-  CASE
-    WHEN msg_group IS NULL THEN NULL
-    ELSE COALESCE(
-      LAST_VALUE(
+  COALESCE(
+    CASE
+      WHEN msg_group IS NULL THEN NULL
+      ELSE LAST_VALUE(
         b.msg_sub_group ignore nulls
       ) over(
         PARTITION BY A.tx_id,
         msg_group
         ORDER BY
           A.msg_index DESC rows unbounded preceding
-      ),
-      0
-    )
-  END AS msg_sub_group,
+      )
+    END,
+    CASE
+      WHEN msg_group IS NOT NULL
+      AND last_msg_type <> 'tx' THEN 0
+    END
+  ) AS msg_sub_group,
   A.msg_index,
   msg_type,
   msg,

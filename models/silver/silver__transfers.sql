@@ -13,6 +13,7 @@ WITH base_atts AS (
         tx_id,
         tx_succeeded,
         msg_group,
+        msg_sub_group,
         msg_index,
         msg_type,
         attribute_key,
@@ -67,6 +68,7 @@ message_index_ibc AS (
     SELECT
         att.tx_id,
         msg_group,
+        msg_sub_group,
         MAX(
             att.msg_index
         ) AS max_index
@@ -84,12 +86,14 @@ message_index_ibc AS (
         AND msg_group IS NOT NULL
     GROUP BY
         att.tx_id,
-        msg_group
+        msg_group,
+        msg_sub_group
 ),
 coin_sent_ibc AS (
     SELECT
         A.tx_id,
         A.msg_group,
+        A.msg_sub_group,
         COALESCE(
             SPLIT_PART(
                 TRIM(
@@ -114,6 +118,7 @@ coin_sent_ibc AS (
         LEFT OUTER JOIN message_index_ibc m
         ON A.tx_id = m.tx_id
         AND A.msg_group = m.msg_group
+        AND A.msg_sub_group = m.msg_sub_group
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
         l
         ON RIGHT(attribute_value, LENGTH(attribute_value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(attribute_value, '[^[:digit:]]', ' ')), ' ', 0))) = l.address
@@ -125,6 +130,7 @@ receiver_ibc AS (
     SELECT
         tx_id,
         msg_group,
+        msg_sub_group,
         COALESCE(
             attribute_value,
             TRY_PARSE_JSON(attribute_value) :receiver
@@ -138,7 +144,8 @@ receiver_ibc AS (
     GROUP BY
         tx_id,
         receiver,
-        msg_group
+        msg_group,
+        msg_sub_group
 ),
 osmo_tx_ids AS (
     SELECT
@@ -226,22 +233,39 @@ fin AS (
         'IBC_TRANSFER_OUT' AS transfer_type,
         r.msg_index,
         sender,
-        amount,
-        currency,
-        DECIMAL,
+        COALESCE(
+            c_old.amount,
+            C.amount
+        ) AS amount,
+        COALESCE(
+            c_old.currency,
+            C.currency
+        ) AS currency,
+        COALESCE(
+            c_old.decimal,
+            C.decimal
+        ) AS DECIMAL,
         receiver,
         _inserted_timestamp,
         concat_ws(
             '-',
             r.tx_id,
             r.msg_index,
-            currency
+            COALESCE(
+                c_old.currency,
+                C.currency
+            )
         ) AS _unique_key
     FROM
         receiver_ibc r
         LEFT OUTER JOIN coin_sent_ibc C
         ON r.tx_id = C.tx_id
         AND r.msg_group = C.msg_group
+        AND r.msg_sub_group = C.msg_sub_group + 1
+        LEFT OUTER JOIN coin_sent_ibc c_old
+        ON r.tx_id = c_old.tx_id
+        AND r.msg_group = c_old.msg_group
+        AND r.msg_sub_group = c_old.msg_sub_group
         LEFT OUTER JOIN sender s
         ON r.tx_id = s.tx_id
         JOIN (
@@ -257,8 +281,14 @@ fin AS (
         ON r.tx_id = t.tx_id
     WHERE
         (
-            amount IS NOT NULL
-            OR currency IS NOT NULL
+            COALESCE(
+                c_old.amount,
+                C.amount
+            ) IS NOT NULL
+            OR COALESCE(
+                c_old.currency,
+                C.currency
+            ) IS NOT NULL
         )
     UNION ALL
     SELECT
@@ -345,7 +375,7 @@ fin AS (
         ON s.tx_id = t.tx_id
         INNER JOIN coin_sent_ibc C
         ON s.tx_id = C.tx_id
-        AND m.msg_group = C.msg_group
+        AND m.msg_group = C.msg_group {# AND m.msg_sub_group = C.msg_sub_group #}
     WHERE
         TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
         AND m.msg_type = 'write_acknowledgement'
