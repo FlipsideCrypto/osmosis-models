@@ -391,7 +391,10 @@ SELECT
         '-',
         tx_id,
         msg_group,
-        msg_sub_group,
+        COALESCE(
+            msg_sub_group,
+            -1
+        ),
         action,
         currency,
         delegator_address,

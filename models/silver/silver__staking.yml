@@ -74,7 +74,6 @@ models:
       - name: MSG_SUB_GROUP
         description: "{{ doc('msg_sub_group') }}"
         tests: 
-          - not_null
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
