@@ -55,7 +55,10 @@ msg_atts AS (
             ) THEN msg_index
         END msg_index,
         A.msg_group,
-        A.msg_sub_group,
+        COALESCE(
+            A.msg_sub_group,
+            -1
+        ) AS msg_sub_group,
         msg_type,
         attribute_key,
         attribute_value,
@@ -129,8 +132,8 @@ AND _inserted_timestamp >= (
 {% endif %}
 ),
 lper AS (
-    SELECT DISTINCT
-        tx_id,
+    SELECT
+        DISTINCT tx_id,
         SPLIT_PART(
             attribute_value,
             '/',
@@ -223,7 +226,7 @@ decimals AS (
         currency,
         CASE
             WHEN currency LIKE '%pool%' THEN 18
-            ELSE decimal
+            ELSE DECIMAL
         END AS DECIMAL,
         block_timestamp
     FROM

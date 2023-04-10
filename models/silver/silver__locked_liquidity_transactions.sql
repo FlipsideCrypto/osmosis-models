@@ -10,7 +10,10 @@ WITH count_ids AS (
     SELECT
         tx_id,
         msg_group,
-        msg_sub_group,
+        COALESCE(
+            msg_sub_group,
+            -1
+        ) AS msg_sub_group,
         COUNT(
             DISTINCT attribute_value
         ) AS id_count
@@ -35,7 +38,10 @@ AND _inserted_timestamp >= (
 GROUP BY
     tx_id,
     msg_group,
-    msg_sub_group
+    COALESCE(
+        msg_sub_group,
+        -1
+    )
 ),
 base AS (
     SELECT
@@ -66,7 +72,10 @@ base AS (
         JOIN count_ids b
         ON A.tx_id = b.tx_id
         AND A.msg_group = b.msg_group
-        AND A.msg_sub_group = b.msg_sub_group
+        AND COALESCE(
+            A.msg_sub_group,
+            -1
+        ) = b.msg_sub_group
     WHERE
         attribute_key IN (
             'period_lock_id',
