@@ -30,14 +30,28 @@ WITH base AS (
 
 {% if is_incremental() %}
 WHERE
-    block_timestamp::DATE >= (
+    block_timestamp :: DATE >= (
         SELECT
-            DATEADD('day', -1,   MAX(
-                block_timestamp::DATE
-            ))
+            DATEADD(
+                'day',
+                -1,
+                MAX(
+                    block_timestamp :: DATE
+                )
+            )
         FROM
             {{ this }}
-    )    
+    )
+    OR b.value :denom :: STRING IN (
+        SELECT
+            currency
+        FROM
+            {{ this }}
+        GROUP BY
+            currency
+        HAVING
+            MAX(COALESCE(DECIMAL, -1)) <> MIN(COALESCE(DECIMAL, -1))
+    )
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY bal.block_id, bal.address, currency
@@ -102,8 +116,7 @@ tmp AS (
         LEFT JOIN tbl bal
         ON ab.address = bal.address
         AND ab.block_timestamp = bal.block_timestamp
-        AND ac.currency = bal.currency
-         qualify(ROW_NUMBER() over(PARTITION BY ab.address, ab.block_id, ac.currency
+        AND ac.currency = bal.currency qualify(ROW_NUMBER() over(PARTITION BY ab.address, ab.block_id, ac.currency
     ORDER BY
         ab._inserted_timestamp DESC)) = 1
 ),
