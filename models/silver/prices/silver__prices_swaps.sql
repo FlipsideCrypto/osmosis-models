@@ -1,7 +1,5 @@
 {{ config(
-    materialized = 'incremental',
-    unique_key = "CONCAT_WS('-', block_hour, currency)",
-    incremental_strategy = 'delete+insert',
+    materialized = 'table',
     cluster_by = ['block_hour']
 ) }}
 
@@ -38,20 +36,19 @@ WITH swaps AS (
         TRY_TO_NUMBER(from_amount) > 0
         AND TRY_TO_NUMBER(to_amount) > 0
         AND f.raw_metadata [1] :exponent IS NOT NULL
-        AND t.raw_metadata [1] :exponent IS NOT NULL
+        AND t.raw_metadata [1] :exponent IS NOT NULL {# {% if is_incremental() %}
+        AND block_hour >=(
+            SELECT
+                DATEADD('day', -1, MAX(block_hour :: DATE))
+            FROM
+                {{ this }}
+        )
+    {% endif %}
 
-{% if is_incremental() %}
-AND block_hour >=(
-    SELECT
-        DATEADD('day', -1, MAX(block_hour :: DATE))
-    FROM
-        {{ this }}
-)
-{% endif %}
-
-qualify(RANK() over(
-ORDER BY
-    block_hour DESC)) <> 1
+    #}
+    qualify(RANK() over(
+    ORDER BY
+        block_hour DESC)) <> 1
 ),
 swap_range AS (
     SELECT
@@ -177,17 +174,18 @@ osmo_price_hour AS (
     WHERE
         price_denom = 'uosmo'
         AND token_address = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858' --axUSDC
+        {# {% if is_incremental() %}
+        AND block_hour >=(
+            SELECT
+                DATEADD('day', -1, MAX(block_hour :: DATE))
+            FROM
+                {{ this }}
+        )
+    {% endif %}
 
-{% if is_incremental() %}
-AND block_hour >=(
-    SELECT
-        DATEADD('day', -1, MAX(block_hour :: DATE))
-    FROM
-        {{ this }}
-)
-{% endif %}
-GROUP BY
-    block_hour
+    #}
+    GROUP BY
+        block_hour
 ),
 osmo AS (
     SELECT
@@ -421,9 +419,7 @@ FINAL AS (
         A.block_hour,
         A.currency,
         A.project_name
-)
-
-{% if is_incremental() %},
+) {# {% if is_incremental() %},
 not_in_final AS (
     SELECT
         DATEADD(
@@ -449,7 +445,9 @@ not_in_final AS (
                 FINAL
         )
 )
-{% endif %},
+{% endif %}
+
+#},
 fill_in_the_blanks_temp AS (
     SELECT
         A.hour AS block_hour,
@@ -469,60 +467,60 @@ fill_in_the_blanks_temp AS (
                 {{ source(
                     'crosschain',
                     'dim_date_hours'
-                ) }} A
+                ) }} A {# {% if is_incremental() %}
+            WHERE
+                HOUR > (
+                    SELECT
+                        MAX(block_hour)
+                    FROM
+                        {{ this }}
+                )
+                AND HOUR <= (
+                    SELECT
+                        max_date
+                    FROM
+                        swap_range
+                )
+            {% else %}
+                JOIN swap_range b
+                ON A.date_hour BETWEEN b.min_date
+                AND max_date
+            {% endif %}
 
-{% if is_incremental() %}
-WHERE
-    HOUR > (
-        SELECT
-            MAX(block_hour)
-        FROM
-            {{ this }}
-    )
-    AND HOUR <= (
-        SELECT
-            max_date
-        FROM
-            swap_range
-    )
-{% else %}
-    JOIN swap_range b
-    ON A.date_hour BETWEEN b.min_date
-    AND max_date
-{% endif %}
-) A
-CROSS JOIN (
-    SELECT
-        DISTINCT currency,
-        project_name
-    FROM
-        FINAL
+            #}
+        ) A
+        CROSS JOIN (
+            SELECT
+                DISTINCT currency,
+                project_name
+            FROM
+                FINAL {# {% if is_incremental() %}
+            UNION
+            SELECT
+                DISTINCT currency,
+                project_name
+            FROM
+                {{ this }}
+            {% endif %}
 
-{% if is_incremental() %}
-UNION
-SELECT
-    DISTINCT currency,
-    project_name
-FROM
-    {{ this }}
-{% endif %}
-) b
-LEFT JOIN (
-    SELECT
-        *
-    FROM
-        FINAL
+            #}
+        ) b
+        LEFT JOIN (
+            SELECT
+                *
+            FROM
+                FINAL {# {% if is_incremental() %}
+            UNION ALL
+            SELECT
+                *
+            FROM
+                not_in_final
+            {% endif %}
 
-{% if is_incremental() %}
-UNION ALL
-SELECT
-    *
-FROM
-    not_in_final
-{% endif %}
-) C
-ON A.hour = C.block_hour
-AND b.currency = C.currency
+            #}
+        ) C
+        ON A.hour = C.block_hour
+        AND b.currency = C.currency
 )
 SELECT
     block_hour,

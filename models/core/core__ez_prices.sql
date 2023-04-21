@@ -1,6 +1,6 @@
 {{ config(
     materialized = 'view',
-    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }}}
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }} }
 ) }}
 
 WITH p_base AS (
@@ -13,6 +13,7 @@ WITH p_base AS (
         UPPER(
             A.symbol
         ) AS symbol,
+        currency,
         A.price,
         A.provider,
         CASE
@@ -29,7 +30,10 @@ WITH p_base AS (
     SELECT
         A.recorded_hour,
         A.symbol,
-        b.address AS currency,
+        COALESCE(
+            A.currency,
+            b.address
+        ) AS currency,
         A.price
     FROM
         p_base A
