@@ -105,18 +105,8 @@ AND _inserted_timestamp >= (
 tx_address AS (
     SELECT
         A.tx_id,
-        FIRST_VALUE(
-            OBJECT_AGG(
-                attribute_key :: STRING,
-                attribute_value :: variant
-            ) ignore nulls
-        ) over (
-            PARTITION BY A.tx_id
-            ORDER BY
-                A.msg_index ASC
-        ) AS j,
         SPLIT_PART(
-            j :acc_seq :: STRING,
+            attribute_value,
             '/',
             0
         ) AS tx_caller_address
@@ -142,10 +132,10 @@ AND _inserted_timestamp >= (
         max_date
 )
 {% endif %}
-GROUP BY
-    A.tx_id,
-    A.msg_group,
-    A.msg_index
+
+qualify(ROW_NUMBER() over(PARTITION BY A.tx_id
+ORDER BY
+    msg_index)) = 1
 ),
 valid AS (
     SELECT
