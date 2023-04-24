@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["token_address","pool_id","block_id"],
     incremental_strategy = 'merge',
+    cluster_by = ['_inserted_timestamp::DATE']
 ) }}
 
 WITH top_pools AS (
@@ -32,6 +33,7 @@ WITH top_pools AS (
             token_1_amount
         ) AS token_1_amount,
         pool_id,
+        pool_type,
         A._inserted_timestamp
     FROM
         {{ ref('silver__pool_balances') }} A
@@ -42,7 +44,7 @@ WITH top_pools AS (
         t1
         ON A.token_1_denom = t1.address
     WHERE
-        pool_type = '/osmosis.gamm.v1beta1.Pool'
+        pool_type NOT ILIKE '%stable%'
         AND token_2_denom IS NULL
         AND (
             t0.decimal IS NOT NULL
@@ -61,10 +63,10 @@ AND A._inserted_timestamp >= (
         {{ this }}
 )
 {% endif %}
-qualify(ROW_NUMBER() OVER(partition by   DATE_TRUNC(
-            'hour',
-            block_timestamp
-        ), pool_id order by block_id desc) =1)
+
+qualify(ROW_NUMBER() over(PARTITION BY DATE_TRUNC('hour', block_timestamp), pool_id
+ORDER BY
+    block_id DESC) = 1)
 ),
 fin AS (
     SELECT
@@ -75,6 +77,7 @@ fin AS (
         token_1_denom AS price_denom,
         pool_id,
         token_0_amount + token_1_amount AS pool_total,
+        pool_type,
         _inserted_timestamp
     FROM
         top_pools
@@ -87,6 +90,7 @@ fin AS (
         token_0_denom AS price_denom,
         pool_id,
         token_0_amount + token_1_amount AS pool_total,
+        pool_type,
         _inserted_timestamp
     FROM
         top_pools
@@ -106,6 +110,7 @@ SELECT
         ORDER BY
             pool_total DESC
     ) AS token_pool_rank,
+    pool_type,
     _inserted_timestamp
 FROM
     fin

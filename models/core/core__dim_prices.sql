@@ -1,11 +1,12 @@
 {{ config(
     materialized = 'view',
-    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }}}
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }} }
 ) }}
 
 SELECT
     recorded_hour AS recorded_at,
     symbol,
+    NULL AS currency,
     CLOSE AS price,
     NULL AS total_supply,
     NULL AS volume_24h,
@@ -16,6 +17,7 @@ UNION ALL
 SELECT
     recorded_hour AS recorded_at,
     symbol,
+    NULL AS currency,
     CLOSE AS price,
     NULL AS total_supply,
     NULL AS volume_24h,
@@ -26,6 +28,7 @@ UNION ALL
 SELECT
     block_hour AS recorded_at,
     project_name AS symbol,
+    currency,
     price_usd AS price,
     NULL AS total_supply,
     NULL AS volume_24h,
@@ -39,6 +42,7 @@ SELECT
         block_timestamp
     ) AS recorded_at,
     project_name AS symbol,
+    token_address AS currency,
     price_usd AS price,
     NULL AS total_supply,
     NULL AS volume_24h,
