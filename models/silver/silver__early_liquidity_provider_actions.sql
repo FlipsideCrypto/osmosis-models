@@ -217,10 +217,15 @@ tokens_2 AS (
         tokens A
         LEFT JOIN lper b
         ON A.tx_id = b.tx_id
-        LEFT JOIN sndr C
+        LEFT JOIN (
+            SELECT
+                DISTINCT tx_id,
+                attribute_value
+            FROM
+                sndr
+        ) C
         ON A.tx_Id = C.tx_ID
-        AND b.liquidity_provider_address = C.attribute_value
-        AND A.msg_index = C.msg_index + 1
+        AND b.liquidity_provider_address = C.attribute_value -- AND A.msg_index = C.msg_index + 1
     WHERE
         what_is_this = 'non lp tokens'
         OR (
@@ -239,7 +244,7 @@ decimals AS (
         currency,
         CASE
             WHEN currency LIKE '%pool%' THEN 18
-            ELSE decimal
+            ELSE DECIMAL
         END AS DECIMAL,
         action,
         block_timestamp

@@ -97,8 +97,14 @@ SELECT
     proposer,
     p.proposal_id :: NUMBER AS proposal_id,
     y.proposal_type,
-    tx_body :messages[0] :content :title :: STRING AS proposal_title,
-    tx_body :messages[0] :content :description :: STRING AS proposal_description,
+    COALESCE(
+        tx_body :messages [0] :content :title,
+        tx_body :messages [0] :msgs [0] :content :title
+    ) :: STRING AS proposal_title,
+    COALESCE(
+        tx_body :messages [0] :content :description,
+        tx_body :messages [0] :msgs [0] :content :description
+    ) :: STRING AS proposal_description,
     _inserted_timestamp
 FROM
     proposal_ids p

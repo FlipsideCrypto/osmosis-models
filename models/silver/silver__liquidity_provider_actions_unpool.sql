@@ -27,11 +27,92 @@ in_play AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        msg_type IN(
-            'pool_exited',
-            'pool_joined'
-        ) {# AND tx_id = '46F3F666580428167DEC0DB97CB5144ACB71E5651FEFF05EE1DB9C250CFDD756'
-        AND block_timestamp :: DATE = '2023-03-22' #}
+        msg_type = 'message'
+        AND attribute_key = 'action'
+        AND attribute_value IN (
+            'unpool_whitelisted_pool',
+            '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
+        ) {# AND tx_id = 'BA95C22E651C479B5699A3676504F820464E12F641C34BB67C436F18271A0262'
+        AND block_timestamp :: DATE = '2022-05-23' #}
+
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
+),
+msg_atts_raw AS (
+    SELECT
+        DISTINCT A.tx_id,
+        CASE
+            WHEN attribute_key IN (
+                'tokens_in',
+                'tokens_out',
+                'amount',
+                'sender'
+            ) THEN msg_index
+        END msg_index,
+        A.msg_group,
+        COALESCE(
+            A.msg_sub_group,
+            -1
+        ) AS msg_sub_group,
+        msg_type,
+        attribute_key,
+        attribute_value,
+        CASE
+            WHEN attribute_key = 'module' THEN 'module'
+            WHEN msg_type IN(
+                'pool_exited',
+                'pool_joined'
+            )
+            AND attribute_key <> 'pool_id' THEN 'non lp tokens'
+            WHEN msg_type = 'burn' THEN 'lp tokens'
+            WHEN attribute_key = 'pool_id' THEN 'pool'
+            WHEN attribute_key = 'acc_seq' THEN 'lper'
+            WHEN attribute_key = 'sender' THEN 'msg sender'
+        END what_is_this,
+        block_timestamp,
+        CASE
+            WHEN what_is_this = 'lp tokens' THEN TRUE
+            ELSE FALSE
+        END AS is_module
+    FROM
+        {{ ref('silver__msg_attributes') }} A
+        JOIN in_play b
+        ON A.tx_id = b.tx_ID
+    WHERE
+        (
+            (
+                msg_type IN (
+                    'pool_exited',
+                    'pool_joined',
+                    'burn'
+                )
+            )
+            AND (
+                attribute_key IN (
+                    'tokens_in',
+                    'tokens_out',
+                    'pool_id'
+                )
+            )
+            OR attribute_key = 'acc_seq'
+            OR (
+                msg_type = 'burn'
+                AND attribute_key = 'amount'
+            )
+            OR (
+                msg_type = 'message'
+                AND attribute_key = 'sender'
+            )
+        ) {# AND A.tx_id = 'BA95C22E651C479B5699A3676504F820464E12F641C34BB67C436F18271A0262'
+        AND A.block_timestamp :: DATE = '2022-05-23' #}
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -46,109 +127,23 @@ AND _inserted_timestamp >= (
 ),
 msg_atts AS (
     SELECT
-        DISTINCT A.tx_id,
-        CASE
-            WHEN attribute_key IN (
-                'tokens_in',
-                'tokens_out',
-                'amount',
-                'sender',
-                'pool_id'
-            ) THEN msg_index
-        END msg_index,
-        A.msg_group,
-        COALESCE(
-            A.msg_sub_group,
-            -1
-        ) AS msg_sub_group,
+        tx_id,
+        msg_index,
+        NULLIF(
+            (conditional_true_event(is_module) over (PARTITION BY tx_id
+            ORDER BY
+                msg_index) -1),
+                -1
+        ) AS msg_group,
+        msg_sub_group,
+        what_is_this,
         msg_type,
         attribute_key,
         attribute_value,
-        CASE
-            WHEN msg_type IN(
-                'pool_exited',
-                'pool_joined'
-            )
-            AND attribute_key <> 'pool_id' THEN 'non lp tokens'
-            WHEN msg_type = 'transfer'
-            AND attribute_key = 'amount'
-            AND attribute_value LIKE '%gamm%pool%'
-            AND attribute_value NOT LIKE '%,%' THEN 'lp tokens'
-            WHEN attribute_key = 'pool_id' THEN 'pool'
-            WHEN attribute_key = 'acc_seq' THEN 'lper'
-            WHEN attribute_key = 'sender' THEN 'msg sender'
-            WHEN attribute_key = 'action' THEN 'action'
-        END what_is_this,
         block_timestamp,
-        SUM(
-            CASE
-                WHEN msg_type = 'transfer'
-                AND attribute_key = 'amount'
-                AND attribute_value LIKE '%gamm%pool%'
-                AND attribute_value NOT LIKE '%,%' THEN 1
-                ELSE 0
-            END
-        ) over(
-            PARTITION BY A.tx_id,
-            A.msg_group
-        ) lp_count
+        is_module
     FROM
-        {{ ref('silver__msg_attributes') }} A
-        JOIN in_play b
-        ON A.tx_id = b.tx_ID
-    WHERE
-        (
-            (
-                msg_type IN (
-                    'pool_exited',
-                    'pool_joined'
-                )
-            )
-            AND (
-                attribute_key IN (
-                    'tokens_in',
-                    'tokens_out',
-                    'pool_id'
-                )
-            )
-            OR attribute_key = 'acc_seq'
-            OR (
-                msg_type = 'transfer'
-                AND attribute_key = 'amount'
-                AND attribute_value LIKE '%gamm%pool%'
-                AND attribute_value NOT LIKE '%,%'
-            )
-            OR (
-                msg_type = 'message'
-                AND attribute_key IN (
-                    'sender',
-                    'action'
-                )
-            )
-        ) {# AND A.tx_id = '46F3F666580428167DEC0DB97CB5144ACB71E5651FEFF05EE1DB9C250CFDD756'
-        AND A.block_timestamp :: DATE = '2023-03-22' #}
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-),
-action AS (
-    SELECT
-        DISTINCT tx_id,
-        attribute_value action
-    FROM
-        msg_atts
-    WHERE
-        what_is_this = 'action' qualify(ROW_NUMBER() over(PARTITION BY tx_id
-    ORDER BY
-        msg_index) = 1)
+        msg_atts_raw
 ),
 lper AS (
     SELECT
@@ -182,8 +177,7 @@ tokens AS (
             0
         ) :: INTEGER AS amount,
         RIGHT(t.value, LENGTH(t.value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(t.value, '[^[:digit:]]', ' ')), ' ', 0))) :: STRING AS currency,
-        block_timestamp,
-        lp_count
+        block_timestamp
     FROM
         msg_atts,
         LATERAL SPLIT_TO_TABLE (
@@ -237,7 +231,6 @@ tokens_2 AS (
             what_is_this = 'lp tokens'
             AND (
                 C.tx_ID IS NOT NULL
-                OR lp_count = 1
             )
         )
 ),
@@ -283,7 +276,7 @@ txn AS (
 ),
 act AS (
     SELECT
-        DISTINCT tx_id,
+        tx_id,
         msg_group,
         msg_sub_group,
         msg_type AS action
@@ -338,10 +331,3 @@ FROM
     JOIN txn tx
     ON d.tx_id = tx.tx_id
     AND d.block_timestamp = tx.block_timestamp
-    JOIN action ax
-    ON d.tx_id = ax.tx_id
-WHERE
-    ax.action NOT IN (
-        'unpool_whitelisted_pool',
-        '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
-    )
