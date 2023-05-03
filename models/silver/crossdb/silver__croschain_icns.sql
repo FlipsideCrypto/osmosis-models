@@ -1,5 +1,5 @@
 {{ config(
-    materialized = 'view'
+    materialized = 'table'
 ) }}
 
 SELECT
@@ -11,6 +11,9 @@ SELECT
     start_date,
     end_date
 FROM
-    {{ ref(
-        'silver__croschain_icns'
+    {{ source(
+        'crosschain',
+        'address_tags'
     ) }}
+WHERE
+    tag_type = 'ICNS'
