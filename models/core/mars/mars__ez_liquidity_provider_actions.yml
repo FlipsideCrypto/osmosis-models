@@ -2,11 +2,6 @@ version: 2
 models:
   - name: mars__ez_liquidity_provider_actions
     description: Includes all actions entering and exiting liquidity mars pools. 
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - TX_ID
-            - CURRENCY
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

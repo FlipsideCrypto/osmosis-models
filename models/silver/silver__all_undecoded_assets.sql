@@ -27,7 +27,6 @@ EXCEPT
 SELECT
   base AS address
 FROM
-  {{ source(
-    'bronze_streamline',
-    'asset_metadata_api'
+  {{ ref(
+    'bronze__asset_metadata'
   ) }}
