@@ -28,5 +28,5 @@ SELECT
   base AS address
 FROM
   {{ ref(
-    'bronze__asset_metadata'
+    'bronze__asset_metadata_api'
   ) }}
