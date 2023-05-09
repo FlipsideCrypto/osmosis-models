@@ -163,9 +163,8 @@ SELECT
     DISTINCT block_id,
     address
 FROM
-    {{ source(
-        'bronze_streamline',
-        'balances_api'
+    {{ ref(
+        'bronze__balances_api'
     ) }}
 ORDER BY
     block_id

@@ -29,9 +29,8 @@ EXCEPT
 SELECT
     block_id
 FROM
-    {{ source(
-        'bronze_streamline',
-        'pool_balances_api'
+    {{ ref(
+        'bronze__pool_balances_api'
     ) }}
 ORDER BY
     block_id DESC
