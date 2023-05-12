@@ -2,7 +2,7 @@
   materialized = 'incremental',
   unique_key = "_unique_key",
   incremental_strategy = 'merge',
-  cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
+  cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE','block_id::NUMBER'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
 ) }}
 
