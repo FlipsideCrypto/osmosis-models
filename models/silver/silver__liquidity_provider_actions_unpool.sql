@@ -21,7 +21,7 @@ max_date AS (
 
 in_play AS (
     SELECT
-        DISTINCT tx_ID,
+        DISTINCT tx_id,
         msg_group,
         msg_sub_group
     FROM
@@ -273,6 +273,18 @@ txn AS (
         _inserted_timestamp
     FROM
         {{ ref('silver__transactions') }}
+
+{% if is_incremental() %}
+WHERE
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            max_date
+    )
+{% endif %}
 ),
 act AS (
     SELECT
