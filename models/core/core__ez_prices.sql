@@ -32,13 +32,18 @@ WITH p_base AS (
         A.symbol,
         COALESCE(
             A.currency,
-            b.address
+            b_1.address,
+            b_2.address
         ) AS currency,
         A.price
     FROM
         p_base A
         LEFT JOIN {{ ref('silver__asset_metadata') }}
-        b
+        b_1
+        ON A.currency = b_1.address
+        LEFT JOIN {{ ref('silver__asset_metadata') }}
+        b_2
         ON A.symbol = UPPER (
-            b.project_name
+            b_2.project_name
         )
+        AND A.currency IS NULL
