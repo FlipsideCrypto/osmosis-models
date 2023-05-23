@@ -1,6 +1,6 @@
 {{ config(
     materialized = 'incremental',
-    unique_key = ["pool_id","block_id"],
+    unique_key = ["pool_id","block_hour"],
     incremental_strategy = 'merge',
     cluster_by = ['block_timestamp']
 ) }}
@@ -288,14 +288,18 @@ WHERE
             {{ this }}
     ) - INTERVAL '7 days'
 {% endif %}
-qualify(ROW_NUMBER() OVER(partition by   DATE_TRUNC(
-            'hour',
-            block_timestamp
-        ), pool_id order by block_id desc) =1)
+
+qualify(ROW_NUMBER() over(PARTITION BY DATE_TRUNC('hour', block_timestamp), pool_id
+ORDER BY
+    block_id DESC) = 1)
 )
 SELECT
     A.block_id,
     A.block_timestamp,
+    DATE_TRUNC(
+        'hour',
+        A.block_timestamp
+    ) block_hour,
     A.pool_id,
     token_0_denom,
     token_0_amount,

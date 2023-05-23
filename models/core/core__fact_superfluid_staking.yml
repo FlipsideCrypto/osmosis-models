@@ -47,3 +47,7 @@ models:
         description: An ID corresponding to the locking step of the transaction.  
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: IS_UNPOOL
+        description: Boolean value indicating whether the transaction is an unpool action.
+        tests: 
+          - dbt_expectations.expect_column_to_exist

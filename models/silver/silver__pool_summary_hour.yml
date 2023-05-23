@@ -4,12 +4,18 @@ models:
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - BLOCK_ID
             - POOL_ID
+            - BLOCK_HOUR
     columns:
       - name: BLOCK_ID
         tests:
           - not_null
+      - name: BLOCK_TIMESTAMP
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
       - name: POOL_ID
         tests:
           - not_null
