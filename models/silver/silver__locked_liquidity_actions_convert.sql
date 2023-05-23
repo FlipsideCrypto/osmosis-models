@@ -49,10 +49,16 @@ base_msg_atts AS (
         ON A.tx_id = b.tx_id
         AND A.msg_group = b.msg_group {# AND b.tx_grp_rn > 1 #}
     WHERE
-        A.msg_type IN (
-            'superfluid_delegate',
-            'lock_tokens',
-            'add_tokens_to_lock'
+        (
+            A.msg_type IN (
+                'superfluid_delegate',
+                'lock_tokens',
+                'add_tokens_to_lock'
+            )
+            OR (
+                A.msg_type = 'tx'
+                AND A.attribute_key = 'acc_seq'
+            )
         )
 
 {% if is_incremental() %}
@@ -112,6 +118,23 @@ tx_msg_flat AS (
         A.msg_type,
         A._inserted_timestamp
 ),
+lper AS (
+    SELECT
+        tx_id,
+        SPLIT_PART(
+            attribute_value,
+            '/',
+            0
+        ) AS locker_address
+    FROM
+        base_msg_atts
+    WHERE
+        msg_type = 'tx' qualify ROW_NUMBER() over (
+            PARTITION BY tx_id
+            ORDER BY
+                msg_index DESC
+        ) = 1
+),
 FINAL AS (
     SELECT
         A.block_id,
@@ -122,33 +145,26 @@ FINAL AS (
         A.msg_type,
         j :lock_id :: INT AS lock_id,
         j :validator :: STRING AS validator,
-        {# COALESCE(
-        j :"add_tokens_to_lock--owner",
-        j :"lock_tokens--owner",
-        j :"begin_unlock--owner",
-        j :"unlock--owner",
-        j :"burn--burner",
-        j :"unpool_pool_id--sender"
-) :: STRING AS locker,
-#}
-j,
-A._INSERTED_TIMESTAMP
-FROM
-    tx_msg_flat A
+        A._INSERTED_TIMESTAMP
+    FROM
+        tx_msg_flat A
 )
 SELECT
     block_id,
     block_timestamp,
-    tx_id,
+    A.tx_id,
     tx_succeeded,
     msg_group,
     msg_type,
+    'convert' AS msg_action,
+    'convert' AS msg_action_description,
+    b.locker_address,
     lock_id,
-    validator,
-    j,
+    validator AS validator_address,
+    TRUE AS is_superfluid,
     concat_ws(
         '-',
-        tx_id,
+        A.tx_id,
         msg_group,
         COALESCE(
             lock_id,
@@ -157,4 +173,6 @@ SELECT
     ) AS _unique_key,
     _INSERTED_TIMESTAMP
 FROM
-    FINAL
+    FINAL A
+    JOIN lper b
+    ON A.tx_id = b.tx_id

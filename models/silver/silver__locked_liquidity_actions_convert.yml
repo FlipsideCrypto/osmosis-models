@@ -1,14 +1,14 @@
 version: 2
 models:
   - name: silver__locked_liquidity_actions_convert
-    description: Records of all LP token locking transactions that have occurred on Osmosis, dating back to the genesis block. These actions include lock, unlock, unpool, and all superfluid actions.
+    description: Records of all conversion of lp tokens to locked lp tokens transactions that have occurred on Osmosis, dating back to the genesis block
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
             - MSG_GROUP
             - LOCK_ID
-            - LOCKER
+            - LOCKER_ADDRESS
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -58,7 +58,7 @@ models:
               column_type_list:
                 - STRING
                 - VARCHAR
-      - name: LOCKER
+      - name: LOCKER_ADDRESS
         description: "{{ doc('locker_address') }}"
         tests: 
           - not_null
@@ -75,41 +75,19 @@ models:
               column_type_list:
                 - NUMBER
                 - FLOAT
-      - name: AMOUNT
-        description: "{{ doc('amount') }}"
-        tests: 
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER
-                - FLOAT
-      - name: CURRENCY
-        description: "{{ doc('currency') }}"
+      - name: VALIDATOR_ADDRESS
+        description: "{{ doc('validator_address') }}"
         tests: 
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
                 - VARCHAR
-      - name: POOL_ID
-        description: "{{ doc('pool_id') }}"
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: osmovaloper1[0-9a-z]{38,38}
+      - name: IS_SUPERFLUID
+        description: "{{ doc('is_superfluid') }}"  
         tests: 
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - NUMBER
-                - FLOAT
-      - name: LOCK_DURATION
-        description: "{{ doc('lock_duration') }}"  
-        tests: 
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-                column_type_list:
-                  - STRING
-                  - VARCHAR  
-      - name: UNLOCK_TIME
-        description: "{{ doc('unlock_time') }}"   
-        tests: 
-          - dbt_expectations.expect_column_values_to_be_in_type_list:
-              column_type_list:
-                - STRING
-                - VARCHAR
+          - not_null
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
