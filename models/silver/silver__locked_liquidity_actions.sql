@@ -332,9 +332,15 @@ fin AS (
         A.duration AS lock_duration,
         A.unlock_time AS unlock_time,
         CASE
-            WHEN b.tx_id IS NOT NULL
-            OR C.lock_id IS NOT NULL
+            WHEN (
+                b.tx_id IS NOT NULL
+                OR C.lock_id IS NOT NULL
+            )
             AND A.block_id >= C.block_id THEN TRUE
+            WHEN COALESCE(
+                A.action,
+                A.msg_type
+            ) ILIKE '%superfluid%' THEN TRUE
             ELSE FALSE
         END is_superfluid,
         A.new_lock_ids AS unpool_new_lock_ids,
