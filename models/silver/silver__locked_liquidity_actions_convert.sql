@@ -47,7 +47,10 @@ base_msg_atts AS (
                 {{ ref('silver__superfluid_actions') }}
         ) b
         ON A.tx_id = b.tx_id
-        AND A.msg_group = b.msg_group {# AND b.tx_grp_rn > 1 #}
+        AND COALESCE(
+            A.msg_group,
+            0
+        ) = b.msg_group {# AND b.tx_grp_rn > 1 #}
     WHERE
         (
             A.msg_type IN (
