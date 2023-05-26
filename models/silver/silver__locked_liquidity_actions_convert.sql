@@ -80,8 +80,9 @@ tx_msg_flat AS (
         A.tx_id,
         A.tx_succeeded,
         A.msg_group,
-        A.msg_index,
+        {# A.msg_index,
         A.msg_type,
+        #}
         A._inserted_timestamp,
         OBJECT_AGG(
             A.attribute_key :: STRING,
@@ -117,8 +118,9 @@ tx_msg_flat AS (
         A.tx_id,
         A.tx_succeeded,
         A.msg_group,
-        A.msg_index,
+        {# A.msg_index,
         A.msg_type,
+        #}
         A._inserted_timestamp
 ),
 lper AS (
@@ -145,7 +147,7 @@ FINAL AS (
         A.tx_id,
         A.tx_succeeded,
         A.msg_group,
-        A.msg_type,
+        {# A.msg_type, #}
         j :lock_id :: INT AS lock_id,
         j :validator :: STRING AS validator,
         A._INSERTED_TIMESTAMP
@@ -158,7 +160,7 @@ SELECT
     A.tx_id,
     tx_succeeded,
     msg_group,
-    msg_type,
+    {# msg_type, #}
     'convert' AS msg_action,
     'convert' AS msg_action_description,
     b.locker_address,
