@@ -160,7 +160,7 @@ SELECT
     A.tx_id,
     tx_succeeded,
     msg_group,
-    {# msg_type, #}
+    'superfluid_delegate' AS msg_type,
     'convert' AS msg_action,
     'convert' AS msg_action_description,
     b.locker_address,
