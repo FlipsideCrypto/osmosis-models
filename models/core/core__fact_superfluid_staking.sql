@@ -31,9 +31,9 @@ SELECT
     A.tx_succeeded,
     A.msg_action AS action,
     A.locker_address AS delegator_address,
-    NULL AS amount,
-    NULL AS currency,
-    NULL AS DECIMAL,
+    amount,
+    currency,
+    DECIMAL,
     A.validator_address,
     A.lock_id,
     FALSE AS is_unpool

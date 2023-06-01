@@ -75,6 +75,20 @@ models:
               column_type_list:
                 - NUMBER
                 - FLOAT
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+                - FLOAT
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - STRING
+                - VARCHAR
       - name: VALIDATOR_ADDRESS
         description: "{{ doc('validator_address') }}"
         tests: 

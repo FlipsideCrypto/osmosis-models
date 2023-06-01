@@ -153,6 +153,25 @@ FINAL AS (
         A._INSERTED_TIMESTAMP
     FROM
         tx_msg_flat A
+),
+lock_amount AS (
+    SELECT
+        A.lock_id,
+        A.currency,
+        A.decimal,
+        SUM(
+            A.amount
+        ) AS amount
+    FROM
+        {{ ref('silver__locked_liquidity_actions') }} A
+        JOIN FINAL b
+        ON A.lock_id = b.lock_id
+    WHERE
+        A.block_timestamp <= b.block_timestamp
+    GROUP BY
+        A.lock_id,
+        A.currency,
+        A.decimal
 )
 SELECT
     block_id,
@@ -164,7 +183,10 @@ SELECT
     'convert' AS msg_action,
     'convert' AS msg_action_description,
     b.locker_address,
-    lock_id,
+    A.lock_id,
+    la.amount,
+    la.currency,
+    la.decimal,
     validator AS validator_address,
     TRUE AS is_superfluid,
     concat_ws(
@@ -172,7 +194,7 @@ SELECT
         A.tx_id,
         msg_group,
         COALESCE(
-            lock_id,
+            A.lock_id,
             -1
         )
     ) AS _unique_key,
@@ -181,3 +203,5 @@ FROM
     FINAL A
     JOIN lper b
     ON A.tx_id = b.tx_id
+    LEFT JOIN lock_amount la
+    ON A.lock_id = la.lock_id
