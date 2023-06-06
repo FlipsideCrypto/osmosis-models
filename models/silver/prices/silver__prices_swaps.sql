@@ -1,8 +1,5 @@
 {{ config(
-    materialized = 'incremental',
-    unique_key = ["block_hour", "currency"],
-    incremental_strategy = 'merge',
-    cluster_by = ['block_hour::DATE'],
+    materialized = 'view'
 ) }}
 
 WITH swaps AS (
@@ -38,20 +35,9 @@ WITH swaps AS (
         TRY_TO_NUMBER(from_amount) > 0
         AND TRY_TO_NUMBER(to_amount) > 0
         AND f.raw_metadata [1] :exponent IS NOT NULL
-        AND t.raw_metadata [1] :exponent IS NOT NULL
-
-{% if is_incremental() %}
-AND block_hour >=(
-    SELECT
-        DATEADD('day', -3, MAX(block_hour :: DATE))
-    FROM
-        {{ this }}
-)
-{% endif %}
-
-qualify(RANK() over(
-ORDER BY
-    block_hour DESC)) <> 1
+        AND t.raw_metadata [1] :exponent IS NOT NULL qualify(RANK() over(
+    ORDER BY
+        block_hour DESC)) <> 1
 ),
 swap_range AS (
     SELECT
@@ -177,17 +163,8 @@ osmo_price_hour AS (
     WHERE
         price_denom = 'uosmo'
         AND token_address = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858' --axUSDC
-
-{% if is_incremental() %}
-AND block_hour >=(
-    SELECT
-        DATEADD('day', -3, MAX(block_hour :: DATE))
-    FROM
-        {{ this }}
-)
-{% endif %}
-GROUP BY
-    block_hour
+    GROUP BY
+        block_hour
 ),
 osmo AS (
     SELECT

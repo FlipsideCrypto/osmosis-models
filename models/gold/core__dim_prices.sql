@@ -1,5 +1,5 @@
 {{ config(
-    materialized = 'view',
+    materialized = 'table',
     meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'PRICES' }} }
 ) }}
 
