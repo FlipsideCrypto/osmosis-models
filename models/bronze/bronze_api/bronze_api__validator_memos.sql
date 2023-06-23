@@ -52,7 +52,7 @@ call AS (
   SELECT
     top 50 ethereum.streamline.udf_api(
       'GET',
-      'https://api.kube-uw2.keplr-prod.manythings.xyz/v2/validator/proposal/memos?proposalId=' || proposal_id :: STRING || '&chainId=osmosis-1&filter=latest',{},{ 'proposal_id' :proposal_id }
+      'https://api-indexer.keplr.app/v2/validator/proposal/memos?proposalId=' || proposal_id :: STRING || '&chainId=osmosis-1&filter=latest',{},{ 'proposal_id' :proposal_id }
     ) AS resp,
     proposal_id,
     SYSDATE() AS _inserted_timestamp
