@@ -32,8 +32,7 @@ in_play AS (
         AND attribute_value IN (
             'unpool_whitelisted_pool',
             '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
-        ) {# AND tx_id = 'BA95C22E651C479B5699A3676504F820464E12F641C34BB67C436F18271A0262'
-        AND block_timestamp :: DATE = '2022-05-23' #}
+        )
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -111,8 +110,7 @@ msg_atts_raw AS (
                 msg_type = 'message'
                 AND attribute_key = 'sender'
             )
-        ) {# AND A.tx_id = 'BA95C22E651C479B5699A3676504F820464E12F641C34BB67C436F18271A0262'
-        AND A.block_timestamp :: DATE = '2022-05-23' #}
+        )
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -224,7 +222,7 @@ tokens_2 AS (
                 sndr
         ) C
         ON A.tx_Id = C.tx_ID
-        AND b.liquidity_provider_address = C.attribute_value -- AND A.msg_index = C.msg_index + 1
+        AND b.liquidity_provider_address = C.attribute_value
     WHERE
         what_is_this = 'non lp tokens'
         OR (
@@ -306,6 +304,8 @@ SELECT
     d.tx_id,
     tx_succeeded,
     d.msg_index,
+    d.msg_group,
+    d.msg_sub_group,
     l.liquidity_provider_address,
     CASE
         WHEN act.action = 'pool_joined'

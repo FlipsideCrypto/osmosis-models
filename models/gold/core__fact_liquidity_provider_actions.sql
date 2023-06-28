@@ -12,7 +12,8 @@ SELECT
     pool_id :: ARRAY AS pool_id,
     amount,
     currency,
-    DECIMAL
+    DECIMAL,
+    msg_group
 FROM
     {{ ref('silver__liquidity_provider_actions') }}
 UNION ALL
@@ -26,7 +27,8 @@ SELECT
     pool_id,
     amount,
     currency,
-    DECIMAL
+    DECIMAL,
+    msg_group
 FROM
     {{ ref('silver__early_liquidity_provider_actions') }}
 UNION ALL
@@ -40,6 +42,7 @@ SELECT
     pool_id :: ARRAY AS pool_id,
     amount,
     currency,
-    DECIMAL
+    DECIMAL,
+    msg_group
 FROM
     {{ ref('silver__liquidity_provider_actions_unpool') }}

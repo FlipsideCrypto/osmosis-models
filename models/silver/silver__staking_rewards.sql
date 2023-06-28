@@ -549,5 +549,6 @@ SELECT
     ) AS _unique_key
 FROM
     prefinal A
-    LEFT OUTER JOIN osmosis_dev.silver.asset_metadata amd
+    LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
+    amd
     ON A.currency = amd.address
