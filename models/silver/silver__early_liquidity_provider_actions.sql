@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp::DATE'],
+    cluster_by = ['block_timestamp::DATE']
 ) }}
 
 WITH
@@ -21,7 +21,7 @@ max_date AS (
 
 in_play AS (
     SELECT
-        tx_ID,
+        tx_id,
         msg_group,
         msg_sub_group,
         attribute_value action,
@@ -29,7 +29,8 @@ in_play AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        msg_type = 'message'
+        block_timestamp :: DATE < '2022-09-25'
+        AND msg_type = 'message'
         AND attribute_key = 'action'
         AND attribute_value IN (
             'join_pool',
@@ -60,7 +61,8 @@ SELECT
 FROM
     {{ ref('silver__msg_attributes') }}
 WHERE
-    msg_type IN(
+    block_timestamp :: DATE < '2022-09-25'
+    AND msg_type IN(
         'pool_exited',
         'pool_joined'
     )
@@ -107,7 +109,8 @@ msg_atts AS (
         JOIN in_play b
         ON A.tx_id = b.tx_ID
     WHERE
-        (
+        A.block_timestamp :: DATE < '2022-09-25'
+        AND (
             (
                 msg_type = 'message'
                 AND attribute_key = 'action'
@@ -273,17 +276,18 @@ txn AS (
         _inserted_timestamp
     FROM
         {{ ref('silver__transactions') }}
+    WHERE
+        block_timestamp :: DATE < '2022-09-25'
 
 {% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            max_date
-    )
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
 {% endif %}
 )
 SELECT
@@ -292,6 +296,8 @@ SELECT
     tx.tx_id,
     tx.tx_succeeded,
     d.msg_index,
+    d.msg_group,
+    d.msg_sub_group,
     l.liquidity_provider_address,
     CASE
         WHEN action = 'join_pool'

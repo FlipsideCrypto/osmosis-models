@@ -41,3 +41,7 @@ models:
           - dbt_expectations.expect_column_to_exist
       - name: DECIMAL
         description: "{{ doc('decimal') }}"
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist 

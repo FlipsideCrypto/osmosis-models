@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp::DATE'],
+    cluster_by = ['block_timestamp::DATE']
 ) }}
 
 WITH
@@ -21,17 +21,44 @@ max_date AS (
 
 in_play AS (
     SELECT
-        DISTINCT tx_ID,
+        DISTINCT tx_id,
         msg_group,
-        msg_sub_group
+        COALESCE(
+            msg_sub_group,
+            -1
+        ) AS msg_sub_group
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        msg_type IN(
+        block_timestamp :: DATE >= '2021-09-24'
+        AND msg_type IN(
             'pool_exited',
             'pool_joined'
-        ) {# AND tx_id = '46F3F666580428167DEC0DB97CB5144ACB71E5651FEFF05EE1DB9C250CFDD756'
-        AND block_timestamp :: DATE = '2023-03-22' #}
+        )
+
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
+EXCEPT
+SELECT
+    tx_id,
+    msg_group,
+    COALESCE(
+        msg_sub_group,
+        -1
+    ) AS msg_sub_group
+FROM
+    {{ ref('silver__msg_attributes') }}
+WHERE
+    block_timestamp :: DATE >= '2021-09-24'
+    AND msg_type ILIKE '%apollo%'
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -46,16 +73,12 @@ AND _inserted_timestamp >= (
 ),
 msg_atts AS (
     SELECT
-        DISTINCT A.tx_id,
-        CASE
-            WHEN attribute_key IN (
-                'tokens_in',
-                'tokens_out',
-                'amount',
-                'sender',
-                'pool_id'
-            ) THEN msg_index
-        END msg_index,
+        A.block_id,
+        A.block_timestamp,
+        A.tx_id,
+        A.tx_succeeded,
+        A._inserted_timestamp,
+        msg_index,
         A.msg_group,
         COALESCE(
             A.msg_sub_group,
@@ -63,70 +86,29 @@ msg_atts AS (
         ) AS msg_sub_group,
         msg_type,
         attribute_key,
-        attribute_value,
-        CASE
-            WHEN msg_type IN(
-                'pool_exited',
-                'pool_joined'
-            )
-            AND attribute_key <> 'pool_id' THEN 'non lp tokens'
-            WHEN msg_type = 'transfer'
-            AND attribute_key = 'amount'
-            AND attribute_value LIKE '%gamm%pool%'
-            AND attribute_value NOT LIKE '%,%' THEN 'lp tokens'
-            WHEN attribute_key = 'pool_id' THEN 'pool'
-            WHEN attribute_key = 'acc_seq' THEN 'lper'
-            WHEN attribute_key = 'sender' THEN 'msg sender'
-            WHEN attribute_key = 'action' THEN 'action'
-        END what_is_this,
-        block_timestamp,
-        SUM(
-            CASE
-                WHEN msg_type = 'transfer'
-                AND attribute_key = 'amount'
-                AND attribute_value LIKE '%gamm%pool%'
-                AND attribute_value NOT LIKE '%,%' THEN 1
-                ELSE 0
-            END
-        ) over(
-            PARTITION BY A.tx_id,
-            A.msg_group
-        ) lp_count
+        attribute_value
     FROM
         {{ ref('silver__msg_attributes') }} A
         JOIN in_play b
-        ON A.tx_id = b.tx_ID
+        ON A.tx_id = b.tx_id
+        AND A.msg_group = b.msg_group
+        AND COALESCE(
+            A.msg_sub_group,
+            -1
+        ) = b.msg_sub_group
     WHERE
-        (
-            (
-                msg_type IN (
-                    'pool_exited',
-                    'pool_joined'
-                )
-            )
-            AND (
-                attribute_key IN (
-                    'tokens_in',
-                    'tokens_out',
-                    'pool_id'
-                )
-            )
-            OR attribute_key = 'acc_seq'
-            OR (
-                msg_type = 'transfer'
-                AND attribute_key = 'amount'
-                AND attribute_value LIKE '%gamm%pool%'
-                AND attribute_value NOT LIKE '%,%'
+        A.block_timestamp :: DATE >= '2021-09-24'
+        AND (
+            msg_type IN (
+                'pool_exited',
+                'pool_joined',
+                'message'
             )
             OR (
-                msg_type = 'message'
-                AND attribute_key IN (
-                    'sender',
-                    'action'
-                )
+                A.msg_type = 'transfer'
+                AND A.msg_group IS NOT NULL
             )
-        ) {# AND A.tx_id = '46F3F666580428167DEC0DB97CB5144ACB71E5651FEFF05EE1DB9C250CFDD756'
-        AND A.block_timestamp :: DATE = '2023-03-22' #}
+        )
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -141,35 +123,114 @@ AND _inserted_timestamp >= (
 ),
 action AS (
     SELECT
-        DISTINCT tx_id,
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_type,
         attribute_value action
     FROM
         msg_atts
     WHERE
-        what_is_this = 'action' qualify(ROW_NUMBER() over(PARTITION BY tx_id
-    ORDER BY
-        msg_index) = 1)
+        msg_type = 'message'
+        AND attribute_key = 'action'
 ),
 lper AS (
     SELECT
-        DISTINCT tx_id,
-        SPLIT_PART(
-            attribute_value,
-            '/',
-            0
-        ) AS liquidity_provider_address
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_type,
+        attribute_value lper
     FROM
         msg_atts
     WHERE
-        what_is_this = 'lper'
+        msg_type IN (
+            'pool_exited',
+            'pool_joined'
+        )
+        AND attribute_key = 'sender'
+),
+pool_tokens AS (
+    SELECT
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_type,
+        msg_index,
+        attribute_value amount
+    FROM
+        msg_atts
+    WHERE
+        msg_type IN (
+            'pool_exited',
+            'pool_joined'
+        )
+        AND attribute_key LIKE 'token%'
+),
+rel_xfer_msg_index AS (
+    SELECT
+        A.tx_id,
+        A.msg_group,
+        A.msg_sub_group,
+        A.msg_index
+    FROM
+        msg_atts A
+        JOIN lper b
+        ON A.tx_id = b.tx_id
+        AND A.msg_group = b.msg_group
+        AND A.msg_sub_group = b.msg_sub_group
+        JOIN pool_tokens C
+        ON A.tx_id = C.tx_id
+        AND A.msg_group = C.msg_group
+        AND A.msg_sub_group = C.msg_sub_group
+        AND A.msg_index < C.msg_index
+    WHERE
+        A.msg_type = 'transfer'
+        AND (
+            (
+                b.msg_type = 'pool_exited'
+                AND A.attribute_key = 'sender'
+                AND A.attribute_value = b.lper
+            )
+            OR (
+                b.msg_type = 'pool_joined'
+                AND A.attribute_key = 'sender'
+                AND A.attribute_value <> b.lper
+            )
+        )
+),
+rel_xfer AS (
+    SELECT
+        A.tx_id,
+        A.msg_group,
+        A.msg_sub_group,
+        A.msg_index,
+        A.attribute_value AS amount
+    FROM
+        msg_atts A
+        JOIN rel_xfer_msg_index b
+        ON A.tx_id = b.tx_id
+        AND A.msg_index = b.msg_index
+    WHERE
+        attribute_key = 'amount'
+),
+pool_id AS (
+    SELECT
+        DISTINCT tx_id,
+        msg_group,
+        msg_sub_group,
+        attribute_value pool_id
+    FROM
+        msg_atts
+    WHERE
+        attribute_key = 'pool_id'
 ),
 tokens AS (
     SELECT
         tx_id,
-        msg_index,
         msg_group,
         msg_sub_group,
-        what_is_this,
+        msg_type,
         SPLIT_PART(
             TRIM(
                 REGEXP_REPLACE(
@@ -181,95 +242,55 @@ tokens AS (
             ' ',
             0
         ) :: INTEGER AS amount,
-        RIGHT(t.value, LENGTH(t.value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(t.value, '[^[:digit:]]', ' ')), ' ', 0))) :: STRING AS currency,
-        block_timestamp,
-        lp_count
+        RIGHT(t.value, LENGTH(t.value) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(t.value, '[^[:digit:]]', ' ')), ' ', 0))) :: STRING AS currency
     FROM
-        msg_atts,
+        (
+            SELECT
+                tx_id,
+                msg_group,
+                msg_sub_group,
+                msg_type,
+                amount
+            FROM
+                pool_tokens
+            UNION ALL
+            SELECT
+                tx_id,
+                msg_group,
+                msg_sub_group,
+                'xfer',
+                amount AS msg_type
+            FROM
+                rel_xfer
+        ),
         LATERAL SPLIT_TO_TABLE (
-            attribute_value,
+            amount,
             ','
         ) t
-    WHERE
-        what_is_this IN (
-            'lp tokens',
-            'non lp tokens'
-        ) qualify(ROW_NUMBER() over(PARTITION BY tx_id, msg_group, msg_sub_group, currency
-    ORDER BY
-        amount DESC) = 1)
-),
-sndr AS (
-    SELECT
-        tx_id,
-        msg_index,
-        attribute_value
-    FROM
-        msg_atts
-    WHERE
-        attribute_key = 'sender'
-),
-tokens_2 AS (
-    SELECT
-        A.tx_id,
-        A.msg_index,
-        A.msg_group,
-        A.msg_sub_group,
-        A.what_is_this,
-        A.amount,
-        A.currency,
-        A.block_timestamp
-    FROM
-        tokens A
-        LEFT JOIN lper b
-        ON A.tx_id = b.tx_id
-        LEFT JOIN (
-            SELECT
-                DISTINCT tx_id,
-                attribute_value
-            FROM
-                sndr
-        ) C
-        ON A.tx_Id = C.tx_ID
-        AND b.liquidity_provider_address = C.attribute_value -- AND A.msg_index = C.msg_index + 1
-    WHERE
-        what_is_this = 'non lp tokens'
-        OR (
-            what_is_this = 'lp tokens'
-            AND (
-                C.tx_ID IS NOT NULL
-                OR lp_count = 1
-            )
-        )
 ),
 decimals AS (
     SELECT
         tx_id,
-        msg_index,
         msg_group,
         msg_sub_group,
-        what_is_this,
-        amount,
+        msg_type,
+        SUM(amount) AS amount,
         currency,
         CASE
             WHEN currency LIKE '%pool%' THEN 18
             ELSE DECIMAL
-        END AS DECIMAL,
-        block_timestamp
+        END AS DECIMAL
     FROM
-        tokens_2 t
+        tokens t
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
         ON currency = address
-),
-pools AS (
-    SELECT
+    GROUP BY
         tx_id,
         msg_group,
         msg_sub_group,
-        REPLACE(SPLIT_PART(currency, 'gamm', 2), '/pool/') :: INT pool_id
-    FROM
-        tokens_2
-    WHERE
-        what_is_this = 'lp tokens'
+        msg_type,
+        currency,
+        DECIMAL
 ),
 txn AS (
     SELECT
@@ -279,40 +300,29 @@ txn AS (
         tx_succeeded,
         _inserted_timestamp
     FROM
-        {{ ref('silver__transactions') }}
-),
-act AS (
-    SELECT
-        DISTINCT tx_id,
-        msg_group,
-        msg_sub_group,
-        msg_type AS action
-    FROM
-        msg_atts
-    WHERE
-        attribute_key IN(
-            'tokens_in',
-            'tokens_out'
-        )
+        msg_atts qualify (ROW_NUMBER() over(PARTITION BY tx_id
+    ORDER BY
+        _inserted_timestamp DESC) = 1)
 )
 SELECT
     tx.block_id,
     tx.block_timestamp,
     d.tx_id,
     tx_succeeded,
-    d.msg_index,
-    l.liquidity_provider_address,
+    d.msg_group,
+    d.msg_sub_group,
+    l.lper AS liquidity_provider_address,
     CASE
-        WHEN act.action = 'pool_joined'
-        AND what_is_this = 'lp tokens' THEN 'lp_tokens_minted'
-        WHEN act.action = 'pool_exited'
-        AND what_is_this = 'lp tokens' THEN 'lp_tokens_burned'
-        WHEN act.action = 'pool_joined'
-        AND what_is_this = 'non lp tokens' THEN 'pool_joined'
-        WHEN act.action = 'pool_exited'
-        AND what_is_this = 'non lp tokens' THEN 'pool_exited'
+        WHEN l.msg_type = 'pool_joined'
+        AND d.msg_type = 'xfer' THEN 'lp_tokens_minted'
+        WHEN l.msg_type = 'pool_exited'
+        AND d.msg_type = 'xfer' THEN 'lp_tokens_burned'
+        WHEN l.msg_type = 'pool_joined'
+        AND d.msg_type = 'pool_joined' THEN 'pool_joined'
+        WHEN l.msg_type = 'pool_exited'
+        AND d.msg_type = 'pool_exited' THEN 'pool_exited'
     END action,
-    pool_id,
+    p1.pool_id :: INT pool_id,
     amount,
     currency,
     DECIMAL,
@@ -320,28 +330,32 @@ SELECT
     concat_ws(
         '-',
         d.tx_id,
-        d.msg_index,
-        d.currency
+        d.msg_group,
+        d.msg_sub_group,
+        d.currency,
+        action
     ) AS _unique_key
 FROM
     decimals d
-    JOIN act
+    JOIN lper l
+    ON d.tx_id = l.tx_id
+    AND d.msg_group = l.msg_group
+    AND d.msg_sub_group = l.msg_sub_group
+    JOIN txn tx
+    ON d.tx_id = tx.tx_id
+    LEFT JOIN pool_id p1
+    ON d.tx_id = p1.tx_id
+    AND d.msg_group = p1.msg_group
+    AND d.msg_sub_group = p1.msg_sub_group
+    LEFT JOIN action act
     ON d.tx_id = act.tx_id
     AND d.msg_group = act.msg_group
     AND d.msg_sub_group = act.msg_sub_group
-    JOIN pools p
-    ON d.tx_id = p.tx_id
-    AND d.msg_group = p.msg_group
-    AND d.msg_sub_group = p.msg_sub_group
-    JOIN lper l
-    ON d.tx_id = l.tx_id
-    JOIN txn tx
-    ON d.tx_id = tx.tx_id
-    AND d.block_timestamp = tx.block_timestamp
-    JOIN action ax
-    ON d.tx_id = ax.tx_id
 WHERE
-    ax.action NOT IN (
+    COALESCE(
+        act.action,
+        ''
+    ) NOT IN (
         'unpool_whitelisted_pool',
         '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
     )
