@@ -2,9 +2,9 @@ name: dbt_run_udf_blockchain
 run-name: dbt_run_udf_blockchain
 
 on:
+  workflow_dispatch:
   schedule:
-  # once an hour
-    - cron: '5 * * * *'
+    - cron: '0 3,15 * * *'
     
 env:
   USE_VARS: "${{ vars.USE_VARS }}"
