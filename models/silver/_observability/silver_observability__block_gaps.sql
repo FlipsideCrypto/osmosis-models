@@ -17,8 +17,6 @@ WITH source AS (
         ) AS prev_BLOCK_ID
     FROM
         {{ ref('silver__blocks') }}
-        {# WHERE
-        block_timestamp < DATEADD(HOUR, -15, getdate()) #}
 
 {% if is_incremental() %}
 WHERE
@@ -26,7 +24,7 @@ WHERE
         block_timestamp :: DATE >= (
             SELECT
                 MAX(
-                    _inserted_timestamp
+                    max_block_timestamp
                 ) :: DATE -3
             FROM
                 {{ this }}
@@ -39,15 +37,15 @@ WHERE
                     {{ this }}
                     qualify(ROW_NUMBER() over(
                 ORDER BY
-                    _inserted_timestamp DESC) = 1)
+                    max_block_timestamp DESC) = 1)
             ) <> 0
         )
     )
 {% endif %}
 )
 SELECT
-    MIN(block_id) AS min_block_id,
-    MAX(block_id) AS max_block_id,
+    MIN(block_id) AS min_block,
+    MAX(block_id) AS max_block,
     MIN(block_timestamp) AS min_block_timestamp,
     MAX(block_timestamp) AS max_block_timestamp,
     COUNT(1) AS total_blocks,

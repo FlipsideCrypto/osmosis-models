@@ -332,8 +332,7 @@ SELECT
         d.tx_id,
         d.msg_group,
         d.msg_sub_group,
-        d.currency,
-        action
+        d.currency
     ) AS _unique_key
 FROM
     decimals d

@@ -1,0 +1,75 @@
+version: 2
+models:
+  - name: silver_observability__transaction_completeness
+    description: Records of all blocks with missing transactions with a timestamp the test was run
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - _INSERTED_TIMESTAMP
+    columns:
+      - name: MIN_BLOCK
+        description: The lowest block id in the test
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+      - name: MAX_BLOCK
+        description: The highest block id in the test
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+      - name: MIN_BLOCK_TIMESTAMP
+        description: The lowest block timestamp in the test
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: MAX_BLOCK_TIMESTAMP
+        description: The highest block timestamp in the test
+        tests:
+          - not_null
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
+      - name: TOTAL_BLOCKS
+        description: Count of blocks in the test
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+      - name: BLOCKS_MISSING_TRANSACTIONS
+        description: Count of blocks with missing transactions in the test
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+      - name: TOTAL_MISSING_TRANSACTIONS
+        description: Total count of missing transactions in the test
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER
+      - name: MISSING_TRANSACTIONS_DETAILS
+        description: blocks with missing transactions with the number of missing transactions
+        tests: 
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - ARRAY
+      - name: _INSERTED_TIMESTAMP
+        description: "{{ doc('inserted_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
