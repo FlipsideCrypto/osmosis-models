@@ -7,14 +7,14 @@ models:
           combination_of_columns:
             - _INSERTED_TIMESTAMP
     columns:
-      - name: MIN_BLOCK_ID
+      - name: MIN_BLOCK
         description: The lowest block id in the test
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
-      - name: MAX_BLOCK_ID
+      - name: MAX_BLOCK
         description: The highest block id in the test
         tests:
           - not_null
