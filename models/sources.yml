@@ -32,6 +32,7 @@ sources:
       - name: asset_metadata_coin_gecko
       - name: hourly_prices_coin_market_cap
       - name: hourly_prices_coin_gecko
+      - name: number_sequence
   - name: crosschain
     database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
     schema: core
