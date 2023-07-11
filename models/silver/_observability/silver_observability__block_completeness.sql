@@ -18,17 +18,24 @@ WITH source AS (
     FROM
         {{ ref('silver__blocks') }} A
     WHERE
-        block_timestamp < DATEADD(HOUR, -14, SYSDATE())
+        block_timestamp < DATEADD(
+            HOUR,
+            -24,
+            SYSDATE()
+        )
 
 {% if is_incremental() %}
 AND (
-    block_timestamp :: DATE >= (
-        SELECT
-            MAX(
-                max_block_timestamp
-            ) :: DATE -3
-        FROM
-            {{ this }}
+    block_timestamp >= DATEADD(
+        HOUR,
+        -96,(
+            SELECT
+                MAX(
+                    max_block_timestamp
+                )
+            FROM
+                {{ this }}
+        )
     )
     OR ({% if var('OBSERV_FULL_TEST') %}
         block_id >= 0
@@ -39,8 +46,7 @@ AND (
     FROM
         (
     SELECT
-        blocks_impacted_array {# JOIN A
-        ON A.block_id = b.value #}
+        blocks_impacted_array
     FROM
         {{ this }}
         qualify ROW_NUMBER() over (
@@ -58,6 +64,19 @@ block_gen AS (
             'crosschain_silver',
             'number_sequence'
         ) }}
+    WHERE
+        _id BETWEEN (
+            SELECT
+                MIN(block_id)
+            FROM
+                source
+        )
+        AND (
+            SELECT
+                MAX(block_id)
+            FROM
+                source
+        )
 )
 SELECT
     'blocks' AS test_name,
@@ -97,7 +116,7 @@ SELECT
             )
         END
     ) AS test_failure_details,
-    CURRENT_TIMESTAMP AS test_timestamp
+    SYSDATE() AS test_timestamp
 FROM
     block_gen A
     LEFT JOIN source b
