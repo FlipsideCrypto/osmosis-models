@@ -3,14 +3,8 @@
     full_refresh = false
 ) }}
 
-WITH max_silver AS (
+WITH bronze AS (
 
-    SELECT
-        MAX(block_id) AS max_block_id
-    FROM
-        {{ ref('silver__transactions') }}
-),
-bronze AS (
     SELECT
         block_id,
         block_timestamp,
@@ -18,41 +12,43 @@ bronze AS (
     FROM
         {{ ref('bronze__transactions') }}
     WHERE
-        block_id <= (
-            SELECT
-                max_block_id
-            FROM
-                max_silver
+        block_timestamp < DATEADD(
+            HOUR,
+            -24,
+            SYSDATE()
         )
 
 {% if is_incremental() %}
 AND (
-    _inserted_timestamp >= CURRENT_DATE - 7
-    AND block_timestamp :: DATE >= (
-        SELECT
-            MAX(
-                max_block_timestamp
-            ) :: DATE -3
-        FROM
-            {{ this }}
-    )
-    OR (
-        (
+    block_timestamp >= DATEADD(
+        HOUR,
+        -96,(
             SELECT
-                blocks_missing_transactions
+                MAX(
+                    max_block_timestamp
+                )
             FROM
                 {{ this }}
-                qualify(ROW_NUMBER() over(
-            ORDER BY
-                max_block_timestamp DESC) = 1)
-        ) <> 0
+        )
     )
+    OR ({% if var('OBSERV_FULL_TEST') %}
+        block_id >= 0
+    {% else %}
+        block_id >= (
+    SELECT
+        MIN(VALUE) - 1
+    FROM
+        (
+    SELECT
+        blocks_impacted_array
+    FROM
+        {{ this }}
+        qualify ROW_NUMBER() over (
+    ORDER BY
+        test_timestamp DESC) = 1), LATERAL FLATTEN(input => blocks_impacted_array))
+    {% endif %})
 )
 {% endif %}
-
-qualify(DENSE_RANK() over(PARTITION BY block_id
-ORDER BY
-    _inserted_timestamp DESC) = 1)
 ),
 bronze_count AS (
     SELECT
@@ -75,38 +71,21 @@ bronze_api AS (
     FROM
         {{ ref('silver__blockchain') }}
     WHERE
-        block_id <= (
+        block_timestamp BETWEEN (
             SELECT
-                max_block_id
+                MIN(block_timestamp)
             FROM
-                max_silver
+                bronze
         )
-
-{% if is_incremental() %}
-AND (
-    block_timestamp :: DATE >= (
-        SELECT
-            MAX(
-                max_block_timestamp
-            ) :: DATE -3
-        FROM
-            {{ this }}
-    )
-    OR (
-        (
+        AND (
             SELECT
-                blocks_missing_transactions
+                MAX(block_timestamp)
             FROM
-                {{ this }}
-                qualify(ROW_NUMBER() over(
-            ORDER BY
-                max_block_timestamp DESC) = 1)
-        ) <> 0
-    )
-)
-{% endif %}
+                bronze
+        )
 )
 SELECT
+    'transactions' AS test_name,
     MIN(
         A.block_id
     ) AS min_block,
@@ -119,7 +98,7 @@ SELECT
     MAX(
         A.block_timestamp
     ) AS max_block_timestamp,
-    COUNT(1) AS total_blocks,
+    COUNT(1) AS blocks_tested,
     SUM(
         CASE
             WHEN COALESCE(
@@ -128,7 +107,18 @@ SELECT
             ) - A.num_txs <> 0 THEN 1
             ELSE 0
         END
-    ) AS blocks_missing_transactions,
+    ) AS blocks_impacted_count,
+    ARRAY_AGG(
+        CASE
+            WHEN COALESCE(
+                b.num_txs,
+                0
+            ) - A.num_txs <> 0 THEN A.block_id
+        END
+    ) within GROUP (
+        ORDER BY
+            A.block_id
+    ) AS blocks_impacted_array,
     SUM(
         ABS(
             COALESCE(
@@ -136,7 +126,7 @@ SELECT
                 0
             ) - A.num_txs
         )
-    ) AS total_missing_transactions,
+    ) AS transactions_impacted_count,
     ARRAY_AGG(
         CASE
             WHEN COALESCE(
@@ -164,30 +154,8 @@ SELECT
     ) within GROUP(
         ORDER BY
             A.block_id
-    ) AS missing_transactions_details,
-    SYSDATE() AS _inserted_timestamp {# SELECT
-    A.block_id AS min_block,
-    A.block_id AS max_block,
-    A.block_timestamp AS min_block_timestamp,
-    A.block_timestamp AS max_block_timestamp,
-    1 AS total_blocks,
-    CASE
-        WHEN A.num_txs - b.num_txs <> 0 THEN 1
-        ELSE 0
-    END AS blocks_missing_transactions,
-    CASE
-        WHEN A.num_txs - b.num_txs <> 0 THEN OBJECT_CONSTRUCT(
-            'block_id',
-            A.block_id,
-            'diff',
-            A.num_txs - b.num_txs,
-            'blockchain_num_txs',
-            b.num_txs,
-            'bronze_num_txs',
-            A.num_txs
-        )
-    END AS missing_transactions_details,
-    SYSDATE() AS _inserted_timestamp #}
+    ) AS test_failure_details,
+    SYSDATE() AS test_timestamp
 FROM
     bronze_api A
     LEFT JOIN bronze_count b
