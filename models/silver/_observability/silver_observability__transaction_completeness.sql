@@ -70,21 +70,21 @@ bronze_api AS (
         num_txs
     FROM
         {{ ref('silver__blockchain') }}
+    WHERE
+        block_timestamp <=(
+            SELECT
+                MAX(block_timestamp)
+            FROM
+                bronze
+        )
 
 {% if is_incremental() %}
-WHERE
-    block_timestamp BETWEEN (
-        SELECT
-            MIN(block_timestamp)
-        FROM
-            bronze
-    )
-    AND (
-        SELECT
-            MAX(block_timestamp)
-        FROM
-            bronze
-    )
+AND block_timestamp >= (
+    SELECT
+        MIN(block_timestamp)
+    FROM
+        bronze
+)
 {% endif %}
 )
 SELECT
