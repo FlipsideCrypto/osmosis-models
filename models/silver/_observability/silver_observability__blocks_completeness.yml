@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: silver_observability__block_completeness
+  - name: silver_observability__blocks_completeness
     description: Records of all blocks block gaps (missing blocks) with a timestamp the test was run
     tests:
       - dbt_utils.unique_combination_of_columns:

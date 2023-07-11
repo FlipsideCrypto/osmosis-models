@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: silver_observability__transaction_completeness
+  - name: silver_observability__transactions_completeness
     description: Records of all blocks with missing transactions with a timestamp the test was run
     tests:
       - dbt_utils.unique_combination_of_columns:
