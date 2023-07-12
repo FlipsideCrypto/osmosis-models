@@ -38,7 +38,8 @@ msg_attributes_cte AS (
             'tx',
             'delegate',
             'redelegate',
-            'unbond'
+            'unbond',
+            'execute'
         )
 
 {% if is_incremental() %}
@@ -51,6 +52,17 @@ AND _inserted_timestamp >= (
         max_date
 )
 {% endif %}
+),
+exclude_eris AS (
+    SELECT
+        DISTINCT A.tx_id,
+        msg_group
+    FROM
+        msg_attributes_cte A
+    WHERE
+        msg_type = 'execute'
+        AND attribute_key = '_contract_address'
+        AND attribute_value = 'osmo1dv8wz09tckslr2wy5z86r46dxvegylhpt97r9yd6qc3kyc6tv42qa89dr9'
 ),
 reward_base AS (
     SELECT
@@ -552,3 +564,8 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
     amd
     ON A.currency = amd.address
+    LEFT JOIN exclude_eris ee
+    ON A.tx_id = ee.tx_id
+    AND A.msg_group = ee.msg_group
+WHERE
+    ee.tx_id IS NULL
