@@ -102,7 +102,10 @@ C AS (
 d AS (
     SELECT
         tx_id,
-        obj :module :: STRING AS module,
+        COALESCE(
+            obj :module :: STRING,
+            'gamm'
+        ) AS module,
         obj :pool_id :: NUMBER AS pool_id,
         'asset_address' AS object_key,
         LTRIM(
