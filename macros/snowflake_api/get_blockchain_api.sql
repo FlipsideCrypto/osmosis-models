@@ -114,14 +114,10 @@ SELECT
         osmosis._internal.api_keys
       WHERE
         provider = 'allthatnode'
-    ),{ 'x-allthatnode-api-key':(
-      SELECT
-        key
-      FROM
-        osmosis._internal.api_keys
-      WHERE
-        provider = 'allthatnode'
-    ) },
+    ),
+    {
+      'Content-Type': 'application/json'
+    },
     call
   ) AS DATA,
   SYSDATE()
