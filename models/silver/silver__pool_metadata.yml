@@ -15,6 +15,21 @@ models:
               column_type_list:
                 - STRING
                 - VARCHAR
+      - name: POOL_CREATED_BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - NUMBER    
+                - FLOAT  
+      - name: POOL_CREATED_BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list:
+                - TIMESTAMP_NTZ
       - name: POOL_ID
         description: "{{ doc('pool_id') }}"
         tests: 
@@ -23,6 +38,10 @@ models:
               column_type_list:
                 - NUMBER
                 - FLOAT
+      - name: POOL_ADDRESS
+        description: "{{ doc('pool_address') }}"
+        tests: 
+          - not_null
       - name: ASSETS
         description: "{{ doc('pool_assets') }}"
         tests:

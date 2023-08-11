@@ -20,7 +20,9 @@ max_date AS (
 
 pool_creation_txs AS (
     SELECT
-        DISTINCT tx_id
+        DISTINCT tx_id,
+        block_timestamp,
+        block_id
     FROM
         {{ ref('silver__msgs') }}
     WHERE
@@ -62,6 +64,10 @@ b AS (
                 AND attribute_key = 'amount'
                 AND attribute_value IS NOT NULL
                 AND ARRAY_SIZE(SPLIT(attribute_value, ',')) :: NUMBER > 1
+            )
+            OR (
+                msg_type = 'transfer'
+                AND len(attribute_value) = 63
             )
         )
         AND attribute_value <> 'poolmanager'
@@ -107,6 +113,7 @@ d AS (
             'gamm'
         ) AS module,
         obj :pool_id :: NUMBER AS pool_id,
+        obj :recipient :: STRING AS pool_address,
         'asset_address' AS object_key,
         LTRIM(
             A.value,
@@ -122,6 +129,7 @@ e AS (
         tx_id,
         module,
         pool_id,
+        pool_address,
         asset_address,
         OBJECT_AGG(
             object_key,
@@ -134,12 +142,16 @@ e AS (
         tx_id,
         module,
         pool_id,
+        pool_address,
         asset_address,
         _inserted_timestamp
 )
 SELECT
     module,
+    C.block_timestamp AS pool_created_block_timestamp,
+    C.block_id AS pool_created_block_id,
     pool_id,
+    pool_address,
     ARRAY_AGG(asset_obj) AS assets,
     concat_ws(
         '-',
@@ -149,7 +161,12 @@ SELECT
     _inserted_timestamp
 FROM
     e
+    JOIN pool_creation_txs C
+    ON C.tx_id = e.tx_id
 GROUP BY
     module,
+    C.block_timestamp,
+    C.block_id,
     pool_id,
+    pool_address,
     _inserted_timestamp
