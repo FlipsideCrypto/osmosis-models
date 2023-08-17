@@ -43,9 +43,9 @@ GROUP BY
         -1
     )
 ),
-base AS (
+pre_base AS (
     SELECT
-        A.tx_id,
+        DISTINCT A.tx_id,
         A.msg_group,
         A.msg_sub_group,
         CASE
@@ -53,20 +53,8 @@ base AS (
         END msg_index_gp,
         id_count,
         _inserted_timestamp,
-        OBJECT_AGG(
-            CASE
-                WHEN attribute_key = 'action' THEN attribute_key || (
-                    SELECT
-                        UUID_STRING()
-                )
-                ELSE attribute_key
-            END :: STRING,
-            attribute_value :: variant
-        ) AS j,
-        COALESCE(
-            j :lock_id,
-            j :period_lock_id
-        ) :: INT AS lock_id
+        attribute_key,
+        attribute_value
     FROM
         {{ ref('silver__msg_attributes') }} A
         JOIN count_ids b
@@ -102,13 +90,38 @@ AND _inserted_timestamp >= (
         {{ this }}
 )
 {% endif %}
-GROUP BY
-    A.tx_id,
-    A.msg_group,
-    A.msg_sub_group,
-    msg_index_gp,
-    id_count,
-    _inserted_timestamp
+),
+base AS (
+    SELECT
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_index_gp,
+        id_count,
+        _inserted_timestamp,
+        OBJECT_AGG(
+            CASE
+                WHEN attribute_key = 'action' THEN attribute_key || (
+                    SELECT
+                        UUID_STRING()
+                )
+                ELSE attribute_key
+            END :: STRING,
+            attribute_value :: variant
+        ) AS j,
+        COALESCE(
+            j :lock_id,
+            j :period_lock_id
+        ) :: INT AS lock_id
+    FROM
+        pre_base
+    GROUP BY
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_index_gp,
+        id_count,
+        _inserted_timestamp
 )
 SELECT
     tx_id,
