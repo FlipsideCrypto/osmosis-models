@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: core__fact_pool_hour
+  - name: defi__fact_pool_hour
     description:  "The table is an hourly summary of each pool within Osmosis. The table is currently limited to show at most four tokens. For pools that contain more than four tokens, those tokens are omitted."
     columns:
       - name: BLOCK_ID

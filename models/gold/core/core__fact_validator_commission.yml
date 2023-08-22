@@ -1,11 +1,11 @@
 version: 2
 models:
-  - name: core__fact_governance_submit_proposal
-    description: Records of all proposal submissions on Osmosis, dating back to the Genesis block. The columns blockchain, chain_id, and tx_status will be deprecating soon.
+  - name: core__fact_validator_commission
+    description: "{{ doc('deprecation') }}"
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
-        tests:
+        tests: 
           - dbt_expectations.expect_column_to_exist
       - name: BLOCK_TIMESTAMP
         description: "{{ doc('block_timestamp') }}"
@@ -13,29 +13,33 @@ models:
           - dbt_expectations.expect_column_to_exist
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
-        tests: 
+        tests:
           - dbt_expectations.expect_column_to_exist
       - name: TX_SUCCEEDED
         description: "{{ doc('tx_succeeded') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_CALLER_ADDRESS
+        description: "{{ doc('tx_caller_address') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: AMOUNT
+        description: The amount of tokens in the staking action
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: PROPOSER
-        description: "{{ doc('proposer') }}"
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: PROPOSAL_ID
-        description: "{{ doc('proposal_id') }}"
+      - name: VALIDATOR_ADDRESS_OPERATOR
+        description: "{{ doc('validator_address') }}" 
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: PROPOSAL_TYPE
-        description: "{{ doc('proposal_type') }}"
+      - name: VALIDATOR_ADDRESS_REWARD
+        description: "{{ doc('validator_address_reward') }}" 
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: PROPOSAL_TITLE
-        description: "{{ doc('proposal_title') }}"
-        tests: 
-          - dbt_expectations.expect_column_to_exist
-      - name: PROPOSAL_DESCRIPTION
-        description: "{{ doc('proposal_description') }}"
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}" 
         tests: 
           - dbt_expectations.expect_column_to_exist

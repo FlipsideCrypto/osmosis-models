@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_locked_liquidity_actions
-    description: Includes all actions related to locked LP tokens. The columns blockchain, chain_id, and tx_status will be deprecating soon.
+    description: "{{ doc('deprecation') }}"
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

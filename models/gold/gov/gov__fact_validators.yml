@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: core__fact_validators
+  - name: gov__fact_validators
     description: Contains validator metadata for assets on the Osmosis blockchain. This table was sourced from an API and may not contain every token.
     columns:
       - name: ADDRESS

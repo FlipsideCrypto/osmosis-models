@@ -1,7 +1,7 @@
 version: 2
 models:
-  - name: core__fact_liquidity_provider_actions
-    description: Includes all actions entering and exiting liquidity pools. The columns blockchain, chain_id, and tx_status will be deprecating soon.  
+  - name: core__fact_governance_submit_proposal
+    description: "{{ doc('block_id') }}"
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -19,29 +19,23 @@ models:
         description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: LIQUIDITY_PROVIDER_ADDRESS
-        description: "{{ doc('liquidity_provider_address') }}"
+      - name: PROPOSER
+        description: "{{ doc('proposer') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: ACTION
-        description: "{{ doc('action') }}"
+      - name: PROPOSAL_ID
+        description: "{{ doc('proposal_id') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: POOL_ID
-        description: "{{ doc('pool_id') }}"
+      - name: PROPOSAL_TYPE
+        description: "{{ doc('proposal_type') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: AMOUNT
-        description: "{{ doc('amount') }}"
+      - name: PROPOSAL_TITLE
+        description: "{{ doc('proposal_title') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: CURRENCY
-        description: "{{ doc('currency') }}"
+      - name: PROPOSAL_DESCRIPTION
+        description: "{{ doc('proposal_description') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: DECIMAL
-        description: "{{ doc('decimal') }}"
-      - name: MSG_GROUP
-        description: "{{ doc('msg_group') }}"
-        tests: 
-          - dbt_expectations.expect_column_to_exist 

@@ -1,7 +1,7 @@
 version: 2
 models:
-  - name: core__fact_governance_votes
-    description: Records of all votes on proposals. The columns blockchain, chain_id, and tx_status will be deprecating soon. 
+  - name: core__fact_liquidity_provider_actions
+    description: "{{ doc('deprecation') }}"
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -19,19 +19,29 @@ models:
         description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: VOTER
-        description: "{{ doc('voter') }}"
+      - name: LIQUIDITY_PROVIDER_ADDRESS
+        description: "{{ doc('liquidity_provider_address') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: PROPOSAL_ID
-        description: "{{ doc('proposal_id') }}"
+      - name: ACTION
+        description: "{{ doc('action') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: VOTE_OPTION
-        description: "{{ doc('vote_option') }}"
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: MEMO
-        description: "{{ doc('memo') }}"
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist 

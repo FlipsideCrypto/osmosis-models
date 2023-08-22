@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_pool_fee_day
-    description: The table is an daily summary of fees accumulated each pool within Osmosis
+    description: "{{ doc('deprecation') }}"
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: core__fact_validator_commission
+  - name: gov__fact_validator_commission
     description: Information about all validator commission that have been claimed on Axelar. 
     columns:
       - name: BLOCK_ID

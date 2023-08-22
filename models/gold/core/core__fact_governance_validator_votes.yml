@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_governance_validator_votes
-    description: Records of all votes on proposals by validators
+    description: "{{ doc('block_id') }}"
     columns:
       - name: PROPOSAL_ID
         description: "{{ doc('proposal_id') }}"

@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: core__fact_staking
+  - name: defi__fact_superfluid_staking
     description: Records of all staking related transactions that have occurred on Osmosis, dating back to the genesis block. These actions include delegate, undelegate, and redelegate. The columns blockchain, chain_id, and tx_status will be deprecating soon.
     columns:
       - name: BLOCK_ID
@@ -19,10 +19,6 @@ models:
         description: "{{ doc('tx_succeeded') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: TX_CALLER_ADDRESS
-        description: "{{ doc('tx_caller_address') }}"
-        tests: 
-          - dbt_expectations.expect_column_to_exist
       - name: ACTION
         description: "{{ doc('action') }}"
         tests: 
@@ -39,13 +35,19 @@ models:
         description: "{{ doc('currency') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
       - name: VALIDATOR_ADDRESS
         description: "{{ doc('validator_address') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: REDELEGATE_SOURCE_VALIDATOR_ADDRESS
-        description: "{{ doc('redelegate_source_validator_address') }}"
-      - name: COMPLETION_TIME
-        description: "{{ doc('completion_time') }}"
-      - name: DECIMAL
-        description: "{{ doc('decimal') }}"
+      - name: LOCK_ID
+        description: An ID corresponding to the locking step of the transaction.  
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: IS_UNPOOL
+        description: Boolean value indicating whether the transaction is an unpool action.
+        tests: 
+          - dbt_expectations.expect_column_to_exist
