@@ -1,7 +1,7 @@
 version: 2
 models:
-  - name: core__dim_liquidity_pools
-    description: "Deprecating soon: This is a notice that we're replacing this table with defi.dim_liquidity_pools. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+  - name: gov__dim_liquidity_pools
+    description: Contains liquidity pool metadata for assets on the Osmosis blockchain. This table was sourced from an API and may not contain every token. 
     columns:
       - name: BLOCKCHAIN
         description: "{{ doc('blockchain') }}"
