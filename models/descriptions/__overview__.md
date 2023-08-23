@@ -18,41 +18,59 @@ There is more information on how to use dbt docs in the last section of this doc
 **Click on the links below to jump to the documentation for each schema.**
 
 ### Core Tables (`OSMOSIS`.`CORE`.`<table_name>`)
+### DeFi Tables (`OSMOSIS`.`DEFI`.`<table_name>`)
+### Governance Tables (`OSMOSIS`.`GOV`.`<table_name>`)
+### Prices Tables (`OSMOSIS`.`PRICE`.`<table_name>`)
 
-**Dimension Tables:**
-- [dim_labels](#!/model/model.osmosis_models.core__dim_labels)
-- [dim_liquidity_pools](#!/model/model.osmosis_models.core__dim_liquidity_pools)
-- [dim_prices ](#!/model/model.osmosis_models.core__dim_prices)
-- [dim_tokens](#!/model/model.osmosis_models.core__dim_tokens)
-- [dim_dim_vote_options](#!/model/model.osmosis_models.core__dim_vote_options)
 
-**Fact Tables:**
+
+**Core Dimension Tables:**
+- [dim_labels](#!/model/model.osmosis.core__dim_labels)
+- [dim_tokens](#!/model/model.osmosis.core__dim_tokens)
+
+**Core Fact Tables:**
 - [fact_airdrop](#!/model/model.osmosis.core__fact_airdrop)
 - [fact_blocks](#!/model/model.osmosis.core__fact_blocks)
 - [fact_daily_balances](#!/model/model.osmosis.core__fact_daily_balances)
-- [fact_governance_proposal_deposits](#!/model/model.osmosis.core__fact_governance_proposal_deposits)
-- [fact_governance_submit_proposal](#!/model/model.osmosis.core__fact_governance_submit_proposal)
-- [fact_governance_validator_votes](#!/model/model.osmosis.core__fact_governance_validator_votes)
-- [fact_governance_votes](#!/model/model.osmosis.core__fact_governance_votes)
-- [fact_liquidity_provider_actions](#!/model/model.osmosis.core__fact_liquidity_provider_actions)
-- [fact_locked_liquidity_actions](#!/model/model.osmosis.core__fact_locked_liquidity_actions)
 - [fact_msg_attributes](#!/model/model.osmosis.core__fact_msg_attributes)
 - [fact_msgs](#!/model/model.osmosis.core__fact_msgs)
-- [fact_pool_fee_day](#!/model/model.osmosis.core__fact_pool_fee_day)
-- [fact_pool_hour](#!/model/model.osmosis.core__fact_pool_hour)
-- [fact_staking](#!/model/model.osmosis.core__fact_staking)
-- [fact_staking_rewards](#!/model/model.osmosis.core__fact_staking_rewards)
-- [fact_superfluid_staking](#!/model/model.osmosis.core__fact_superfluid_staking)
-- [fact_swaps](#!/model/model.osmosis.core__fact_swaps)
 - [fact_token_day](#!/model/model.osmosis.core__fact_token_day)
 - [fact_transactions](#!/model/model.osmosis.core__fact_transactions)
 - [fact_transfers](#!/model/model.osmosis.core__fact_transfers)
-- [fact_validators](#!/model/model.osmosis.core__fact_validators)
 
-
-**Convenience Tables:**
+**Core Convenience Tables:**
 - [ez_icns](#!/model/model.osmosis.core__ez_icns)
+
+**DeFi Dimension Tables:**
+- [dim_liquidity_pools](#!/model/model.osmosis.defi__dim_liquidity_pools)
+
+**DeFi Fact Tables:**
+- [fact_liquidity_provider_actions](#!/model/model.osmosis.defi__fact_liquidity_provider_actions)
+- [fact_locked_liquidity_actions](#!/model/model.osmosis.defi__fact_locked_liquidity_actions)
+- [fact_pool_fee_day](#!/model/model.osmosis.defi__fact_pool_fee_day)
+- [fact_pool_hour](#!/model/model.osmosis.defi__fact_pool_hour)
+- [fact_superfluid_staking](#!/model/model.osmosis.defi__fact_superfluid_staking)
+- [fact_swaps](#!/model/model.osmosis.defi__fact_swaps)
+
+**Governance Dimension Tables:**
+- [dim_dim_vote_options](#!/model/model.osmosis.core__dim_vote_options)
+
+**Governance Fact Tables:**
+- [fact_governance_proposal_deposits](#!/model/model.osmosis.gov__fact_governance_proposal_deposits)
+- [fact_governance_submit_proposal](#!/model/model.osmosis.gov__fact_governance_submit_proposal)
+- [fact_governance_validator_votes](#!/model/model.osmosis.gov__fact_governance_validator_votes)
+- [fact_governance_votes](#!/model/model.osmosis.cgov__fact_governance_votes)
+- [fact_staking](#!/model/model.osmosis.cgov__fact_staking)
+- [fact_staking_rewards](#!/model/model.osmosis.gov__fact_staking_rewards)
+- [fact_validators](#!/model/model.osmosis.gov__fact_validators)
+
+
+**Prices FacDimensiont Tables:**
+- [dim_prices ](#!/model/model.osmosis.core__dim_prices)
+
+**Prices Convenience Tables:**
 - [ez_prices](#!/model/model.osmosis.core__ez_prices)
+
 
 
 ## **Data Model Overview**
@@ -61,7 +79,7 @@ The Osmosis models are built a few different ways, but the core fact tables are 
 
 - Bronze: Data is loaded in from the source as a view
 - Silver: All necessary parsing, filtering, de-duping, and other transformations are done here
-- Gold (or core): Final views and tables that are available publicly
+- Gold (core/defi/gov/price): Final views and tables that are available publicly
 
 The dimension tables are sourced from a variety of on-chain and off-chain sources.
 
@@ -89,7 +107,7 @@ Note that you can also right-click on models to interactively filter and explore
 
 ### **More information**
 - [Flipside](https://flipsidecrypto.xyz/)
-- [Velocity](https://app.flipsidecrypto.com/velocity?nav=Discover)
+- [Data Studio](https://flipsidecrypto.xyz/edit)
 - [Tutorials](https://docs.flipsidecrypto.com/our-data/tutorials)
 - [Github](https://github.com/FlipsideCrypto/osmosis-models)
 - [What is dbt?](https://docs.getdbt.com/docs/introduction)
