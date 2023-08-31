@@ -1,0 +1,31 @@
+version: 2
+models:
+  - name: gov__dim_liquidity_pools
+    description: Contains liquidity pool metadata for assets on the Osmosis blockchain. This table was sourced from an API and may not contain every token. 
+    columns:
+      - name: BLOCKCHAIN
+        description: "{{ doc('blockchain') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_CREATED_BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_CREATED_BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: MODULE
+        description: "{{ doc('pool_module') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ADDRESS
+        description: "{{ doc('pool_address') }}"
+      - name: ASSETS
+        description: "{{ doc('pool_assets') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

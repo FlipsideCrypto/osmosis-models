@@ -7,11 +7,11 @@ sources:
     tables:
       - name: osmosis_blocks
       - name: osmosis_txs 
-  - name: shared
-    database: flipside_prod_db
-    schema: silver
+  - name: crosschain_bronze
+    database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
+    schema: bronze
     tables:
-      - name: prices_v2
+      - name: legacy_prices
   - name: bronze_api
     schema: bronze_api
     tables: 
@@ -37,8 +37,8 @@ sources:
     database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
     schema: core
     tables:
-      - name: address_labels
-      - name: address_tags
+      - name: dim_address_labels
+      - name: dim_address_tags
       - name: dim_dates
       - name: dim_date_hours
   - name: axelar_silver

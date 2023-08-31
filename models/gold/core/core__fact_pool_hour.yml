@@ -1,0 +1,81 @@
+version: 2
+models:
+  - name: core__fact_pool_hour
+    description: "Deprecating soon: This is a notice that we're replacing this table with defi.fact_pool_hour. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_0_CURRENCY
+        description: "The first token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_0_AMOUNT
+        description: "The decimal adjusted amount of the first token within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_1_CURRENCY
+        description: "The second token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_1_AMOUNT
+        description: "The decimal adjusted amount of the second token within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE
+        description: "The price of the first token as denominated in the token_1_currency. This only applies to two-token pools where one of the tokens is osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE_USD
+        description: "The price of the token in USD"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TWAP
+        description: "The time weighted asset price, denominated in osmos. This is calculated by averaging the high, low, open, and close of the day"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TWAP_USD
+        description: The time weighted asset price, denominated in USD. This is calculated by averaging the high, low, open, and close of the day
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY
+        description: "The total value of tokens within the pool, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LIQUIDITY_USD
+        description: "The total value of tokens within the pool, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOLUME
+        description: "The total value of tokens swapped in and out of the pool, denominated in osmos"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOLUME_USD
+        description:  "The total value of tokens swapped in and out of the pool, denominated in USD"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_2_CURRENCY
+        description: "The third token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_2_AMOUNT
+        description: "The decimal adjusted amount of the third token within this liquidity pool (if exists)"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_3_CURRENCY
+        description: "The fourth token address contained within this liquidity pool"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOKEN_3_AMOUNT
+        description: "The decimal adjusted amount of the fourth token within this liquidity pool (if exists)"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

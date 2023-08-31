@@ -1,0 +1,45 @@
+version: 2
+models:
+  - name: core__fact_validator_commission
+    description: "Deprecating soon: This is a notice that we're replacing this table with gov.fact_validator_commission. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_CALLER_ADDRESS
+        description: "{{ doc('tx_caller_address') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: AMOUNT
+        description: The amount of tokens in the staking action
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VALIDATOR_ADDRESS_OPERATOR
+        description: "{{ doc('validator_address') }}" 
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VALIDATOR_ADDRESS_REWARD
+        description: "{{ doc('validator_address_reward') }}" 
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}" 
+        tests: 
+          - dbt_expectations.expect_column_to_exist

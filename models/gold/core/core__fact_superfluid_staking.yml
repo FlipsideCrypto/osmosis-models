@@ -1,0 +1,53 @@
+version: 2
+models:
+  - name: core__fact_superfluid_staking
+    description: "Deprecating soon: This is a notice that we're replacing this table with defi.fact_superfluid_staking. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: ACTION
+        description: "{{ doc('action') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: DELEGATOR_ADDRESS
+        description: "{{ doc('delegator_address') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VALIDATOR_ADDRESS
+        description: "{{ doc('validator_address') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LOCK_ID
+        description: An ID corresponding to the locking step of the transaction.  
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: IS_UNPOOL
+        description: Boolean value indicating whether the transaction is an unpool action.
+        tests: 
+          - dbt_expectations.expect_column_to_exist

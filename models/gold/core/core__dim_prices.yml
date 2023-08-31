@@ -1,0 +1,25 @@
+version: 2
+models:
+  - name: core__dim_prices
+    description: "Deprecating soon: This is a notice that we're replacing this table with defi.dim_prices. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+    columns:
+      - name: RECORDED_AT
+        description: The time, including the day and hour, that the price of the token corresponds to. 
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: SYMBOL
+        description: The token's symbol
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PRICE
+        description: The price of the token in USD. 
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TOTAL_SUPPLY
+        description: The total circulating supply of the token
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: PROVIDER
+        description: Where the price is sourced from. Prices sourced from the swaps table may have outliers for hours with low swap volume. 
+        tests: 
+          - dbt_expectations.expect_column_to_exist

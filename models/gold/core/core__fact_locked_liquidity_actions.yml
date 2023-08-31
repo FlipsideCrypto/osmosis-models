@@ -1,0 +1,73 @@
+version: 2
+models:
+  - name: core__fact_locked_liquidity_actions
+    description: "Deprecating soon: This is a notice that we're replacing this table with defi.fact_locked_liquidity_actions. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+    columns:
+      - name: BLOCK_ID
+        description: "{{ doc('block_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: BLOCK_TIMESTAMP
+        description: "{{ doc('block_timestamp') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_ID
+        description: "{{ doc('tx_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: TX_SUCCEEDED
+        description: "{{ doc('tx_succeeded') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MSG_GROUP
+        description: "{{ doc('msg_group') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MSG_ACTION
+        description: "{{ doc('msg_action') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: MSG_ACTION_DESCRIPTION
+        description: "{{ doc('msg_action_description') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LOCKER_ADDRESS
+        description: "{{ doc('locker_address') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LOCK_ID
+        description: "{{ doc('lock_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
+        description: "{{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: AMOUNT
+        description: "{{ doc('amount') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CURRENCY
+        description: "{{ doc('currency') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: DECIMAL
+        description: "{{ doc('decimal') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: LOCK_DURATION
+        description: "{{ doc('lock_duration') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: UNLOCK_TIME
+        description: "{{ doc('unlock_time') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: IS_SUPERFLUID
+        description: "{{ doc('is_superfluid') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: UNPOOL_NEW_LOCK_IDS
+        description: "{{ doc('unpool_new_lock_ids') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist

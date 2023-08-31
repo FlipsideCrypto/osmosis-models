@@ -1,0 +1,10 @@
+version: 2
+models:
+  - name: core__dim_vote_options
+    description: "Deprecating soon: This is a notice that we're replacing this table with gov.dim_vote_options. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+
+    columns:
+      - name: VOTE_ID
+        description: "The vote option id"
+      - name: DESCRIPTION
+        description: "The vote option description"

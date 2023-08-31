@@ -1,0 +1,37 @@
+version: 2
+models:
+  - name: core__fact_governance_validator_votes
+    description: "Deprecating soon: This is a notice that we're replacing this table with gov.fact_governance_validator_votes. Please migrate queries to the new table by 9/11/23. There will be no column changes or any other changes of any kind."
+    columns:
+      - name: PROPOSAL_ID
+        description: "{{ doc('proposal_id') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: VALIDATOR_ADDRESS
+        description: "{{ doc('validator_address') }}"
+        tests:
+          - dbt_expectations.expect_column_to_exist
+      - name: MEMO
+        description: "{{ doc('memo') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOTE
+        description: "{{ doc('vote_option') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VOTING_POWER
+        description: The power of the validator that voted
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: VERSION
+        description: The vote version. This is increment up if the validator votes more than once
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: CREATED_AT
+        description: When the validator vote record was created
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: UPDATED_AT
+        description: When the validator vote record was updated
+        tests: 
+          - dbt_expectations.expect_column_to_exist
