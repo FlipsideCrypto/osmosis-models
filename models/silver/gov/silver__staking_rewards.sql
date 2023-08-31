@@ -535,6 +535,30 @@ GROUP BY
     END,
     A.validator_address,
     b._inserted_timestamp
+),
+tx_body_del AS (
+    SELECT
+        tx_id,
+        msg :delegator :: STRING AS delegator_address
+    FROM
+        {{ ref('silver__tx_body_msgs') }} A
+    WHERE
+        delegator_address IS NOT NULL
+
+{% if is_incremental() %}
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        max_date
+)
+{% endif %}
+
+qualify(ROW_NUMBER() over (PARTITION BY tx_id
+ORDER BY
+    msg_group) = 1)
 )
 SELECT
     block_id,
@@ -544,7 +568,10 @@ SELECT
     A.tx_caller_address,
     A.action,
     A.msg_group,
-    A.delegator_address,
+    COALESCE(
+        A.delegator_address,
+        tbd.delegator_address
+    ) AS delegator_address,
     A.amount,
     A.currency,
     A.validator_address,
@@ -556,7 +583,10 @@ SELECT
         A.msg_group,
         A.action,
         A.currency,
-        A.delegator_address,
+        COALESCE(
+            A.delegator_address,
+            tbd.delegator_address
+        ),
         A.validator_address
     ) AS _unique_key
 FROM
@@ -567,5 +597,7 @@ FROM
     LEFT JOIN exclude_eris ee
     ON A.tx_id = ee.tx_id
     AND A.msg_group = ee.msg_group
+    LEFT JOIN tx_body_del tbd
+    ON A.tx_id = tbd.tx_id
 WHERE
     ee.tx_id IS NULL
