@@ -13,7 +13,7 @@ SELECT
 FROM
     {{ source(
         'crosschain',
-        'dim_address_tags'
+        'dim_tags'
     ) }}
 WHERE
     tag_type = 'ICNS'
