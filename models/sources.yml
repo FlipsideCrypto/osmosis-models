@@ -37,8 +37,8 @@ sources:
     database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
     schema: core
     tables:
-      - name: dim_address_labels
-      - name: dim_address_tags
+      - name: dim_labels
+      - name: dim_tags
       - name: dim_dates
       - name: dim_date_hours
   - name: axelar_silver
