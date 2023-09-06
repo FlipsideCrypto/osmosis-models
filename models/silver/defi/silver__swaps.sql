@@ -90,6 +90,8 @@ pre_final AS (
             b.value :tokenOutMinAmount :: NUMBER,
             b.value :token_out_min_amount :: NUMBER
         ) AS to_amount,
+        b.value :token_in :amount :: NUMBER from_amount,
+        b.value :token_in :denom :: STRING from_currency,
         b.value :routes AS routes,
         _inserted_timestamp,
         b.index AS _body_index
@@ -307,10 +309,19 @@ pre_final2 AS (
         p.tx_id,
         tx_succeeded,
         trader,
-        f.from_amount,
-        f.from_currency,
+        COALESCE(
+            f.from_amount,
+            p.from_amount
+        ) AS from_amount,
+        COALESCE(
+            f.from_currency,
+            p.from_currency
+        ) AS from_currency,
         CASE
-            WHEN f.from_currency LIKE 'gamm/pool/%' THEN 18
+            WHEN COALESCE(
+                f.from_currency,
+                p.from_currency
+            ) LIKE 'gamm/pool/%' THEN 18
             ELSE l.decimal
         END AS from_decimal,
         tt.to_amount,
@@ -337,7 +348,10 @@ pre_final2 AS (
         ON tt.to_currency = A.address
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
         l
-        ON f.from_currency = l.address
+        ON COALESCE(
+            f.from_currency,
+            p.from_currency
+        ) = l.address
 )
 SELECT
     block_id,
