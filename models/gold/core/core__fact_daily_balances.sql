@@ -3,13 +3,8 @@
     unique_key = "CONCAT_WS('-', date, address, balance_type, currency)",
     incremental_strategy = 'delete+insert',
     cluster_by = ['date'],
-      meta={
-        'database_tags':{
-            'table': {
-                'PURPOSE': 'BALANCES'
-            }
-        }
-      }
+    tags = ['balances'],
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'BALANCES' }} }
 ) }}
 
 SELECT

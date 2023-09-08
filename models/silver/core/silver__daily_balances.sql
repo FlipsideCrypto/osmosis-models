@@ -3,6 +3,7 @@
     unique_key = ["date", "address", "balance_type", "currency"],
     incremental_strategy = 'delete+insert',
     cluster_by = ['date'],
+    tags = ['balances']
 ) }}
 
 WITH
