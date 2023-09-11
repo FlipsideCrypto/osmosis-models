@@ -30,13 +30,17 @@ SELECT
   project_name,
   raw_metadata [0] :aliases [0] :: STRING AS alias,
   raw_metadata [array_size(raw_metadata)-1] :exponent :: NUMBER AS DECIMAL,
-  raw_metadata, 
+  raw_metadata,
+  COALESCE(
+    raw_metadata [0] :aliases [0] :: STRING,
+    raw_metadata [0] :denom :: STRING
+  ) AS denom,
   concat_ws(
-        '-',
-        address, 
-        creator, 
-        blockchain
-    ) AS _unique_key
+    '-',
+    address,
+    creator,
+    blockchain
+  ) AS _unique_key
 FROM
   base qualify(ROW_NUMBER() over(PARTITION BY blockchain, creator, address
 ORDER BY

@@ -2,7 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp::DATE']
+    cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE']
 ) }}
 
 WITH base_atts AS (
@@ -45,7 +45,7 @@ AND _inserted_timestamp >= (
         )
     FROM
         {{ this }}
-) - INTERVAL '48 HOURS'
+) - INTERVAL '24 HOURS'
 {% endif %}
 ),
 sender AS (
@@ -358,10 +358,7 @@ fin AS (
         JOIN base_atts m
         ON s.tx_id = m.tx_id
         LEFT OUTER JOIN {{ ref('silver__asset_metadata') }} A
-        ON TRY_PARSE_JSON(attribute_value) :denom :: STRING = COALESCE(
-            raw_metadata [0] :aliases [0] :: STRING,
-            raw_metadata [0] :denom :: STRING
-        )
+        ON TRY_PARSE_JSON(attribute_value) :denom :: STRING = A.denom
         JOIN (
             SELECT
                 DISTINCT block_id,
@@ -407,7 +404,7 @@ WHERE
             )
         FROM
             {{ this }}
-    ) - INTERVAL '72 HOURS'
+    ) - INTERVAL '30 HOURS'
 {% endif %}
 ),
 axl_tran AS (
@@ -440,7 +437,7 @@ AND _inserted_timestamp >= (
         )
     FROM
         {{ this }}
-) - INTERVAL '72 HOURS'
+) - INTERVAL '30 HOURS'
 {% endif %}
 )
 SELECT
