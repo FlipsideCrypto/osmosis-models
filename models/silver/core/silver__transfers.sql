@@ -345,7 +345,7 @@ fin AS (
         C.amount :: NUMBER AS amount,
         C.currency,
         A.decimal,
-        COALESCE(TRY_PARSE_JSON(attribute_value) :receiver, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :staking :delegate :validator, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :bank :send :to_address) :: STRING AS receiver,
+        COALESCE(TRY_PARSE_JSON(attribute_value) :receiver, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :staking :delegate :validator, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :bank :send :to_address, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :wasm :execute :contract_addr) :: STRING AS receiver,
         m._inserted_timestamp,
         concat_ws(
             '-',
