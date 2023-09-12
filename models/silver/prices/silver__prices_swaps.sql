@@ -541,8 +541,7 @@ SELECT
     swaps_in_hour,
     volume_in_hour * price AS volume_usd_in_hour
 FROM
-    fill_in_the_blanks_temp
-WHERE
+    fill_in_the_blanks_temp {# WHERE
     project_name IN (
         'axlUSDC',
         'axlWBTC',
@@ -556,7 +555,9 @@ WHERE
         'axlWETH',
         'RAW',
         'gDAI',
-        'ION'
-    ) qualify(LAST_VALUE(price ignore nulls) over(PARTITION BY currency
+        'ION',
+        'LORE'
+    ) #}
+    qualify(LAST_VALUE(price ignore nulls) over(PARTITION BY currency
 ORDER BY
     block_hour ASC rows unbounded preceding)) IS NOT NULL
