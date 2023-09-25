@@ -24,26 +24,27 @@ WITH p_base AS (
             ELSE 4
         END AS pro_rank
     FROM
-        {{ ref('core__dim_prices') }} A qualify(ROW_NUMBER() over(PARTITION BY recorded_hour, UPPER(symbol)
-    ORDER BY
-        pro_rank) = 1))
-    SELECT
-        A.recorded_hour,
-        A.symbol,
-        COALESCE(
-            A.currency,
-            b_1.address,
-            b_2.address
-        ) AS currency,
-        A.price
-    FROM
-        p_base A
-        LEFT JOIN {{ ref('silver__asset_metadata') }}
-        b_1
-        ON A.currency = b_1.address
-        LEFT JOIN {{ ref('silver__asset_metadata') }}
-        b_2
-        ON A.symbol = UPPER (
-            b_2.project_name
-        )
-        AND A.currency IS NULL
+        {{ ref('price__dim_prices') }} A
+)
+SELECT
+    A.recorded_hour,
+    A.symbol,
+    COALESCE(
+        A.currency,
+        b_1.address,
+        b_2.address
+    ) AS currency,
+    A.price
+FROM
+    p_base A
+    LEFT JOIN {{ ref('silver__asset_metadata') }}
+    b_1
+    ON A.currency = b_1.address
+    LEFT JOIN {{ ref('silver__asset_metadata') }}
+    b_2
+    ON A.symbol = UPPER (
+        b_2.project_name
+    )
+    AND A.currency IS NULL qualify(ROW_NUMBER() over(PARTITION BY recorded_hour, COALESCE(A.currency, b_1.address, b_2.address)
+ORDER BY
+    pro_rank) = 1)
