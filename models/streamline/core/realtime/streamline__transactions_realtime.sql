@@ -12,11 +12,11 @@ WITH blocks AS (
         block_number
     FROM
         {{ ref("streamline__complete_txcount") }}
-        -- EXCEPT
-        -- SELECT
-        --     block_number
-        -- FROM
-        --     {{ ref("streamline__complete_transactions") }}
+        EXCEPT
+        SELECT
+            block_number
+        FROM
+            {{ ref("streamline__complete_transactions") }}
 ),
 transactions_counts_by_block AS (
     SELECT
@@ -63,12 +63,13 @@ numbers AS (
                 block_number,
                 pagination_offset
             FROM
-                blocks_with_page_numbers -- EXCEPT
-                -- SELECT
-                --     block_number,
-                --     pagination_offset
-                -- FROM
-                --     {{ ref("streamline__complete_transactions") }}
+                blocks_with_page_numbers 
+            EXCEPT
+                SELECT
+                    block_number,
+                    pagination_offset
+                FROM
+                    {{ ref("streamline__complete_transactions") }}
         )
     SELECT
         block_number,
