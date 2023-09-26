@@ -1,7 +1,7 @@
 {{ config (
     materialized = "view",
     post_hook = if_data_call_function(
-        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','2000000')}}, 'producer_batch_size', {{var('producer_batch_size','5000')}}, 'worker_batch_size', {{var('worker_batch_size','500')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
+        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','2000000')}}, 'producer_batch_size', {{var('producer_batch_size','2000')}}, 'worker_batch_size', {{var('worker_batch_size','200')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
         target = "{{this.schema}}.{{this.identifier}}"
     )
 ) }}
@@ -12,11 +12,11 @@ WITH blocks AS (
         block_number
     FROM
         {{ ref("streamline__complete_txcount") }}
-    EXCEPT
-    SELECT
-        block_number
-    FROM
-        {{ ref("streamline__complete_transactions") }}
+        -- EXCEPT
+        -- SELECT
+        --     block_number
+        -- FROM
+        --     {{ ref("streamline__complete_transactions") }}
 ),
 transactions_counts_by_block AS (
     SELECT
@@ -63,31 +63,21 @@ numbers AS (
                 block_number,
                 pagination_offset
             FROM
-                blocks_with_page_numbers
-            EXCEPT
-            SELECT
-                block_number,
-                pagination_offset
-            FROM
-                {{ ref("streamline__complete_transactions") }}
+                blocks_with_page_numbers -- EXCEPT
+                -- SELECT
+                --     block_number,
+                --     pagination_offset
+                -- FROM
+                --     {{ ref("streamline__complete_transactions") }}
         )
     SELECT
         block_number,
-        PARSE_JSON (
-            CONCAT(
-                '{"request_type": "GET",',
-                '"url": "/cosmos/tx/v1beta1/txs", "params":{',
-                '"events":"tx.height=',
-                block_number :: STRING,
-                '",',
-                '"pagination.limit":"100"',
-                ',',
-                '"pagination.offset":"',
-                pagination_offset,
-                '"},"id":"',
-                block_number :: STRING,
-                '"}'
-            )
+        ARRAY_CONSTRUCT(
+            'GET', 
+            '/cosmos/tx/v1beta1/txs', 
+            PARSE_JSON('{}'), 
+            PARSE_JSON(CONCAT('{"params":{', '"events":"tx.height=', block_number :: STRING, '",', '"pagination.limit":"100"', ',', '"pagination.offset":"', pagination_offset, '"},"id":"', block_number :: STRING, '"}')),
+            ''
         ) AS request
     FROM
         blocks_with_page_numbers_to_read
