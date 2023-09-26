@@ -10,7 +10,7 @@
 SELECT
     id,
     block_number,
-    pagination_offset,
+    VALUE :metadata :request :params ['pagination.offset'] ::STRING AS pagination_offset,
     _inserted_timestamp
 FROM
 
@@ -27,6 +27,6 @@ WHERE
     {{ ref('bronze__streamline_FR_transactions') }}
 {% endif %}
 
-qualify(ROW_NUMBER() over (PARTITION BY id
+qualify(ROW_NUMBER() over (PARTITION BY id, pagination_offset
 ORDER BY
     _inserted_timestamp DESC)) = 1
