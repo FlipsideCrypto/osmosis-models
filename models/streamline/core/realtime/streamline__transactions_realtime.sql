@@ -1,7 +1,7 @@
 {{ config (
     materialized = "view",
     post_hook = if_data_call_function(
-        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','100000')}}, 'producer_batch_size', {{var('producer_batch_size','5000')}}, 'worker_batch_size', {{var('worker_batch_size','200')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
+        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','1000')}}, 'producer_batch_size', {{var('producer_batch_size','1000')}}, 'worker_batch_size', {{var('worker_batch_size','100')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
         target = "{{this.schema}}.{{this.identifier}}"
     )
 ) }}
@@ -12,11 +12,11 @@ WITH blocks AS (
         block_number
     FROM
         {{ ref("streamline__complete_txcount") }}
-        -- EXCEPT
-        -- SELECT
-        --     block_number
-        -- FROM
-        --     {{ ref("streamline__complete_transactions") }}
+    EXCEPT
+    SELECT
+        block_number
+    FROM
+        {{ ref("streamline__complete_transactions") }}
 ),
 transactions_counts_by_block AS (
     SELECT
@@ -91,7 +91,5 @@ numbers AS (
         ) AS request
     FROM
         blocks_with_page_numbers_to_read
-    WHERE
-        block_number = 8350025
     ORDER BY
         block_number DESC
