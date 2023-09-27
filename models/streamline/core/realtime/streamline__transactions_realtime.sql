@@ -1,7 +1,7 @@
 {{ config (
     materialized = "view",
     post_hook = if_data_call_function(
-        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','2000000')}}, 'producer_batch_size', {{var('producer_batch_size','2000')}}, 'worker_batch_size', {{var('worker_batch_size','200')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
+        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','2000000')}}, 'producer_batch_size', {{var('producer_batch_size','200')}}, 'worker_batch_size', {{var('worker_batch_size','20')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
         target = "{{this.schema}}.{{this.identifier}}"
     )
 ) }}
