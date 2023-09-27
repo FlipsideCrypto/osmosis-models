@@ -2,7 +2,8 @@
   materialized = 'incremental',
   unique_key = "proposal_id",
   incremental_strategy = 'delete+insert',
-  full_refresh = false
+  full_refresh = false,
+  tags = ['daily']
 ) }}
 
 WITH valid_props AS (
