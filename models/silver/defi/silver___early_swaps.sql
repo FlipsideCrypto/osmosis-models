@@ -177,7 +177,7 @@ AND _inserted_timestamp >= (
 SELECT
     block_id,
     block_timestamp,
-    blockchain,
+    {# blockchain, #}
     chain_id,
     e.tx_id,
     tx_status,
