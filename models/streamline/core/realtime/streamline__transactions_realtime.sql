@@ -77,10 +77,11 @@ numbers AS (
             'GET', 
             '/cosmos/tx/v1beta1/txs', 
             PARSE_JSON('{}'), 
-            PARSE_JSON(CONCAT('{"params":{', '"events":"tx.height=', block_number :: STRING, '",', '"pagination.limit":"100"', ',', '"pagination.offset":"', pagination_offset, '"},"id":"', block_number :: STRING, '"}')),
-            ''
+            PARSE_JSON(CONCAT('{', '"events":"tx.height=', block_number :: STRING, '",', '"pagination.limit":"100"', ',', '"pagination.offset":"', pagination_offset, '"}')),
+            PARSE_JSON(CONCAT('{', '"id":"', block_number :: STRING, '"}'))
         ) AS request
     FROM
         blocks_with_page_numbers_to_read
+    WHERE block_number = 1313641
     ORDER BY
         block_number DESC
