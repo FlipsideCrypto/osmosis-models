@@ -47,6 +47,21 @@ b AS (
         attribute_index,
         attribute_key,
         attribute_value,
+        NULLIF(
+            (
+                conditional_true_event(
+                    CASE
+                        WHEN ma.msg_type = 'pool_created' THEN TRUE
+                        ELSE FALSE
+                    END
+                ) over (
+                    PARTITION BY ma.tx_id
+                    ORDER BY
+                        ma.msg_index
+                ) -1
+            ),
+            -1
+        ) AS pool_group,
         _inserted_timestamp
     FROM
         {{ ref('silver__msg_attributes') }}
@@ -83,31 +98,60 @@ AND _inserted_timestamp >= (
 )
 {% endif %}
 ),
+b_plus AS (
+    SELECT
+        tx_id,
+        msg_index,
+        pool_group,
+        msg_type,
+        _inserted_timestamp,
+        OBJECT_AGG(
+            attribute_key,
+            attribute_value :: variant
+        ) j
+    FROM
+        b
+    GROUP BY
+        tx_id,
+        msg_index,
+        pool_group,
+        msg_type,
+        _inserted_timestamp
+),
 C AS (
     SELECT
         tx_id,
+        pool_group,
         _inserted_timestamp,
         OBJECT_AGG(
             attribute_key,
             attribute_value :: variant
         ) AS obj
     FROM
-        (
+        b
+    WHERE
+        tx_id || msg_index IN (
             SELECT
-                DISTINCT tx_id,
-                attribute_key,
-                attribute_value,
-                _inserted_timestamp
+                tx_id || msg_index
             FROM
-                b
+                b_plus
+            WHERE
+                msg_type = 'pool_created'
+                OR (
+                    msg_type = 'transfer'
+                    AND j :amount IS NOT NULL
+                    AND j :amount NOT LIKE '%gamm%'
+                )
         )
     GROUP BY
         tx_id,
+        pool_group,
         _inserted_timestamp
 ),
 d AS (
     SELECT
         tx_id,
+        pool_group,
         COALESCE(
             obj :module :: STRING,
             'gamm'
@@ -122,7 +166,7 @@ d AS (
         _inserted_timestamp
     FROM
         C,
-        TABLE(FLATTEN(SPLIT(obj :amount, ','))) A
+        TABLE(FLATTEN(SPLIT(obj :amount, ','), outer => TRUE)) A
 ),
 e AS (
     SELECT
