@@ -1,25 +1,21 @@
 {{ config(
     materialized = 'view',
-      meta={
-        'database_tags':{
-            'table': {
-                'PURPOSE': 'SWAPS'
-            }
-        }
-      }
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'SWAPS' }}}
 ) }}
 
-SELECT 
-    block_id, 
-    block_timestamp, 
-    tx_id, 
-    tx_succeeded, 
-    trader, 
-    from_amount, 
-    from_currency, 
-    from_decimal, 
-    to_amount, 
-    to_currency, 
-    to_decimal, 
-    pool_ids
-FROM {{ ref('silver__swaps') }}
+SELECT
+    block_id,
+    block_timestamp,
+    tx_id,
+    tx_succeeded,
+    trader,
+    from_amount,
+    from_currency,
+    from_decimal,
+    to_amount,
+    to_currency,
+    TO_DECIMAL,
+    pool_ids,
+    _BODY_INDEX
+FROM
+    {{ ref('silver__swaps') }}
