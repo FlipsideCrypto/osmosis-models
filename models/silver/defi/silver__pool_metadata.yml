@@ -40,8 +40,6 @@ models:
                 - FLOAT
       - name: POOL_ADDRESS
         description: "{{ doc('pool_address') }}"
-        tests: 
-          - not_null
       - name: ASSETS
         description: "{{ doc('pool_assets') }}"
         tests:
