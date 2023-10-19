@@ -24,7 +24,7 @@ SELECT
   DATA :tx_responses :tx :auth_info AS auth_info,
   DATA :tx_responses :tx :body AS tx_body,
   REPLACE(
-    metadata :request [0] :params :events,
+    metadata :request [3] :params :events,
     'tx.height='
   ) :: INT AS block_id_requested,
   _inserted_timestamp
