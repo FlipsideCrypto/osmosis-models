@@ -4,40 +4,55 @@
     incremental_strategy = 'merge',
 ) }}
 
-WITH
-
-{% if is_incremental() %}
-max_date AS (
+WITH base_atts AS (
 
     SELECT
-        MAX(
-            _inserted_timestamp
-        ) _inserted_timestamp
-    FROM
-        {{ this }}
-),
-{% endif %}
-
-pool_creation_txs AS (
-    SELECT
-        DISTINCT tx_id,
+        tx_id,
         block_timestamp,
-        block_id
+        block_id,
+        msg_type,
+        msg_index,
+        attribute_index,
+        attribute_key,
+        attribute_value,
+        _inserted_timestamp
     FROM
-        {{ ref('silver__msgs') }}
+        {{ ref('silver__msg_attributes') }}
     WHERE
-        msg_type = 'pool_created'
+        msg_type IN (
+            'pool_created',
+            'transfer',
+            'message'
+        )
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
     SELECT
         MAX(
             _inserted_timestamp
-        )
+        ) _inserted_timestamp
     FROM
-        max_date
+        {{ this }}
 )
 {% endif %}
+),
+pool_creation_txs AS (
+    SELECT
+        tx_id,
+        block_timestamp,
+        block_id,
+        COUNT(
+            DISTINCT attribute_value
+        ) pool_count
+    FROM
+        base_atts
+    WHERE
+        msg_type = 'pool_created'
+        AND attribute_key = 'pool_id'
+    GROUP BY
+        tx_id,
+        block_timestamp,
+        block_id
 ),
 b AS (
     SELECT
@@ -47,25 +62,27 @@ b AS (
         attribute_index,
         attribute_key,
         attribute_value,
-        NULLIF(
-            (
-                conditional_true_event(
-                    CASE
-                        WHEN ma.msg_type = 'pool_created' THEN TRUE
-                        ELSE FALSE
-                    END
-                ) over (
-                    PARTITION BY ma.tx_id
-                    ORDER BY
-                        ma.msg_index
-                ) -1
-            ),
-            -1
-        ) AS pool_group,
+        CASE
+            WHEN pool_count = 1 THEN 0
+            ELSE NULLIF(
+                (
+                    conditional_true_event(
+                        CASE
+                            WHEN ma.msg_type = 'pool_created' THEN TRUE
+                            ELSE FALSE
+                        END
+                    ) over (
+                        PARTITION BY ma.tx_id
+                        ORDER BY
+                            ma.msg_index
+                    ) -1
+                ),
+                -1
+            )
+        END AS pool_group,
         _inserted_timestamp
     FROM
-        {{ ref('silver__msg_attributes') }}
-        ma
+        base_atts ma
         INNER JOIN pool_creation_txs t
         ON t.tx_id = ma.tx_id
     WHERE
@@ -86,17 +103,20 @@ b AS (
             )
         )
         AND attribute_value <> 'poolmanager'
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
+),
+bb AS (
     SELECT
-        MAX(
-            _inserted_timestamp
-        )
+        tx_id,
+        msg_index,
+        pool_group,
+        msg_type,
+        _inserted_timestamp,
+        attribute_key,
+        attribute_value
     FROM
-        max_date
-)
-{% endif %}
+        b qualify(ROW_NUMBER() over (PARTITION BY tx_id, pool_group, msg_type, attribute_key
+    ORDER BY
+        msg_index) = 1)
 ),
 b_plus AS (
     SELECT
@@ -110,7 +130,7 @@ b_plus AS (
             attribute_value :: variant
         ) j
     FROM
-        b
+        bb
     GROUP BY
         tx_id,
         msg_index,
@@ -140,7 +160,7 @@ C AS (
                 OR (
                     msg_type = 'transfer'
                     AND j :amount IS NOT NULL
-                    AND j :amount NOT LIKE '%gamm%'
+                    AND j :amount LIKE '%,%'
                 )
         )
     GROUP BY

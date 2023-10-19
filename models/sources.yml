@@ -51,3 +51,7 @@ sources:
     tables:
       - name: link_events
       - name: transfers
+  - name: bronze
+    schema: bronze
+    tables:
+      - name: chainwalkers_txs

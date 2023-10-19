@@ -33,7 +33,7 @@ WHERE
       {{ this }}
   )
 {% endif %}
-WHERE
-  _partition_by_block_id = 10000000 qualify(ROW_NUMBER() over(PARTITION BY chain_id, block_id
+
+qualify(ROW_NUMBER() over(PARTITION BY chain_id, block_id
 ORDER BY
   _inserted_timestamp DESC)) = 1
