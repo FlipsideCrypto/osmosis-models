@@ -18,8 +18,7 @@ sources:
       - name: blockchain
   - name: bronze_streamline
     database: streamline
-    schema: OSMOSIS  
-    #  {{ "OSMOSIS_DEV" if var("STREAMLINE_USE_DEV_FOR_EXTERNAL_TABLES", False) else "OSMOSIS" }}
+    schema: {{ "OSMOSIS_DEV" if var("STREAMLINE_USE_DEV_FOR_EXTERNAL_TABLES", False) else "OSMOSIS" }}
     tables:
       - name: validator_metadata_api
       - name: asset_metadata_api
