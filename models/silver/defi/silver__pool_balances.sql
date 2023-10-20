@@ -117,3 +117,7 @@ WHERE
             {{ this }}
     )
 {% endif %}
+
+qualify (ROW_NUMBER() over (PARTITION BY A.block_id, pool_id
+ORDER BY
+    _inserted_timestamp DESC) = 1)
