@@ -21,17 +21,18 @@ FROM
 {% else %}
   {{ ref('bronze__streamline_FR_blocks') }}
 {% endif %}
+WHERE
+  chain_id IS NOT NULL
 
 {% if is_incremental() %}
-WHERE
-  _inserted_timestamp >= (
-    SELECT
-      MAX(
-        _inserted_timestamp
-      )
-    FROM
-      {{ this }}
-  )
+AND _inserted_timestamp >= (
+  SELECT
+    MAX(
+      _inserted_timestamp
+    )
+  FROM
+    {{ this }}
+)
 {% endif %}
 
 qualify(ROW_NUMBER() over(PARTITION BY chain_id, block_id
