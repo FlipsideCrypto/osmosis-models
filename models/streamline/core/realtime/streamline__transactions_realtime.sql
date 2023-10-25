@@ -13,28 +13,7 @@ WITH blocks AS (
     FROM
         {{ ref("streamline__complete_txcount") }}
     WHERE
-        block_number NOT IN (
-            1139774,
-            1140098,
-            1139579,
-            1140116,
-            1139814,
-            1139811,
-            1139799,
-            1139944,
-            1140151,
-            1139873,
-            1139843,
-            1140301,
-            1139952,
-            1140236,
-            1139948,
-            1140024,
-            1139996,
-            1139960,
-            1139957,
-            1140075
-        )
+        block_number > 1127901
     EXCEPT
     SELECT
         block_number
