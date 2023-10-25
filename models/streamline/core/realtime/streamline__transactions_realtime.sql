@@ -12,11 +12,34 @@ WITH blocks AS (
         block_number
     FROM
         {{ ref("streamline__complete_txcount") }}
-        EXCEPT
-        SELECT
-            block_number
-        FROM
-            {{ ref("streamline__complete_transactions") }}
+    WHERE
+        block_number NOT IN (
+            1139774,
+            1140098,
+            1139579,
+            1140116,
+            1139814,
+            1139811,
+            1139799,
+            1139944,
+            1140151,
+            1139873,
+            1139843,
+            1140301,
+            1139952,
+            1140236,
+            1139948,
+            1140024,
+            1139996,
+            1139960,
+            1139957,
+            1140075
+        )
+    EXCEPT
+    SELECT
+        block_number
+    FROM
+        {{ ref("streamline__complete_transactions") }}
 ),
 transactions_counts_by_block AS (
     SELECT
@@ -63,21 +86,35 @@ numbers AS (
                 block_number,
                 pagination_offset
             FROM
-                blocks_with_page_numbers 
+                blocks_with_page_numbers
             EXCEPT
-                SELECT
-                    block_number,
-                    pagination_offset
-                FROM
-                    {{ ref("streamline__complete_transactions") }}
+            SELECT
+                block_number,
+                pagination_offset
+            FROM
+                {{ ref("streamline__complete_transactions") }}
         )
     SELECT
         block_number,
         ARRAY_CONSTRUCT(
-            'GET', 
-            '/cosmos/tx/v1beta1/txs', 
-            PARSE_JSON('{}'), 
-            PARSE_JSON(CONCAT('{"params":{', '"events":"tx.height=', block_number :: STRING, '",', '"pagination.limit":"100"', ',', '"pagination.offset":"', pagination_offset, '"},"id":"', block_number :: STRING, '"}')),
+            'GET',
+            '/cosmos/tx/v1beta1/txs',
+            PARSE_JSON('{}'),
+            PARSE_JSON(
+                CONCAT(
+                    '{"params":{',
+                    '"events":"tx.height=',
+                    block_number :: STRING,
+                    '",',
+                    '"pagination.limit":"100"',
+                    ',',
+                    '"pagination.offset":"',
+                    pagination_offset,
+                    '"},"id":"',
+                    block_number :: STRING,
+                    '"}'
+                )
+            ),
             ''
         ) AS request
     FROM
