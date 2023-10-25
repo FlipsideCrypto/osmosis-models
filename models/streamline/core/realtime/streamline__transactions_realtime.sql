@@ -13,7 +13,7 @@ WITH blocks AS (
     FROM
         {{ ref("streamline__complete_txcount") }}
     WHERE
-        block_number > 1131175
+        block_number > 11800000
     EXCEPT
     SELECT
         block_number
