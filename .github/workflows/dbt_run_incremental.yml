@@ -4,7 +4,7 @@ run-name: dbt_run_incremental
 on:
   workflow_dispatch:
   schedule:
-    - cron: '20,50 * * * *'
+    - cron: '25,55 * * * *'
 
 env:
   USE_VARS: "${{ vars.USE_VARS }}"
