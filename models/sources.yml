@@ -16,6 +16,7 @@ sources:
     schema: bronze_api
     tables: 
       - name: blockchain
+      - name: manual_tx_lq
   - name: bronze_streamline
     database: streamline
     schema: |

@@ -11,7 +11,7 @@ models:
           column_name: BLOCK_ID
           config:
             severity: error
-            error_if: ">100"
+            error_if: ">2"
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

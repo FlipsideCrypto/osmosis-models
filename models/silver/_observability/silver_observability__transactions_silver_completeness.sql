@@ -89,78 +89,34 @@ bronze AS (
     FROM
         {{ ref('silver___manual_tx_lq') }}
 ),
-b_block AS (
-    SELECT
-        A.block_id,
-        A.block_id_requested,
-        A.block_timestamp,
-        A.tx_id,
-        A._inserted_timestamp
-    FROM
-        bronze A qualify(ROW_NUMBER() over(PARTITION BY A.block_id, tx_id
-    ORDER BY
-        A._inserted_timestamp DESC) = 1)
-),
-b_block_req AS (
-    SELECT
-        A.block_id,
-        A.block_id_requested,
-        A.block_timestamp,
-        A.tx_id,
-        A._inserted_timestamp
-    FROM
-        bronze A qualify(ROW_NUMBER() over(PARTITION BY A.block_id_requested, tx_id
-    ORDER BY
-        A._inserted_timestamp DESC) = 1)
-),
 bronze_count AS (
     SELECT
         block_id,
         MIN(block_timestamp) AS block_timestamp,
-        MAX(num_txs) num_txs
+        COUNT(1) num_txs
     FROM
         (
             SELECT
                 block_id,
                 block_timestamp,
-                COUNT(
-                    DISTINCT tx_id
-                ) AS num_txs
+                tx_id
             FROM
-                b_block A
-            GROUP BY
-                block_id,
-                block_timestamp
-            UNION ALL
-            SELECT
-                block_id_requested AS block_id,
-                MIN(block_timestamp) AS block_timestamp,
-                COUNT(
-                    DISTINCT tx_id
-                ) AS num_txs
-            FROM
-                b_block_req A
-            GROUP BY
-                block_id_requested
+                bronze A qualify(ROW_NUMBER() over(PARTITION BY tx_id
+            ORDER BY
+                block_id DESC, _inserted_timestamp DESC) = 1)
         )
     GROUP BY
         block_id
 ),
-bronze_api AS (
+silver AS (
     SELECT
-        A.block_id,
-        A.block_timestamp,
-        LEAST(
-            A.num_txs,
-            b.num_txs
-        ) AS num_txs
+        block_id,
+        MIN(block_timestamp) AS block_timestamp,
+        COUNT(1) AS num_txs
     FROM
-        {{ ref('silver__blockchain') }} A
-        LEFT JOIN {{ ref('bronze__tx_count') }}
-        b
-        ON A.block_id = b.block_id
+        {{ ref('silver__transactions') }}
     WHERE
-        A.block_timestamp BETWEEN (
+        block_timestamp BETWEEN (
             SELECT
                 MIN(block_timestamp)
             FROM
@@ -172,10 +128,8 @@ bronze_api AS (
             FROM
                 rel_blocks
         )
-        AND COALESCE(
-            b.num_txs,
-            0
-        ) > 0
+    GROUP BY
+        block_id
 )
 SELECT
     'transactions' AS test_name,
@@ -235,9 +189,9 @@ SELECT
                     b.num_txs,
                     0
                 ) - A.num_txs,
-                'blockchain_num_txs',
-                A.num_txs,
                 'bronze_num_txs',
+                A.num_txs,
+                'silver_num_txs',
                 COALESCE(
                     b.num_txs,
                     0
@@ -250,6 +204,6 @@ SELECT
     ) AS test_failure_details,
     SYSDATE() AS test_timestamp
 FROM
-    bronze_api A
-    LEFT JOIN bronze_count b
+    bronze_count A
+    LEFT JOIN silver b
     ON A.block_id = b.block_id

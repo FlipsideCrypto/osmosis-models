@@ -61,6 +61,23 @@ WHERE
         'bronze',
         'chainwalkers_txs'
       ) }}
+  ),
+  man AS (
+    SELECT
+      block_id,
+      block_timestamp,
+      codespace,
+      gas_used,
+      gas_wanted,
+      tx_id,
+      tx_succeeded,
+      tx_code,
+      msgs,
+      auth_info,
+      tx_body,
+      _inserted_timestamp
+    FROM
+      {{ ref('silver___manual_tx_lq') }}
   )
 {% endif %},
 combo AS (
@@ -100,6 +117,23 @@ combo AS (
     _inserted_timestamp
   FROM
     cw
+  UNION ALL
+  SELECT
+    'man' AS source,
+    block_id,
+    block_timestamp,
+    codespace,
+    gas_used,
+    gas_wanted,
+    tx_id,
+    tx_succeeded,
+    tx_code,
+    msgs,
+    auth_info,
+    tx_body,
+    _inserted_timestamp
+  FROM
+    man
   {% endif %}
 )
 SELECT
