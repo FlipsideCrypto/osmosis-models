@@ -178,7 +178,7 @@ SELECT
     block_id,
     block_timestamp,
     {# blockchain, #}
-    chain_id,
+    NULL AS chain_id,
     e.tx_id,
     tx_status,
     tt.trader,
