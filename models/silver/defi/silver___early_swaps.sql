@@ -180,7 +180,7 @@ SELECT
     {# blockchain, #}
     NULL AS chain_id,
     e.tx_id,
-    tx_status,
+    NULL AS tx_status,
     tt.trader,
     from_amount :: NUMBER AS from_amount,
     from_currency,
