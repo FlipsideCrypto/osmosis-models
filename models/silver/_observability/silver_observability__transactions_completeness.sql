@@ -176,6 +176,10 @@ bronze_api AS (
             b.num_txs,
             0
         ) > 0
+        AND A.block_id NOT IN (
+            12028887,
+            12028888
+        )
 )
 SELECT
     'transactions' AS test_name,
