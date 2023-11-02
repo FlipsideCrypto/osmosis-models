@@ -15,6 +15,7 @@ WITH txs AS (
         {{ ref('silver__msg_attributes') }} A
     WHERE
         msg_type = 'withdraw_commission'
+        AND tx_id <> '5D9503F5FE8FA7299099D88DF4989579D5FD0FCF7CB727DFE288A4BB03D2A00D'
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
