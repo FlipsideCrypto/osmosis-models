@@ -31,15 +31,20 @@ FROM
         'bronze_api',
         'manual_tx_lq'
     ) }}
+WHERE
+    block_id IS NOT NULL
 
 {% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            {{ this }}
-    )
+AND _inserted_timestamp >= (
+    SELECT
+        MAX(
+            _inserted_timestamp
+        )
+    FROM
+        {{ this }}
+)
 {% endif %}
+
+qualify(ROW_NUMBER() over (PARTITION BY block_id, tx_id
+ORDER BY
+    _inserted_timestamp DESC) = 1)

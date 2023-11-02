@@ -6,7 +6,7 @@
 WITH calls AS (
 
     SELECT
-        'https://osmosis-mainnet-archive.allthatnode.com:1317/{key}/cosmos/tx/v1beta1/txs/' || tx_id calls,
+        'https://osmosis-mainnet-archive.allthatnode.com:1317/l3fuPi7QUWgb2h80aLGHYUIVHSGYjL76/cosmos/tx/v1beta1/txs/' || tx_id calls,
         tx_id
     FROM
         (
@@ -23,6 +23,8 @@ SELECT
     tx_id
 FROM
     {{ this }}
+WHERE
+    DATA :data :tx_response :height IS NOT NULL
 {% endif %}
 LIMIT
     20
