@@ -210,7 +210,7 @@ no_price AS (
         ON A.block_id = b.block_id
         AND A.denom = b.token_address
     WHERE
-        b.block_id IS NULL qualify(ROW_NUMBER() over(PARTITION BY A.denom
+        b.block_id IS NULL qualify(ROW_NUMBER() over(PARTITION BY A.denom, A.block_id
     ORDER BY
         A.amount DESC) = 1)
 ),
@@ -245,7 +245,7 @@ yes_price AS (
                 non_osmo_pools
         ) b
         ON A.block_id = b.block_id
-        AND A.denom = b.token_address qualify(ROW_NUMBER() over(PARTITION BY A.pool_id
+        AND A.denom = b.token_address qualify(ROW_NUMBER() over(PARTITION BY A.pool_id, A.block_id
     ORDER BY
         A.amount DESC) = 1)
 ),
