@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: price__ez_prices
-    description: Contains token prices in USD for assets that can be traded on the Osmosis Zone and Frontier. 
+    description: Contains token prices in USD for assets that can be traded on Osmosis.
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:

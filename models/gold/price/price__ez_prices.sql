@@ -25,6 +25,8 @@ WITH p_base AS (
         END AS pro_rank
     FROM
         {{ ref('price__dim_prices') }} A
+    WHERE
+        A.provider <> 'swaps'
 )
 SELECT
     A.recorded_hour,
