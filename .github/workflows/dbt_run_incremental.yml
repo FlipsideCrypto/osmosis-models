@@ -3,8 +3,8 @@ run-name: dbt_run_incremental
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '25,55 * * * *'
+  # schedule:
+  #   - cron: '25,55 * * * *'
 
 env:
   USE_VARS: "${{ vars.USE_VARS }}"
@@ -28,7 +28,7 @@ jobs:
     with:
       dbt_command: |
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
-          dbt run -s ./models --exclude models/silver/_observability models/streamline tag:balances  tag:daily
+          dbt run -s "osmosis_models,./models" --exclude models/silver/_observability models/streamline tag:balances  tag:daily
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
       environment: workflow_prod
       warehouse: ${{ vars.WAREHOUSE }}

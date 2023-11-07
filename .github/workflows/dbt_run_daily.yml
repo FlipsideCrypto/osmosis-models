@@ -28,7 +28,7 @@ jobs:
     with:
       dbt_command: |
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
-          dbt run -s tag:balances tag:daily
+          dbt run -s "osmosis_models,tag:balances" "osmosis_models,tag:daily"
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
       environment: workflow_prod
       warehouse: ${{ vars.WAREHOUSE }}

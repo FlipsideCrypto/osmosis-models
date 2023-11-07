@@ -48,6 +48,7 @@ vars:
   STREAMLINE_RUN_HISTORY: False
   UPDATE_UDFS_AND_SPS: False
   UPDATE_SNOWFLAKE_TAGS: True
+  START_GHA_TASKS: False
   
 tests:
   +store_failures: true # all tests

@@ -56,3 +56,8 @@ sources:
     schema: bronze
     tables:
       - name: chainwalkers_txs
+  - name: github_actions
+    database: osmosis
+    schema: github_actions
+    tables:
+      - name: workflows
