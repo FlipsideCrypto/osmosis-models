@@ -117,7 +117,14 @@ reward_combo AS (
         j :amount :: STRING AS amount,
         j :sender :: STRING AS delegator_address
     FROM
-        msg_attr_rewards
+        (
+            SELECT
+                *
+            FROM
+                msg_attr_rewards qualify(ROW_NUMBER() over(PARTITION BY tx_id, msg_group, group_id, attribute_key
+            ORDER BY
+                msg_index) = 1)
+        )
     WHERE
         attribute_key IN (
             'sender',
