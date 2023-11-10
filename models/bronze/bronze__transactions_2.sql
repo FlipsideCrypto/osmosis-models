@@ -3,7 +3,8 @@
   incremental_strategy = 'delete+insert',
   unique_key = 'id',
   cluster_by = ['_inserted_timestamp::date','block_timestamp::date'],
-  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION"
+  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION",
+  tags = ['core']
 ) }}
 -- depends_on: {{ ref('bronze__streamline_transactions') }}
 

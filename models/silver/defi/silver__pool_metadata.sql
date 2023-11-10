@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    tags = ['noncore']
 ) }}
 
 WITH base_atts AS (

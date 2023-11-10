@@ -2,7 +2,8 @@
   materialized = 'incremental',
   unique_key = ['chain_id','block_id'],
   incremental_strategy = 'merge',
-  cluster_by = ['block_timestamp::DATE']
+  cluster_by = ['block_timestamp::DATE'],
+  tags = ['core']
 ) }}
 -- depends_on: {{ ref('bronze__streamline_blocks') }}
 

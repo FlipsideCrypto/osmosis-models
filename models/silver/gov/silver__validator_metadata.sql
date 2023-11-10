@@ -1,5 +1,6 @@
 {{ config(
-  materialized = 'table'
+  materialized = 'table',
+  tags = ['daily']
 ) }}
 
 SELECT
@@ -18,20 +19,19 @@ SELECT
   VALUE :min_self_delegation :: NUMBER AS min_self_delegation,
   VALUE :rank :: NUMBER AS RANK,
   VALUE :uptime :missed_blocks :: NUMBER AS missed_blocks,
-  VALUE AS raw_metadata, 
+  VALUE AS raw_metadata,
   concat_ws(
-        '-',
-        address, 
-        creator, 
-        blockchain
-    ) AS _unique_key, 
+    '-',
+    address,
+    creator,
+    blockchain
+  ) AS _unique_key,
   VALUE :update_time :: TIMESTAMP AS _inserted_timestamp
 FROM
   {{ source(
     'bronze_streamline',
     'validator_metadata_api'
   ) }}
-
   qualify(ROW_NUMBER() over(PARTITION BY blockchain, creator, address
 ORDER BY
   _inserted_timestamp DESC)) = 1

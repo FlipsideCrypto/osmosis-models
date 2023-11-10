@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = ["pool_id","block_id"],
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp']
+    cluster_by = ['block_timestamp'],
+    tags = ['noncore']
 ) }}
 
 SELECT

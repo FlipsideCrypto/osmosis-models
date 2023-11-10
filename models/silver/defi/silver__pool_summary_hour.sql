@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = ["pool_id","block_hour"],
     incremental_strategy = 'merge',
-    cluster_by = ['block_timestamp']
+    cluster_by = ['block_timestamp'],
+    tags = ['noncore']
 ) }}
 
 WITH pool_token_prices AS (

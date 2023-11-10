@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
-    cluster_by = ['_inserted_timestamp::DATE']
+    cluster_by = ['_inserted_timestamp::DATE'],
+    tags = ['noncore']
 ) }}
 
 WITH count_ids AS (

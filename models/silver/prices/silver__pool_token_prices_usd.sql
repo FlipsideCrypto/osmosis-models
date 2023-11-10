@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = ["token_address","block_id"],
     incremental_strategy = 'merge',
-    cluster_by = ['_inserted_timestamp::DATE']
+    cluster_by = ['_inserted_timestamp::DATE'],
+    tags = ['noncore']
 ) }}
 
 WITH osmo_price AS (

@@ -3,6 +3,7 @@
     unique_key = ["block_hour", "currency"],
     incremental_strategy = 'merge',
     cluster_by = ['block_hour::DATE'],
+    tags = ['noncore']
 ) }}
 
 WITH swaps AS (

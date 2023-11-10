@@ -1,7 +1,8 @@
 {{ config(
     materialized = 'incremental',
     unique_key = 'proposal_id',
-    incremental_strategy = 'delete+insert'
+    incremental_strategy = 'delete+insert',
+    tags = ['noncore']
 ) }}
 
 WITH base AS (

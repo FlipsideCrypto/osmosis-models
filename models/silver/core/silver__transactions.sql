@@ -3,7 +3,8 @@
   unique_key = "tx_id",
   incremental_strategy = 'merge',
   cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
-  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(tx_id)"
+  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(tx_id)",
+  tags = ['core']
 ) }}
 -- depends_on: {{ ref('bronze__streamline_transactions') }}
 WITH sl AS (

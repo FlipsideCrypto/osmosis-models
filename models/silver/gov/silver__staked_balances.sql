@@ -2,6 +2,7 @@
     materialized = 'incremental',
     incremental_strategy = 'delete+insert',
     cluster_by = ['block_timestamp'],
+    tags = ['noncore']
 ) }}
 
 WITH all_staked AS (

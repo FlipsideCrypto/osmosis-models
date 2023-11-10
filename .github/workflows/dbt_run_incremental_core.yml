@@ -1,5 +1,5 @@
-name: dbt_run_incremental
-run-name: dbt_run_incremental
+name: dbt_run_incremental_core
+run-name: dbt_run_incremental_core
 
 on:
   workflow_dispatch:
@@ -28,8 +28,7 @@ jobs:
     with:
       dbt_command: |
           dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
-          dbt run -s "osmosis_models,./models" --exclude models/silver/_observability models/streamline tag:balances  tag:daily
-          dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
+          dbt run -s "osmosis_models,tag:core" 
       environment: workflow_prod
       warehouse: ${{ vars.WAREHOUSE }}
     secrets: inherit 

@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = ["block_date","pool_id","currency"],
     incremental_strategy = 'merge',
-    cluster_by = ['block_date']
+    cluster_by = ['block_date'],
+    tags = ['noncore']
 ) }}
 
 WITH last_block_of_day AS (
