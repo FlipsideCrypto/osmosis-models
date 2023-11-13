@@ -28,6 +28,10 @@ jobs:
     with:
       dbt_command: |
           dbt run -s "osmosis_models,tag:noncore" 
+          dbt run-operation get_blockchain_api;
+          dbt run -m models/silver/core/silver__blockchain.sql;
+          dbt run-operation get_blockchain_api;
+          dbt run -m models/silver/core/silver__blockchain.sql;
       environment: workflow_prod
       warehouse: ${{ vars.WAREHOUSE }}
     secrets: inherit 
