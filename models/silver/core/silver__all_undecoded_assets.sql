@@ -1,6 +1,7 @@
 {{ config(
   materialized = 'view',
-  post_hook = "call silver.sp_bulk_get_asset_metadata()"
+  post_hook = "call silver.sp_bulk_get_asset_metadata()",
+  tags = ['noncore']
 ) }}
 
 SELECT

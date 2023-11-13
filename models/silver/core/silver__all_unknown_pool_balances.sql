@@ -1,6 +1,7 @@
 {{ config(
     materialized = 'view',
     post_hook = 'call silver.sp_bulk_get_pool_balances()',
+    tags = ['noncore']
 ) }}
 
 WITH last_block_of_hour AS (
