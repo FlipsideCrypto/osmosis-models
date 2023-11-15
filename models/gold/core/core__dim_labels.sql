@@ -2,7 +2,6 @@
     materialized = 'view',
     tags = ['noncore']
 ) }}
-) }}
 
 SELECT
     blockchain,
