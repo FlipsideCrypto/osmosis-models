@@ -1,6 +1,7 @@
 {{ config(
     materialized = 'view',
-    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'DEFI' }} }
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'DEFI' }} },
+    tags = ['noncore']
 ) }}
 
 WITH pools AS (

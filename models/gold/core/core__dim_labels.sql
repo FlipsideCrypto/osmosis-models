@@ -1,5 +1,7 @@
 {{ config(
-    materialized = 'view'
+    materialized = 'view',
+    tags = ['noncore']
+) }}
 ) }}
 
 SELECT

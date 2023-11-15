@@ -1,13 +1,14 @@
 {{ config(
-    materialized = 'view'
+    materialized = 'view',
+    tags = ['noncore']
 ) }}
 
-SELECT 
-    block_id, 
-    block_timestamp, 
-    chain_id, 
-    tx_count, 
-    proposer_address, 
+SELECT
+    block_id,
+    block_timestamp,
+    chain_id,
+    tx_count,
+    proposer_address,
     validator_hash
-FROM 
+FROM
     {{ ref('silver__blocks') }}

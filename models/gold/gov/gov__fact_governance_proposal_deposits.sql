@@ -1,22 +1,18 @@
 {{ config(
     materialized = 'view',
-      meta={
-        'database_tags':{
-            'table': {
-                'PURPOSE': 'GOVERNANCE'
-            }
-        }
-      }
+    meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'GOVERNANCE' }}},
+    tags = ['noncore']
 ) }}
 
-SELECT 
-    block_id, 
-    block_timestamp, 
-    tx_id, 
+SELECT
+    block_id,
+    block_timestamp,
+    tx_id,
     tx_succeeded,
-    depositor, 
-    proposal_id, 
-    amount, 
-    currency, 
-    decimal
-FROM {{ ref('silver__governance_proposal_deposits') }}
+    depositor,
+    proposal_id,
+    amount,
+    currency,
+    DECIMAL
+FROM
+    {{ ref('silver__governance_proposal_deposits') }}

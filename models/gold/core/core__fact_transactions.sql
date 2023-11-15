@@ -3,6 +3,7 @@
     unique_key = "tx_id",
     incremental_strategy = 'merge',
     cluster_by = ['block_timestamp::DATE'],
+    tags = ['core']
 ) }}
 
 WITH fee AS (
@@ -18,6 +19,7 @@ WITH fee AS (
 {% if is_incremental() %}
 AND _inserted_timestamp :: DATE >= CURRENT_DATE -2
 {% endif %}
+
 qualify(ROW_NUMBER() over(PARTITION BY tx_id
 ORDER BY
     msg_index)) = 1
