@@ -179,7 +179,7 @@ combine AS (
         all_staked
     UNION ALL
     SELECT
-        A.block_id,
+        DISTINCT A.block_id,
         block_timestamp,
         address,
         b.lock_id,
