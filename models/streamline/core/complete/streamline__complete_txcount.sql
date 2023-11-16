@@ -10,6 +10,7 @@
 SELECT
     id,
     block_number,
+    DATA :: INTEGER AS txcount,
     _inserted_timestamp
 FROM
 

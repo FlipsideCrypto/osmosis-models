@@ -9,26 +9,16 @@
 WITH blocks AS (
 
     SELECT
-        block_number
+        A.block_number,
+        A.txcount
     FROM
-        {{ ref("streamline__complete_txcount") }}
+        {{ ref("streamline__complete_txcount") }} A
+        LEFT JOIN {{ ref("streamline__complete_transactions") }}
+        b
+        ON A.block_number = b.block_number
     WHERE
-        block_number > 11800000
-    EXCEPT
-    SELECT
-        block_number
-    FROM
-        {{ ref("streamline__complete_transactions") }}
-),
-transactions_counts_by_block AS (
-    SELECT
-        tc.block_number,
-        tc.data :: INTEGER AS txcount
-    FROM
-        {{ ref("bronze__streamline_FR_txcount") }}
-        tc
-        INNER JOIN blocks b
-        ON tc.block_number = b.block_number
+        A.block_number > 11800000
+        AND b.block_number IS NULL
 ),
 numbers AS (
     -- Recursive CTE to generate numbers. We'll use the maximum txcount value to limit our recursion.
@@ -44,14 +34,14 @@ numbers AS (
             SELECT
                 CEIL(MAX(txcount) / 100.0)
             FROM
-                transactions_counts_by_block)
+                blocks)
         ),
         blocks_with_page_numbers AS (
             SELECT
                 tt.block_number AS block_number,
                 ROUND((n.n -1) * 100) :: STRING AS pagination_offset
             FROM
-                transactions_counts_by_block tt
+                blocks tt
                 JOIN numbers n
                 ON n.n <= CASE
                     WHEN tt.txcount % 100 = 0 THEN tt.txcount / 100
