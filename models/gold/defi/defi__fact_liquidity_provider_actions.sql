@@ -44,12 +44,9 @@ SELECT
     currency,
     DECIMAL,
     msg_group,
-    COALESCE(
-        early_liquidity_provider_actions_id,
-        {{ dbt_utils.generate_surrogate_key(
-            ['_unique_key']
-        ) }}
-    ) AS fact_liquidity_provider_actions_id,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS fact_liquidity_provider_actions_id,
     COALESCE(
         inserted_timestamp,
         '2000-01-01'

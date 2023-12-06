@@ -14,12 +14,9 @@ SELECT
     currency,
     DECIMAL,
     receiver,
-    COALESCE(
-        airdrops_id,
-        {{ dbt_utils.generate_surrogate_key(
-            ['_unique_key']
-        ) }}
-    ) AS fact_airdrops_id,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS fact_airdrops_id,
     COALESCE(
         inserted_timestamp,
         '2000-01-01'
