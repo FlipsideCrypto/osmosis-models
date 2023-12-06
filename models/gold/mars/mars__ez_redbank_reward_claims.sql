@@ -16,7 +16,21 @@ SELECT
     contract_name,
     action,
     USER,
-    mars_rewards
+    mars_rewards,
+    COALESCE(
+        red_bank_actions_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['tx_id','msg_index']
+        ) }}
+    ) AS ez_red_bank_reward_claims_id,
+    COALESCE(
+        inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__red_bank_actions') }}
 WHERE

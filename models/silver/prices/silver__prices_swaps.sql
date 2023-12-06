@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["block_hour", "currency"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_hour::DATE'],
     tags = ['noncore']
 ) }}
@@ -540,7 +541,13 @@ SELECT
     max_price_usd_hour,
     volatility_measure,
     swaps_in_hour,
-    volume_in_hour * price AS volume_usd_in_hour
+    volume_in_hour * price AS volume_usd_in_hour,
+    {{ dbt_utils.generate_surrogate_key(
+        ['block_hour','currency']
+    ) }} AS prices_swaps_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     fill_in_the_blanks_temp {# WHERE
     project_name IN (

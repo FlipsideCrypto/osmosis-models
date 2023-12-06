@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["block_date","pool_id","currency"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_date'],
     tags = ['noncore']
 ) }}
@@ -162,7 +163,13 @@ SELECT
     SUM(fees) AS fees,
     SUM(fees_usd) AS fees_usd,
     fee_type,
-    MAX(_inserted_timestamp) AS _inserted_timestamp
+    MAX(_inserted_timestamp) AS _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['pool_id','block_date','currency']
+    ) }} AS pool_fee_summary_day_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     pre_agg A
 GROUP BY

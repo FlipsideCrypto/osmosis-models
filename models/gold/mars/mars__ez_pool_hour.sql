@@ -31,7 +31,21 @@ SELECT
     liquidity,
     liquidity_usd,
     volume,
-    volume_usd
+    volume_usd,
+    COALESCE(
+        pool_summary_hour_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['pool_id','block_hour']
+        ) }}
+    ) AS ez_pool_hour_id,
+    COALESCE(
+        A.inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        A.modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__pool_summary_hour') }} A
     LEFT JOIN {{ ref('silver__asset_metadata') }}

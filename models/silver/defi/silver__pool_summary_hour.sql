@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["pool_id","block_hour"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp'],
     tags = ['noncore']
 ) }}
@@ -322,7 +323,13 @@ SELECT
     token_2_amount,
     token_3_denom,
     token_3_amount,
-    A._inserted_timestamp
+    A._inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['a.pool_id','block_hour']
+    ) }} AS pool_summary_hour_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     adjust A
     LEFT JOIN pool_token_prices b

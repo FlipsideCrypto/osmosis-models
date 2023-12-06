@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["pool_id","block_id"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp'],
     tags = ['noncore']
 ) }}
@@ -95,7 +96,13 @@ SELECT
     ) :: bigint AS total_weight,
     b.value :scaling_factor_controller :: STRING AS scaling_factor_controller,
     b.value :scaling_factors AS scaling_factors,
-    _INSERTED_DATE AS _inserted_timestamp
+    _INSERTED_DATE AS _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['pool_id','a.block_id']
+    ) }} AS pool_balances_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     {{ source(
         'bronze_streamline',

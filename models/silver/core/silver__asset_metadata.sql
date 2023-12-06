@@ -41,7 +41,13 @@ SELECT
     address,
     creator,
     blockchain
-  ) AS _unique_key
+  ) AS _unique_key,
+  {{ dbt_utils.generate_surrogate_key(
+    ['_unique_key']
+  ) }} AS asset_metadata_id,
+  SYSDATE() AS inserted_timestamp,
+  SYSDATE() AS modified_timestamp,
+  '{{ invocation_id }}' AS _invocation_id
 FROM
   base qualify(ROW_NUMBER() over(PARTITION BY blockchain, creator, address
 ORDER BY

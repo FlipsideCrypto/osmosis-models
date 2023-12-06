@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["tx_id","msg_index"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -93,7 +94,13 @@ SELECT
         ' ',
         0
     ) :: FLOAT AS to_amount,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['tx_id','msg_index']
+    ) }} AS token_swapped_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     token_swapped A
     JOIN bhour b

@@ -1,26 +1,22 @@
 {{ config(
     materialized = 'view',
-    tags = ['core']
+    tags = ['noncore']
 ) }}
 
 SELECT
-    block_id,
-    block_timestamp,
-    tx_id,
-    tx_from,
-    tx_succeeded,
-    codespace,
-    fee,
-    gas_used,
-    gas_wanted,
-    tx_code,
-    msgs,
+    'osmosis' AS blockchain,
+    module,
+    pool_created_block_timestamp,
+    pool_created_block_id,
+    pool_id,
+    pool_address,
+    assets,
     COALESCE(
-        transactions_final_id,
+        pool_metadata_id,
         {{ dbt_utils.generate_surrogate_key(
-            ['tx_id']
+            ['_unique_key']
         ) }}
-    ) AS fact_transactions_id,
+    ) AS dim_liquidity_pools_id,
     COALESCE(
         inserted_timestamp,
         '2000-01-01'
@@ -30,4 +26,4 @@ SELECT
         '2000-01-01'
     ) AS modified_timestamp
 FROM
-    {{ ref('silver__transactions_final') }}
+    {{ ref('silver__pool_metadata') }}

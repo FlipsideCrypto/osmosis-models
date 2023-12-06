@@ -17,7 +17,21 @@ SELECT
     action,
     to_address,
     denom AS currency,
-    amount :: INT AS amount
+    amount :: INT AS amount,
+    COALESCE(
+        red_bank_actions_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['tx_id','msg_index']
+        ) }}
+    ) AS ez_red_bank_rewards_distributions_id,
+    COALESCE(
+        inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__red_bank_actions') }}
 WHERE

@@ -284,39 +284,40 @@ balance_temp AS (
         AND d.address = b.address
         AND d.currency = b.currency
         AND d.balance_type = b.balance_type
-)
-SELECT
-    DATE,
-    balance_type,
-    address,
-    currency,
-    DECIMAL,
-    LAST_VALUE(
-        balance ignore nulls
-    ) over(
-        PARTITION BY address,
+),
+fin AS (
+    SELECT
+        DATE,
+        balance_type,
+        address,
         currency,
-        balance_type
-        ORDER BY
-            DATE ASC rows unbounded preceding
-    ) AS balance
-FROM
-    balance_temp
-WHERE
-    balance_type <> 'pool'
-UNION ALL
-SELECT
-    A.block_timestamp :: DATE AS DATE,
-    'pool' AS balance_type,
-    A.pool_address AS address,
-    token_0_denom currency,
-    DECIMAL,
-    token_0_amount balance
-FROM
-    {{ ref('silver__pool_balances') }} A
-    LEFT JOIN {{ ref('silver__asset_metadata') }}
-    am
-    ON A.token_0_denom = am.address
+        DECIMAL,
+        LAST_VALUE(
+            balance ignore nulls
+        ) over(
+            PARTITION BY address,
+            currency,
+            balance_type
+            ORDER BY
+                DATE ASC rows unbounded preceding
+        ) AS balance
+    FROM
+        balance_temp
+    WHERE
+        balance_type <> 'pool'
+    UNION ALL
+    SELECT
+        A.block_timestamp :: DATE AS DATE,
+        'pool' AS balance_type,
+        A.pool_address AS address,
+        token_0_denom currency,
+        DECIMAL,
+        token_0_amount balance
+    FROM
+        {{ ref('silver__pool_balances') }} A
+        LEFT JOIN {{ ref('silver__asset_metadata') }}
+        am
+        ON A.token_0_denom = am.address
 
 {% if is_incremental() %}
 WHERE
@@ -410,3 +411,19 @@ AND A.block_timestamp :: DATE >= (
     qualify(ROW_NUMBER() over(PARTITION BY block_timestamp :: DATE, pool_id, token_3_denom
     ORDER BY
         block_timestamp DESC) = 1)
+)
+SELECT
+    DATE,
+    balance_type,
+    address,
+    balance,
+    currency,
+    DECIMAL,
+    {{ dbt_utils.generate_surrogate_key(
+        ['date', 'address', 'balance_type', 'currency']
+    ) }} AS daily_balances_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
+FROM
+    fin

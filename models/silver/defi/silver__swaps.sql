@@ -368,6 +368,12 @@ SELECT
     TO_DECIMAL,
     pool_ids,
     _inserted_timestamp,
-    _body_index
+    _body_index,
+    {{ dbt_utils.generate_surrogate_key(
+        ['tx_id','_body_index']
+    ) }} AS swaps_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     pre_final2

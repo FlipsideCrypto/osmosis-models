@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE'],
 ) }}
 
@@ -173,7 +174,7 @@ SELECT
     'AIRDROP' AS transfer_type,
     r.msg_index,
     sender,
-    amount :: NUMBER as amount,
+    amount :: NUMBER AS amount,
     currency,
     DECIMAL,
     receiver,
@@ -183,7 +184,13 @@ SELECT
         r.tx_id,
         r.msg_index,
         currency
-    ) _unique_key
+    ) _unique_key,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS airdrops_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     areceiver r
     LEFT OUTER JOIN aamount C

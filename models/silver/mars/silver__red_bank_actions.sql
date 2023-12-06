@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["tx_id","msg_index"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE','action'],
     tags = ['noncore']
 ) }}
@@ -93,7 +94,13 @@ SELECT
     attributes :borrow_rate :: FLOAT AS borrow_rate,
     attributes :liquidity_index :: STRING AS liquidity_index,
     attributes :liquidity_rate :: FLOAT AS liquidity_rate,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['a.tx_id','a.msg_index']
+    ) }} AS red_bank_actions_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     {{ ref('silver__msg_attributes') }} A
     JOIN tx b

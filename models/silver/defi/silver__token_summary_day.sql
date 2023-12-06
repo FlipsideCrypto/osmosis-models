@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["currency","block_date"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_date'],
     tags = ['noncore']
 ) }}
@@ -31,7 +32,13 @@ SELECT
     MAX(liquidity_usd) liquidity_usd,
     SUM(volume) volume,
     SUM(volume_usd) volume_usd,
-    MAX(_inserted_timestamp) AS _inserted_timestamp
+    MAX(_inserted_timestamp) AS _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['currency','block_date']
+    ) }} AS token_summary_day_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     last_block_of_day blc
     JOIN {{ ref('silver__pool_summary_hour') }} A

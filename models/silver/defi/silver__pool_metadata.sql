@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     tags = ['noncore']
 ) }}
 
@@ -223,7 +224,13 @@ SELECT
         module,
         pool_id
     ) AS _unique_key,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS pool_metadata_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     e
     JOIN pool_creation_txs C

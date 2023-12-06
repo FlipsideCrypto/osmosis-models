@@ -23,7 +23,10 @@ WITH p_base AS (
             WHEN 'coin market cap' THEN 2
             WHEN 'pool balances' THEN 3
             ELSE 4
-        END AS pro_rank
+        END AS pro_rank,
+        dim_prices_id,
+        inserted_timestamp,
+        modified_timestamp
     FROM
         {{ ref('price__dim_prices') }} A
     WHERE
@@ -37,7 +40,16 @@ SELECT
         b_1.address,
         b_2.address
     ) AS currency,
-    A.price
+    A.price,
+    dim_prices_id AS ez_prices_id,
+    COALESCE(
+        A.inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        A.modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     p_base A
     LEFT JOIN {{ ref('silver__asset_metadata') }}

@@ -32,7 +32,21 @@ SELECT
         amount
     ) AS amount,
     currency,
-    b.project_name AS symbol
+    b.project_name AS symbol,
+    COALESCE(
+        liquidity_provider_actions_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['a._unique_key']
+        ) }}
+    ) AS ez_liquidity_provider_actions_id,
+    COALESCE(
+        A.inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        A.modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__liquidity_provider_actions') }} A
     LEFT JOIN {{ ref('silver__asset_metadata') }}

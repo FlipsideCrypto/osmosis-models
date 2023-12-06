@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["token_address","block_id"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['_inserted_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -273,43 +274,60 @@ stable_prices AS (
         ON b.block_id = sf2.block_id
         AND b.pool_id = sf2.pool_id
         AND b.token_address = sf2.denom
+),
+fin AS (
+    SELECT
+        block_id,
+        block_timestamp,
+        token_address,
+        osmo_price AS price_usd,
+        pool_id,
+        _inserted_timestamp
+    FROM
+        osmo_price
+    UNION ALL
+    SELECT
+        block_id,
+        block_timestamp,
+        token_address,
+        price_usd,
+        pool_id,
+        _inserted_timestamp
+    FROM
+        osmo_pools
+    UNION ALL
+    SELECT
+        block_id,
+        block_timestamp,
+        token_address,
+        price_usd,
+        pool_id,
+        _inserted_timestamp
+    FROM
+        non_osmo_pools
+    UNION ALL
+    SELECT
+        block_id,
+        block_timestamp,
+        token_address,
+        price_usd,
+        pool_id,
+        _inserted_timestamp
+    FROM
+        stable_prices
 )
 SELECT
     block_id,
     block_timestamp,
     token_address,
-    osmo_price AS price_usd,
-    pool_id,
-    _inserted_timestamp
-FROM
-    osmo_price
-UNION ALL
-SELECT
-    block_id,
-    block_timestamp,
-    token_address,
     price_usd,
     pool_id,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['token_address','block_id']
+    ) }} AS pool_token_prices_usd_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
-    osmo_pools
-UNION ALL
-SELECT
-    block_id,
-    block_timestamp,
-    token_address,
-    price_usd,
-    pool_id,
-    _inserted_timestamp
-FROM
-    non_osmo_pools
-UNION ALL
-SELECT
-    block_id,
-    block_timestamp,
-    token_address,
-    price_usd,
-    pool_id,
-    _inserted_timestamp
-FROM
-    stable_prices
+    fin

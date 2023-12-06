@@ -2,6 +2,7 @@
   materialized = 'incremental',
   unique_key = "tx_id",
   incremental_strategy = 'merge',
+  merge_exclude_columns = ["inserted_timestamp"],
   cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(tx_id)",
   tags = ['core']
@@ -138,7 +139,25 @@ combo AS (
   {% endif %}
 )
 SELECT
-  *
+  source,
+  block_id,
+  block_timestamp,
+  codespace,
+  gas_used,
+  gas_wanted,
+  tx_id,
+  tx_succeeded,
+  tx_code,
+  msgs,
+  auth_info,
+  tx_body,
+  _inserted_timestamp,
+  {{ dbt_utils.generate_surrogate_key(
+    ['tx_id']
+  ) }} AS transactions_id,
+  SYSDATE() AS inserted_timestamp,
+  SYSDATE() AS modified_timestamp,
+  '{{ invocation_id }}' AS _invocation_id
 FROM
   combo qualify(ROW_NUMBER() over(PARTITION BY tx_id
 ORDER BY

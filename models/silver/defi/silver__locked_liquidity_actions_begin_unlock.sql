@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -229,6 +230,12 @@ SELECT
         ),
         locker
     ) AS _unique_key,
-    _INSERTED_TIMESTAMP
+    _INSERTED_TIMESTAMP,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS locked_liquidity_actions_begin_unlock_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     FINAL
