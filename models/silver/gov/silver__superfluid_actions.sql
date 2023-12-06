@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['_inserted_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -28,7 +29,13 @@ SELECT
         A.tx_id,
         A.msg_group
     ) AS _unique_key,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS superfluid_actions_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     {{ ref('silver__tx_body_msgs') }} A
     LEFT JOIN (

@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = ["token_address","pool_id","block_id"],
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['_inserted_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -112,6 +113,12 @@ SELECT
             pool_total DESC
     ) AS token_pool_rank,
     pool_type,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['token_address','block_id','pool_id']
+    ) }} AS pool_token_prices_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     fin

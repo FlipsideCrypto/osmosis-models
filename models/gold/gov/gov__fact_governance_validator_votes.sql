@@ -13,7 +13,21 @@ SELECT
     voting_power,
     version,
     created_at,
-    updated_at
+    updated_at,
+    COALESCE (
+        validator_memos_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['proposal_id','validator_address']
+        ) }}
+    ) AS fact_validator_votes_id,
+    COALESCE(
+        A.inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        A.modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__validator_memos') }} A
     LEFT JOIN {{ ref('silver__validator_metadata') }}

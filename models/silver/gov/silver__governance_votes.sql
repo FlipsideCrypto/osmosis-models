@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -141,7 +142,13 @@ SELECT
     vote_weight,
     memo,
     _inserted_timestamp,
-    _unique_key
+    _unique_key,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS governance_votes_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     pre_final p
     LEFT OUTER JOIN memo_text m

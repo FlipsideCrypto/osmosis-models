@@ -24,7 +24,13 @@ SELECT
   b.block_timestamp,
   b.decimal,
   b.currency,
-  b._inserted_timestamp
+  b._inserted_timestamp,
+  {{ dbt_utils.generate_surrogate_key(
+    ['b.address', 'b.balance_type']
+  ) }} AS latest_liquid_balances_id,
+  SYSDATE() AS inserted_timestamp,
+  SYSDATE() AS modified_timestamp,
+  '{{ invocation_id }}' AS _invocation_id
 FROM
   {{ ref('silver__liquid_balances') }}
   b

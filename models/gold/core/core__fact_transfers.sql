@@ -15,6 +15,20 @@ SELECT
     DECIMAL,
     receiver,
     foreign_address,
-    foreign_chain
+    foreign_chain,
+    COALESCE(
+        transfers_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['_unique_key']
+        ) }}
+    ) AS fact_transfers_id,
+    COALESCE(
+        inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__transfers') }}

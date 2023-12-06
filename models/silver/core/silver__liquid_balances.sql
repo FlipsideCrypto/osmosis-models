@@ -210,7 +210,13 @@ SELECT
     CASE
         WHEN currency LIKE 'gamm/pool/%' THEN 18
         ELSE b.decimal
-    END AS DECIMAL
+    END AS DECIMAL,
+    {{ dbt_utils.generate_surrogate_key(
+        ['block_id', 'address', 'currency']
+    ) }} AS liquid_balances_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     joined A
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}

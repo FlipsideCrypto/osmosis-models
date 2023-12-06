@@ -35,7 +35,13 @@ SELECT
     i.value :version :: INT AS version,
     i.value :created_at :: datetime AS created_at,
     i.value :updated_at :: datetime AS updated_at,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['proposal_id','validator_address']
+    ) }} AS validator_memos_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     base,
     LATERAL FLATTEN(

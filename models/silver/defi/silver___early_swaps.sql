@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "tx_id",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE']
 ) }}
 
@@ -195,7 +196,13 @@ SELECT
         ELSE tok.to_decimal :: NUMBER
     END AS TO_DECIMAL,
     NULL :: ARRAY AS pool_ids,
-    _inserted_timestamp
+    _inserted_timestamp,
+    {{ dbt_utils.generate_surrogate_key(
+        ['e.tx_id']
+    ) }} AS _early_swaps_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     early_swaps e
     LEFT OUTER JOIN {{ ref('silver__transactions') }}

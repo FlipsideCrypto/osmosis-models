@@ -3,6 +3,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
     tags = ['core']
 ) }}
@@ -466,7 +467,13 @@ SELECT
         C.foreign_chain
     ) AS foreign_chain,
     A._inserted_timestamp,
-    A._unique_key
+    A._unique_key,
+  {{ dbt_utils.generate_surrogate_key(
+    ['a._unique_key']
+  ) }} AS transfers_id,
+  SYSDATE() AS inserted_timestamp,
+  SYSDATE() AS modified_timestamp,
+  '{{ invocation_id }}' AS _invocation_id
 FROM
     fin A
     LEFT JOIN links b

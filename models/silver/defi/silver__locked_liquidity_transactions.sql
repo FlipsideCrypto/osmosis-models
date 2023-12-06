@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "_unique_key",
     incremental_strategy = 'merge',
+    merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['_inserted_timestamp::DATE'],
     tags = ['noncore']
 ) }}
@@ -136,7 +137,13 @@ SELECT
         tx_id,
         msg_group,
         lock_id
-    ) AS _unique_key
+    ) AS _unique_key,
+    {{ dbt_utils.generate_surrogate_key(
+        ['_unique_key']
+    ) }} AS locked_liquidity_transactions_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     base
 WHERE

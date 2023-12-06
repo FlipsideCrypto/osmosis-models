@@ -34,7 +34,21 @@ SELECT
     ) AS to_amount,
     to_currency,
     t.project_name to_symbol,
-    pool_ids
+    pool_ids,
+    COALESCE(
+        swaps_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['tx_id','_body_index']
+        ) }}
+    ) AS ez_swaps_id,
+    COALESCE(
+        A.inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        A.modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__swaps') }} A
     LEFT JOIN {{ ref('silver__asset_metadata') }}

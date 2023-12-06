@@ -1,6 +1,6 @@
 version: 2
 models:
-  - name: gov__dim_liquidity_pools
+  - name: defi__dim_liquidity_pools
     description: Contains liquidity pool metadata for assets on the Osmosis blockchain. This table was sourced from an API and may not contain every token. 
     columns:
       - name: BLOCKCHAIN

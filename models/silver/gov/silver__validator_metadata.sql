@@ -26,7 +26,13 @@ SELECT
     creator,
     blockchain
   ) AS _unique_key,
-  VALUE :update_time :: TIMESTAMP AS _inserted_timestamp
+  VALUE :update_time :: TIMESTAMP AS _inserted_timestamp,
+  {{ dbt_utils.generate_surrogate_key(
+    ['_unique_key']
+  ) }} AS validator_metadata_id,
+  SYSDATE() AS inserted_timestamp,
+  SYSDATE() AS modified_timestamp,
+  '{{ invocation_id }}' AS _invocation_id
 FROM
   {{ source(
     'bronze_streamline',

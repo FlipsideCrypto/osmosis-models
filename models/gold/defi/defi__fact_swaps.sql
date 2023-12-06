@@ -17,6 +17,20 @@ SELECT
     to_currency,
     TO_DECIMAL,
     pool_ids,
-    _BODY_INDEX
+    _BODY_INDEX,
+    COALESCE(
+        swaps_id,
+        {{ dbt_utils.generate_surrogate_key(
+            ['tx_id','_body_index']
+        ) }}
+    ) AS fact_swaps_id,
+    COALESCE(
+        inserted_timestamp,
+        '2000-01-01'
+    ) AS inserted_timestamp,
+    COALESCE(
+        modified_timestamp,
+        '2000-01-01'
+    ) AS modified_timestamp
 FROM
     {{ ref('silver__swaps') }}
