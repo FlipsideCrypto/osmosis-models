@@ -69,25 +69,29 @@ bronze AS (
         )
     UNION ALL
     SELECT
-        block_id,
-        block_id,
-        block_timestamp,
-        tx_id,
-        _inserted_timestamp
+        A.block_id,
+        A.block_id,
+        A.block_timestamp,
+        A.tx_id,
+        A._inserted_timestamp
     FROM
         {{ source(
             'bronze',
             'chainwalkers_txs'
-        ) }}
+        ) }} A
+        JOIN rel_blocks b
+        ON A.block_id = b.block_id
     UNION ALL
     SELECT
-        block_id,
-        block_id,
-        block_timestamp,
-        tx_id,
-        _inserted_timestamp
+        A.block_id,
+        A.block_id,
+        A.block_timestamp,
+        A.tx_id,
+        A._inserted_timestamp
     FROM
-        {{ ref('silver___manual_tx_lq') }}
+        {{ ref('silver___manual_tx_lq') }} A
+        JOIN rel_blocks b
+        ON A.block_id = b.block_id
 ),
 bronze_count AS (
     SELECT
