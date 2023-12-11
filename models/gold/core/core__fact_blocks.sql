@@ -15,7 +15,7 @@ SELECT
         {{ dbt_utils.generate_surrogate_key(
             ['block_id']
         ) }}
-    ) AS fact_airdrops_id,
+    ) AS fact_blocks_id,
     COALESCE(
         inserted_timestamp,
         '2000-01-01'
