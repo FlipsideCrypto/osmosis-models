@@ -144,7 +144,7 @@ SELECT
     _inserted_timestamp,
     _unique_key,
     {{ dbt_utils.generate_surrogate_key(
-        ['tx_id','proposal_id','voter','vote_option']
+        ['p.tx_id','proposal_id','voter','vote_option']
     ) }} AS governance_votes_id,
     SYSDATE() AS inserted_timestamp,
     SYSDATE() AS modified_timestamp,
