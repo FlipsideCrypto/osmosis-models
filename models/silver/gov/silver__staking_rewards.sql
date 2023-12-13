@@ -65,7 +65,8 @@ exclude_eris AS (
         msg_type = 'execute'
         AND attribute_key = '_contract_address'
         AND attribute_value IN (
-            'osmo1dv8wz09tckslr2wy5z86r46dxvegylhpt97r9yd6qc3kyc6tv42qa89dr9' --eris,
+            'osmo1dv8wz09tckslr2wy5z86r46dxvegylhpt97r9yd6qc3kyc6tv42qa89dr9',
+            --eris
             'osmo1yeztz03jgdd9y2sdcxveyft3g4p2v3y08hv3aduw88vf6av228fsydge0e' --polytone_voice_from_juno-1 ??
         )
 ),
