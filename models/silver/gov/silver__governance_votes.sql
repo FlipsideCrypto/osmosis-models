@@ -144,7 +144,7 @@ SELECT
     _inserted_timestamp,
     _unique_key,
     {{ dbt_utils.generate_surrogate_key(
-        ['_unique_key']
+        ['tx_id','proposal_id','voter','vote_option']
     ) }} AS governance_votes_id,
     SYSDATE() AS inserted_timestamp,
     SYSDATE() AS modified_timestamp,
@@ -152,4 +152,8 @@ SELECT
 FROM
     pre_final p
     LEFT OUTER JOIN memo_text m
-    ON p.tx_id = m.tx_id
+    ON p.tx_id = m.tx_id qualify ROW_NUMBER() over (
+        PARTITION BY _unique_key
+        ORDER BY
+            _inserted_timestamp DESC
+    ) = 1
