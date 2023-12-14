@@ -56,6 +56,7 @@ sources:
     schema: bronze
     tables:
       - name: chainwalkers_txs
+      - name: manual_large_txs
   - name: github_actions
     database: osmosis
     schema: github_actions
