@@ -19,7 +19,6 @@ WITH blocks AS (
         {{ ref("streamline__complete_blocks") }}
 )
 SELECT
-    block_number,
     PARSE_JSON(
         CONCAT(
             '{"jsonrpc": "2.0",',
@@ -32,4 +31,5 @@ SELECT
     ) AS request
 FROM
     blocks
-ORDER BY block_number DESC
+ORDER BY
+    block_number
