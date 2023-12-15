@@ -19,7 +19,6 @@ WITH blocks AS (
         {{ ref("streamline__complete_blocks") }}
 )
 SELECT
-    {# block_number, #}
     PARSE_JSON(
         CONCAT(
             '{"jsonrpc": "2.0",',
@@ -29,28 +28,8 @@ SELECT
             block_number :: STRING,
             '"}'
         )
-    ) AS request {#
-    ARRAY_CONSTRUCT(
-        block_number,
-        ARRAY_CONSTRUCT(
-            'POST',
-            '{service}/{x-allthatnode-api-key}',
-            PARSE_JSON('{}'),
-            PARSE_JSON(
-                CONCAT(
-                    '{"jsonrpc": "2.0",',
-                    '"method": "block", "params":["',
-                    block_number :: STRING,
-                    '"],"id":"',
-                    block_number :: STRING,
-                    '"}'
-                )
-            )
-        )
-    ) AS request #}
+    ) AS request
 FROM
     blocks
 ORDER BY
     block_number
-LIMIT
-    1
