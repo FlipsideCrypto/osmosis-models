@@ -17,8 +17,6 @@ WITH bhour AS (
         MAX(block_id) AS block_id_hour
     FROM
         {{ ref('silver__blocks') }}
-    WHERE
-        block_id >= 2300000 {# AND block_timestamp :: DATE <= CURRENT_DATE - 1 #}
     GROUP BY
         block_hour
 ),
