@@ -12,7 +12,7 @@ SELECT
   id,
   COALESCE(
     VALUE :block_number,
-    VALUE: tx_responses :height
+    DATA: tx_responses :height
   ) :: INT AS block_id,
   DATA :tx_responses :timestamp :: timestamp_ntz AS block_timestamp,
   DATA :tx_responses :codespace :: STRING AS codespace,
