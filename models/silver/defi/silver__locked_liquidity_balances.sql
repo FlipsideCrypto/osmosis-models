@@ -224,7 +224,10 @@ SELECT
         '-',
         block_id,
         address,
-        lock_id,
+        COALESCE(
+            lock_id,
+            -1
+        ),
         currency
     ) AS _unique_key,
     _inserted_timestamp,
