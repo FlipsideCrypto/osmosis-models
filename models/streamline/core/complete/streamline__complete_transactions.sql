@@ -9,8 +9,11 @@
 
 SELECT
     id,
-    block_number,
-    VALUE :metadata :request :params ['pagination.offset'] ::STRING AS pagination_offset,
+    COALESCE(
+        block_number,
+        VALUE: tx_responses :height
+    ) AS block_number,
+    VALUE :metadata :request :params ['pagination.offset'] :: STRING AS pagination_offset,
     _inserted_timestamp
 FROM
 

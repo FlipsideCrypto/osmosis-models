@@ -17,7 +17,8 @@ WITH blocks AS (
         b
         ON A.block_number = b.block_number
     WHERE
-        A.block_number = 12206934
+        A.block_number > 11800000
+        AND b.block_number IS NULL
 ),
 numbers AS (
     -- Recursive CTE to generate numbers. We'll use the maximum txcount value to limit our recursion.
