@@ -4,8 +4,7 @@
     incremental_strategy = 'merge',
     merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE'],
-    tags = ['noncore'],
-    enabled = false
+    tags = ['noncore']
 ) }}
 
 WITH all_staked AS (
@@ -240,3 +239,5 @@ SELECT
     '{{ invocation_id }}' AS _invocation_id
 FROM
     combine
+WHERE
+    0 = 1
