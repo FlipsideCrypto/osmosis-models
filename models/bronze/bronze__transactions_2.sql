@@ -27,9 +27,19 @@ SELECT
   DATA :tx_responses :events AS msgs,
   DATA :tx_responses :tx :auth_info AS auth_info,
   DATA :tx_responses :tx :body AS tx_body,
-  REPLACE(
-    metadata :request [3] :params :events,
-    'tx.height='
+  COALESCE(
+    REPLACE(
+      metadata :request [3] :params :events,
+      'tx.height='
+    ),
+    SUBSTR(
+      metadata :request :url,
+      CHARINDEX(
+        'offset=',
+        metadata :request :url
+      ) + 7,
+      99
+    )
   ) :: INT AS block_id_requested,
   _inserted_timestamp
 FROM
