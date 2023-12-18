@@ -13,7 +13,14 @@ SELECT
         block_number,
         DATA: tx_responses :height
     ) AS block_number,
-    VALUE :metadata :request :params ['pagination.offset'] :: STRING AS pagination_offset,
+    SUBSTR(
+        metadata :request :url,
+        CHARINDEX(
+            'offset=',
+            metadata :request :url
+        ) + 7,
+        99
+    ) :: STRING AS pagination_offset,
     _inserted_timestamp
 FROM
 
