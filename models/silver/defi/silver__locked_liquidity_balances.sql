@@ -76,6 +76,10 @@ AND block_timestamp :: DATE >=(
     FROM
         {{ this }})
     {% endif %}
+
+    qualify(ROW_NUMBER() over(PARTITION BY tx_id, lock_id
+    ORDER BY
+        msg_action_description) = 1)
 ),
 unpool_base AS (
     SELECT
@@ -239,5 +243,3 @@ SELECT
     '{{ invocation_id }}' AS _invocation_id
 FROM
     combine
-WHERE
-    0 = 1
