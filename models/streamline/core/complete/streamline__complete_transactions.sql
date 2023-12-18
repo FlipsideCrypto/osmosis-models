@@ -1,7 +1,7 @@
 -- depends_on: {{ ref('bronze__streamline_transactions') }}
 {{ config (
     materialized = "incremental",
-    unique_key = "id",
+    unique_key = ['id','pagination_offset'],
     cluster_by = "ROUND(block_number, -3)",
     merge_update_columns = ["id"],
     post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(id)"
