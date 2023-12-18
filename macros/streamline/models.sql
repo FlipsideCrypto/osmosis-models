@@ -82,6 +82,7 @@ WHERE
             )
         SELECT
             {{ unique_key }},
+            block_number,
             DATA,
             _inserted_timestamp,
             MD5(
@@ -144,6 +145,7 @@ WHERE
 SELECT
     {{ unique_key }},
     DATA,
+    block_number,
     _inserted_timestamp,
     MD5(
         CAST(
