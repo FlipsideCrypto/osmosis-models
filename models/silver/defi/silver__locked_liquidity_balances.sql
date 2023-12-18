@@ -76,6 +76,10 @@ AND block_timestamp :: DATE >=(
     FROM
         {{ this }})
     {% endif %}
+
+    qualify(ROW_NUMBER() over(PARTITION BY tx_id, lock_id
+    ORDER BY
+        msg_action_description) = 1)
 ),
 unpool_base AS (
     SELECT
@@ -224,7 +228,10 @@ SELECT
         '-',
         block_id,
         address,
-        lock_id,
+        COALESCE(
+            lock_id,
+            -1
+        ),
         currency
     ) AS _unique_key,
     _inserted_timestamp,

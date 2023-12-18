@@ -1,7 +1,7 @@
 {{ config (
     materialized = "view",
     post_hook = if_data_call_function(
-        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','10000')}}, 'producer_batch_size', {{var('producer_batch_size','200')}}, 'worker_batch_size', {{var('worker_batch_size','20')}}, 'exploded_key', '[\"txs;tx_responses\"]'))",
+        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'transactions', 'sql_limit', {{var('sql_limit','10000')}}, 'producer_batch_size', {{var('producer_batch_size','200')}}, 'worker_batch_size', {{var('worker_batch_size','20')}}, 'exploded_key', '[\"txs;tx_responses\"]', 'sm_secret_name','prod/osmosis/allthatnode/mainnet-archive/rest'))",
         target = "{{this.schema}}.{{this.identifier}}"
     )
 ) }}
@@ -62,31 +62,26 @@ numbers AS (
                 pagination_offset
             FROM
                 {{ ref("streamline__complete_transactions") }}
+        ),
+        calls AS (
+            SELECT
+                '{service}/{Authentication}/cosmos/tx/v1beta1/txs?events=tx.height%3D' || block_number :: STRING || '&pagination.limit=100&pagination.offset=' || pagination_offset :: STRING AS calls,
+                block_number
+            FROM
+                blocks_with_page_numbers_to_read
         )
     SELECT
-        block_number,
         ARRAY_CONSTRUCT(
-            'GET',
-            '/cosmos/tx/v1beta1/txs',
-            PARSE_JSON('{}'),
-            PARSE_JSON(
-                CONCAT(
-                    '{"params":{',
-                    '"events":"tx.height=',
-                    block_number :: STRING,
-                    '",',
-                    '"pagination.limit":"100"',
-                    ',',
-                    '"pagination.offset":"',
-                    pagination_offset,
-                    '"},"id":"',
-                    block_number :: STRING,
-                    '"}'
-                )
-            ),
-            ''
+            block_number,
+            ARRAY_CONSTRUCT(
+                'GET',
+                calls,
+                PARSE_JSON('{}'),
+                PARSE_JSON('{}'),
+                ''
+            )
         ) AS request
     FROM
-        blocks_with_page_numbers_to_read
+        calls
     ORDER BY
-        block_number DESC
+        block_number
