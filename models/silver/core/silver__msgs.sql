@@ -23,7 +23,9 @@ WITH b AS (
         TRY_BASE64_DECODE_STRING(
           msg :attributes [0] :key
         ),
-        msg :attributes [0] :key
+        CASE
+          WHEN block_id >= 12833808 THEN msg :attributes [0] :key
+        END
       ) :: STRING = 'action',
       TRUE,
       FALSE
@@ -33,7 +35,9 @@ WITH b AS (
         TRY_BASE64_DECODE_STRING(
           msg :attributes [0] :key
         ),
-        msg :attributes [0] :key
+        CASE
+          WHEN block_id >= 12833808 THEN msg :attributes [0] :key
+        END
       ) :: STRING = 'module',
       TRUE,
       FALSE
@@ -42,13 +46,17 @@ WITH b AS (
       TRY_BASE64_DECODE_STRING(
         msg :attributes [0] :key
       ),
-      msg :attributes [0] :key
+      CASE
+        WHEN block_id >= 12833808 THEN msg :attributes [0] :key
+      END
     ) :: STRING AS attribute_key,
     COALESCE(
       TRY_BASE64_DECODE_STRING(
         msg :attributes [0] :value
       ),
-      msg :attributes [0] :value
+      CASE
+        WHEN block_id >= 12833808 THEN msg :attributes [0] :value
+      END
     ) :: STRING AS attribute_value,
     _inserted_timestamp
   FROM

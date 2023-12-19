@@ -69,29 +69,33 @@ SELECT
     trader,
     pool_id,
     RIGHT(tokens_in, LENGTH(tokens_in) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(tokens_in, '[^[:digit:]]', ' ')), ' ', 0))) AS from_currency,
-    SPLIT_PART(
-        TRIM(
-            REGEXP_REPLACE(
-                tokens_in,
-                '[^[:digit:]]',
-                ' '
-            )
-        ),
-        ' ',
-        0
-    ) :: FLOAT AS from_amount,
+    TRY_CAST(
+        SPLIT_PART(
+            TRIM(
+                REGEXP_REPLACE(
+                    tokens_in,
+                    '[^[:digit:]]',
+                    ' '
+                )
+            ),
+            ' ',
+            0
+        ) AS FLOAT
+    ) AS from_amount,
     RIGHT(tokens_out, LENGTH(tokens_out) - LENGTH(SPLIT_PART(TRIM(REGEXP_REPLACE(tokens_out, '[^[:digit:]]', ' ')), ' ', 0))) AS to_currency,
-    SPLIT_PART(
-        TRIM(
-            REGEXP_REPLACE(
-                tokens_out,
-                '[^[:digit:]]',
-                ' '
-            )
-        ),
-        ' ',
-        0
-    ) :: FLOAT AS to_amount,
+    TRY_CAST(
+        SPLIT_PART(
+            TRIM(
+                REGEXP_REPLACE(
+                    tokens_out,
+                    '[^[:digit:]]',
+                    ' '
+                )
+            ),
+            ' ',
+            0
+        ) AS FLOAT
+    ) AS to_amount,
     _inserted_timestamp,
     {{ dbt_utils.generate_surrogate_key(
         ['tx_id','msg_index']
@@ -106,3 +110,6 @@ FROM
         'hour',
         A.block_timestamp
     ) = b.block_hour
+WHERE
+    from_amount IS NOT NULL
+    AND to_amount IS NOT NULL
