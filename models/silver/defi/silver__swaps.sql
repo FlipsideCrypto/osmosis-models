@@ -310,10 +310,7 @@ pre_final2 AS (
         p.tx_id,
         tx_succeeded,
         trader,
-        COALESCE(
-            f.from_amount,
-            p.from_amount
-        ) AS from_amount,
+        COALESCE(TRY_CAST(f.from_amount AS bigint), TRY_CAST(p.from_amount AS bigint)) AS from_amount,
         COALESCE(
             f.from_currency,
             p.from_currency
