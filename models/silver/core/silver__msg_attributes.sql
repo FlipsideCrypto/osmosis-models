@@ -18,12 +18,8 @@ SELECT
   msg_index,
   msg_type,
   b.index AS attribute_index,
-  TRY_BASE64_DECODE_STRING(
-    b.value :key :: STRING
-  ) AS attribute_key,
-  TRY_BASE64_DECODE_STRING(
-    b.value :value :: STRING
-  ) AS attribute_value,
+  COALESCE(TRY_BASE64_DECODE_STRING(b.value :key), b.value :key) :: STRING AS attribute_key,
+  COALESCE(TRY_BASE64_DECODE_STRING(b.value :value), b.value :value) :: STRING AS attribute_value,
   _inserted_timestamp,
   concat_ws(
     '-',

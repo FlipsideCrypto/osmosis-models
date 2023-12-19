@@ -19,31 +19,41 @@ WITH b AS (
     VALUE :type :: STRING AS msg_type,
     VALUE AS msg,
     IFF(
-      TRY_BASE64_DECODE_STRING(
-        msg :attributes [0] :key :: STRING
-      ) = 'action',
+      COALESCE(
+        TRY_BASE64_DECODE_STRING(
+          msg :attributes [0] :key
+        ),
+        msg :attributes [0] :key
+      ) :: STRING = 'action',
       TRUE,
       FALSE
     ) AS is_action,
     IFF(
-      TRY_BASE64_DECODE_STRING(
-        msg :attributes [0] :key :: STRING
-      ) = 'module',
+      COALESCE(
+        TRY_BASE64_DECODE_STRING(
+          msg :attributes [0] :key
+        ),
+        msg :attributes [0] :key
+      ) :: STRING = 'module',
       TRUE,
       FALSE
     ) AS is_module,
-    TRY_BASE64_DECODE_STRING(
-      msg :attributes [0] :key :: STRING
-    ) attribute_key,
-    TRY_BASE64_DECODE_STRING(
-      msg :attributes [0] :value :: STRING
-    ) attribute_value,
+    COALESCE(
+      TRY_BASE64_DECODE_STRING(
+        msg :attributes [0] :key
+      ),
+      msg :attributes [0] :key
+    ) :: STRING AS attribute_key,
+    COALESCE(
+      TRY_BASE64_DECODE_STRING(
+        msg :attributes [0] :value
+      ),
+      msg :attributes [0] :value
+    ) :: STRING AS attribute_value,
     _inserted_timestamp
   FROM
     {{ ref('silver__transactions') }} A,
-    LATERAL FLATTEN(
-      input => A.msgs
-    )
+    LATERAL FLATTEN(input => A.msgs)
 
 {% if is_incremental() %}
 WHERE
