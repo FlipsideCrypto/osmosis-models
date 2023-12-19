@@ -18,22 +18,46 @@ SELECT
   msg_index,
   msg_type,
   b.index AS attribute_index,
-  COALESCE(TRY_BASE64_DECODE_STRING(b.value :key), CASE WHEN block_id >= 12833808 THEN b.value :key END) :: STRING AS attribute_key, 
-  COALESCE(TRY_BASE64_DECODE_STRING(b.value :value), CASE WHEN block_id >= 12833808 THEN b.value :value END) :: STRING AS attribute_value, 
-  _inserted_timestamp, 
-  concat_ws('-', tx_id, msg_index, attribute_index) AS _unique_key, 
+  COALESCE(
+    CASE
+      WHEN block_id < 12833808 THEN TRY_BASE64_DECODE_STRING(
+        b.value :key
+      )
+    END,
+    b.value :key
+  ) :: STRING AS attribute_key,
+  COALESCE(
+    CASE
+      WHEN block_id < 12833808 THEN TRY_BASE64_DECODE_STRING(
+        b.value :value
+      )
+    END,
+    b.value :value
+  ) :: STRING AS attribute_value,
+  _inserted_timestamp,
+  concat_ws(
+    '-',
+    tx_id,
+    msg_index,
+    attribute_index
+  ) AS _unique_key,
   {{ dbt_utils.generate_surrogate_key(['_unique_key']) }} AS msg_attributes_id,
-   SYSDATE() AS inserted_timestamp,
-   SYSDATE() AS modified_timestamp,
-    '{{ invocation_id }}' AS _invocation_id
+  SYSDATE() AS inserted_timestamp,
+  SYSDATE() AS modified_timestamp,
+  '{{ invocation_id }}' AS _invocation_id
 FROM
-  {{ ref('silver__msgs') }} A, LATERAL FLATTEN(input => A.msg, path => 'attributes') b
+  {{ ref('silver__msgs') }} A,
+  LATERAL FLATTEN(
+    input => A.msg,
+    path => 'attributes'
+  ) b
 
 {% if is_incremental() %}
 WHERE
   _inserted_timestamp >= (
-SELECT
-  MAX(_inserted_timestamp)
-FROM
-  {{ this }})
+    SELECT
+      MAX(_inserted_timestamp)
+    FROM
+      {{ this }}
+  )
 {% endif %}

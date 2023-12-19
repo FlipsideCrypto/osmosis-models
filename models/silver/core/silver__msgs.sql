@@ -32,31 +32,31 @@ WITH b AS (
     ) AS is_action,
     IFF(
       COALESCE(
-        TRY_BASE64_DECODE_STRING(
-          msg :attributes [0] :key
-        ),
         CASE
-          WHEN block_id >= 12833808 THEN msg :attributes [0] :key
-        END
+          WHEN block_id < 12833808 THEN TRY_BASE64_DECODE_STRING(
+            msg :attributes [0] :key
+          )
+        END,
+        msg :attributes [0] :key
       ) :: STRING = 'module',
       TRUE,
       FALSE
     ) AS is_module,
     COALESCE(
-      TRY_BASE64_DECODE_STRING(
-        msg :attributes [0] :key
-      ),
       CASE
-        WHEN block_id >= 12833808 THEN msg :attributes [0] :key
-      END
+        WHEN block_id < 12833808 THEN TRY_BASE64_DECODE_STRING(
+          msg :attributes [0] :key
+        )
+      END,
+      msg :attributes [0] :key
     ) :: STRING AS attribute_key,
     COALESCE(
-      TRY_BASE64_DECODE_STRING(
-        msg :attributes [0] :value
-      ),
       CASE
-        WHEN block_id >= 12833808 THEN msg :attributes [0] :value
-      END
+        WHEN block_id < 12833808 THEN TRY_BASE64_DECODE_STRING(
+          msg :attributes [0] :value
+        )
+      END,
+      msg :attributes [0] :value
     ) :: STRING AS attribute_value,
     _inserted_timestamp
   FROM
