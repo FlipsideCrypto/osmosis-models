@@ -9,51 +9,16 @@
 ) }}
 
 {% if execute %}
-    {% set query = """
-        CREATE OR REPLACE TEMPORARY TABLE silver.transfers__intermediate_tmp AS
-        SELECT
-            block_id,
-            block_timestamp,
-            tx_id,
-            tx_succeeded,
-            msg_group,
-            msg_sub_group,
-            msg_index,
-            msg_type,
-            attribute_key,
-            attribute_value,
-            _inserted_timestamp
-        FROM
-            """ ~ ref('silver__msg_attributes') ~ """
-        WHERE
-            (
-                attribute_key IN (
-                    'acc_seq',
-                    'amount'
-                )
-                OR msg_type IN (
-                    'coin_spent',
-                    'transfer',
-                    'message',
-                    'claim',
-                    'ibc_transfer',
-                    'write_acknowledgement'
-                )
-            )"""
-    %}
+    {% set query = """ CREATE OR REPLACE TEMPORARY TABLE silver.transfers__intermediate_tmp AS SELECT block_id, block_timestamp, tx_id, tx_succeeded, msg_group, msg_sub_group, msg_index, msg_type, attribute_key, attribute_value, _inserted_timestamp FROM """ ~ ref('silver__msg_attributes') ~ """ WHERE ( attribute_key IN ( 'acc_seq', 'amount' ) OR msg_type IN ( 'coin_spent', 'transfer', 'message', 'claim', 'ibc_transfer', 'write_acknowledgement' ) )""" %}
     {% set incr = "" %}
-    {% if is_incremental() %}
-        {% set incr = """
-        AND _inserted_timestamp >= (
-            SELECT
-                MAX(
-                    _inserted_timestamp
-                )
-            FROM
-                """ ~ this ~ """
-        ) - INTERVAL '24 HOURS'""" %}
-    {% endif %}
-    {% do run_query(query ~ incr) %}
+
+{% if is_incremental() %}
+{% set incr = """ AND _inserted_timestamp >= ( SELECT MAX( _inserted_timestamp ) FROM """ ~ this ~ """ ) - INTERVAL '24 HOURS'""" %}
+{% endif %}
+
+{% do run_query(
+    query ~ incr
+) %}
 {% endif %}
 
 WITH base_atts AS (
@@ -437,7 +402,7 @@ axl_tran AS (
         foreign_address IS NOT NULL
 
 {% if is_incremental() %}
-AND _inserted_timestamp >= (
+AND A._inserted_timestamp >= (
     SELECT
         MAX(
             _inserted_timestamp
