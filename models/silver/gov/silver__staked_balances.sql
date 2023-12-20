@@ -18,7 +18,7 @@ WITH all_staked AS (
             WHEN currency LIKE 'gamm/pool/%' THEN 18
             ELSE A.decimal
         END AS DECIMAL,
-        _inserted_timestamp
+        s._inserted_timestamp
     FROM
         {{ ref('silver__staking') }}
         s
@@ -44,7 +44,7 @@ AND block_timestamp :: DATE >=(
             WHEN currency LIKE 'gamm/pool/%' THEN 18
             ELSE A.decimal
         END AS DECIMAL,
-        _inserted_timestamp
+        s._inserted_timestamp
     FROM
         {{ ref('silver__staking') }}
         s

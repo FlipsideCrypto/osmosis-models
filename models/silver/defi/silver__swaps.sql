@@ -329,7 +329,7 @@ pre_final2 AS (
             ELSE A.decimal
         END AS TO_DECIMAL,
         pool_ids,
-        _inserted_timestamp,
+        p._inserted_timestamp,
         p._body_index
     FROM
         pre_final p
