@@ -1,8 +1,9 @@
-{{ config(
-    materialized = 'view',
-    enabled = false
+{{ config (
+    materialized = "incremental",
+    unique_key = ["block_id","address"],
+    tags = ['streamline_view']
 ) }}
-
+-- depends_on: {{ ref('silver__blocks') }}
 WITH base AS (
 
     SELECT
@@ -15,27 +16,37 @@ WITH base AS (
     FROM
         {{ ref('silver__msg_attributes') }}
     WHERE
-        RLIKE(
-            attribute_value,
-            'osmo\\w{39}'
+        (
+            RLIKE(
+                attribute_value,
+                'osmo\\w{39}'
+            )
+            OR (
+                msg_type = 'message'
+                AND attribute_key = 'action'
+                AND attribute_value = 'superfluid_delegate'
+            )
         )
-        OR (
-            msg_type = 'message'
-            AND attribute_key = 'action'
-            AND attribute_value = 'superfluid_delegate'
-        )
-),
-all_wallets AS (
+        AND block_id > 12782446 -- last block pulled via old process
+
+{% if is_incremental() %}
+AND block_timestamp :: DATE >= (
     SELECT
-        DISTINCT attribute_value AS address
-    FROM
-        base
-    WHERE
-        RLIKE(
-            attribute_value,
-            'osmo\\w{39}'
+        MAX(
+            block_timestamp :: DATE
         )
-        AND block_timestamp :: DATE <= '2022-05-31' -- some snapshot date
+    FROM
+        (
+            SELECT
+                MAX(block_id) block_id
+            FROM
+                {{ this }}
+        ) A
+        JOIN {{ ref('silver__blocks') }}
+        b
+        ON A.block_id = b.block_id
+)
+{% endif %}
 ),
 wallets_per_block AS (
     SELECT
@@ -50,7 +61,7 @@ wallets_per_block AS (
             'osmo\\w{39}'
         )
         AND block_id > 2383300
-        AND block_timestamp_date < CURRENT_DATE - 1
+        AND block_timestamp_date < CURRENT_DATE
 ),
 max_block_id_per_date AS (
     SELECT
@@ -83,50 +94,25 @@ unique_address_per_block_date AS (
 ),
 all_lp_wallets AS (
     SELECT
-        DISTINCT liquidity_provider_address AS address
+        liquidity_provider_address AS address
     FROM
         {{ ref('silver__liquidity_provider_actions') }}
     WHERE
         action = 'pool_joined'
+    GROUP BY
+        1
     UNION
     SELECT
-        DISTINCT b.address
+        delegator_address AS address
     FROM
-        (
-            SELECT
-                block_id,
-                tx_id
-            FROM
-                base
-            WHERE
-                msg_type = 'message'
-                AND attribute_key = 'action'
-                AND attribute_value = 'superfluid_delegate'
-        ) A
-        INNER JOIN (
-            SELECT
-                SPLIT_PART(
-                    attribute_value,
-                    '/',
-                    0
-                ) address,
-                tx_ID
-            FROM
-                base
-            WHERE
-                attribute_key = 'acc_seq'
-        ) b
-        ON A.tx_ID = b.tx_ID
+        {{ ref('silver__superfluid_actions') }}
+    GROUP BY
+        1
 ),
 possible_balances_needed AS (
     SELECT
-        2383300 AS block_id,
+        max_block_id AS block_id,
         address
-    FROM
-        all_wallets
-    UNION
-    SELECT
-        *
     FROM
         unique_address_per_block_date
     UNION
@@ -156,16 +142,8 @@ possible_balances_needed AS (
 )
 SELECT
     block_id,
-    address
+    address,
+    SYSDATE() AS inserted_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     possible_balances_needed
-EXCEPT
-SELECT
-    DISTINCT block_id,
-    address
-FROM
-    {{ ref(
-        'bronze__balances_api'
-    ) }}
-ORDER BY
-    block_id
