@@ -52,8 +52,8 @@ combo AS (
     VALUE :exponent :: INT AS DECIMAL,
     denom_units AS raw_metadata,
     COALESCE(
-      VALUE [0] :aliases [0] :: STRING,
-      VALUE [0] :denom :: STRING
+      VALUE :aliases [0] :: STRING,
+      VALUE :denom :: STRING
     ) AS denom,
     address AS _unique_key,
     _inserted_timestamp
