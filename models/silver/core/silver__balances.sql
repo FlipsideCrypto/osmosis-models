@@ -6,7 +6,6 @@
     tags = ['balances']
 ) }}
 -- depends_on: {{ ref('bronze__streamline_balances') }}
-
 WITH base AS (
 
     SELECT
@@ -40,7 +39,7 @@ sl2 AS (
         REPLACE(
             REPLACE(
                 A.metadata :request :url,
-                ' {service}/{Authentication}/cosmos/bank/v1beta1/balances/'
+                '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
             ),
             '?pagination.limit=1000'
         ) AS address,
@@ -89,6 +88,7 @@ combo AS (
         _inserted_timestamp
     FROM
         sl2
+        WHERE currency is not null
 )
 SELECT
     block_id,
