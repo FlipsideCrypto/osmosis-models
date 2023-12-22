@@ -79,6 +79,8 @@ combo AS (
         _inserted_timestamp
     FROM
         base
+    WHERE
+        currency IS NOT NULL
     UNION ALL
     SELECT
         block_id,
@@ -88,7 +90,8 @@ combo AS (
         _inserted_timestamp
     FROM
         sl2
-        WHERE currency is not null
+    WHERE
+        currency IS NOT NULL
 )
 SELECT
     block_id,
