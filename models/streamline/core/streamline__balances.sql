@@ -27,7 +27,7 @@ WITH base AS (
                 AND attribute_value = 'superfluid_delegate'
             )
         )
-        AND block_id > 12782446 -- last block pulled via old process
+        AND block_id > 12768267 -- last block pulled via old process
 
 {% if is_incremental() %}
 AND block_timestamp :: DATE >= (
