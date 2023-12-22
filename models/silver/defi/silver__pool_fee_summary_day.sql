@@ -102,6 +102,7 @@ pre_agg AS (
         AND A.block_id_hour = prices.block_id
     WHERE
         A.block_id >= 2300000
+        AND A.pool_id IS NOT NULL
 
 {% if is_incremental() %}
 AND b.block_date >= (
