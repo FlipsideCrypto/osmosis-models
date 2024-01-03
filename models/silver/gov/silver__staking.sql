@@ -134,6 +134,7 @@ spent AS (
         ) AS j,
         j :spender :: STRING AS spender,
         j :amount :: STRING AS amount_raw,
+        j :authz_msg_index :: INT AS authz_msg_index,
         SPLIT_PART(
             TRIM(
                 REGEXP_REPLACE(
@@ -162,6 +163,38 @@ spent AS (
         msg_group,
         msg_sub_group,
         msg_index
+),
+spent_auth AS (
+    SELECT
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_index,
+        spender,
+        authz_msg_index,
+        amount,
+        currency
+    FROM
+        spent
+    WHERE
+        authz_msg_index IS NOT NULL qualify(ROW_NUMBER() over(PARTITION BY tx_id, authz_msg_index
+    ORDER BY
+        msg_index DESC) = 1)
+),
+spent_amount AS (
+    SELECT
+        tx_id,
+        msg_group,
+        msg_sub_group,
+        msg_index,
+        spender,
+        authz_msg_index,
+        amount,
+        currency
+    FROM
+        spent qualify(ROW_NUMBER() over(PARTITION BY tx_id, COALESCE(msg_group, -1), COALESCE(msg_sub_group, -1), amount
+    ORDER BY
+        msg_index DESC) = 1)
 ),
 wr AS (
     SELECT
@@ -243,7 +276,9 @@ SELECT
     COALESCE(
         s.sender,
         C.delegator,
+        d_auth.spender,
         d.spender,
+        d_amount.spender,
         b.tx_caller_address
     ) AS delegator_address,
     A.amount :: INT AS amount,
@@ -270,18 +305,61 @@ FROM
     LEFT JOIN sendr s
     ON A.tx_id = s.tx_id
     AND A.msg_group = s.msg_group
-    AND A.msg_sub_group = s.msg_sub_group
+    AND COALESCE(
+        A.msg_sub_group,
+        -1
+    ) = COALESCE(
+        s.msg_sub_group,
+        -1
+    )
     LEFT JOIN wr C
     ON A.tx_id = C.tx_id
     AND A.msg_group = C.msg_group
-    AND A.msg_sub_group = C.msg_sub_group
+    AND COALESCE(
+        A.msg_sub_group,
+        -1
+    ) = COALESCE(
+        C.msg_sub_group,
+        -1
+    )
     AND A.validator_address = C.validator
+    LEFT JOIN spent_auth d_auth
+    ON A.tx_id = d_auth.tx_id
+    AND A.msg_group = d_auth.msg_group
+    AND COALESCE(
+        A.msg_sub_group,
+        -1
+    ) = COALESCE(
+        d_auth.msg_sub_group,
+        -1
+    )
+    AND A.authz_msg_index = d_auth.authz_msg_index
     LEFT JOIN spent d
     ON A.tx_id = d.tx_id
     AND A.msg_group = d.msg_group
-    AND A.msg_sub_group = d.msg_sub_group
+    AND COALESCE(
+        A.msg_sub_group,
+        -1
+    ) = COALESCE(
+        d.msg_sub_group,
+        -1
+    )
     AND A.amount = d.amount
     AND A.del_rank = d.spent_rank
+    AND A.authz_msg_index IS NULL
+    LEFT JOIN spent_amount d_amount
+    ON A.tx_id = d_amount.tx_id
+    AND A.msg_group = d_amount.msg_group
+    AND COALESCE(
+        A.msg_sub_group,
+        -1
+    ) = COALESCE(
+        d_amount.msg_sub_group,
+        -1
+    )
+    AND A.amount = d_amount.amount
+    AND d_auth.tx_id IS NULL
+    AND d.tx_id IS NULL
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
     amd
     ON A.currency = amd.address
