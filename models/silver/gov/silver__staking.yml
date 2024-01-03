@@ -6,12 +6,7 @@ models:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - TX_ID
-            - MSG_GROUP
-            - MSG_SUB_GROUP
-            - ACTION
-            - CURRENCY
-            - DELEGATOR_ADDRESS
-            - VALIDATOR_ADDRESS
+            - MSG_INDEX
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -25,9 +20,9 @@ models:
         description: "{{ doc('block_timestamp') }}"
         tests:
           - not_null
-          # - dbt_expectations.expect_row_values_to_have_recent_data:
-          #     datepart: day
-          #     interval: 1
+          - dbt_expectations.expect_row_values_to_have_recent_data:
+              datepart: day
+              interval: 1
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - TIMESTAMP_NTZ

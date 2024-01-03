@@ -32,7 +32,7 @@ sources:
       - name: pool_balances
       - name: balances
   - name: crosschain_silver
-    database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
+    database: crosschain
     schema: silver
     tables:
       - name: asset_metadata_coin_market_cap
