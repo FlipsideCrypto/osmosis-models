@@ -6,7 +6,62 @@
     cluster_by = ['block_timestamp'],
     tags = ['noncore']
 ) }}
+-- depends_on: {{ ref('bronze__streamline_pool_balances') }}
+WITH base AS (
 
+    SELECT
+        A.block_id,
+        A.pools,
+        A._INSERTED_DATE AS _INSERTED_TIMESTAMP
+    FROM
+        {{ source(
+            'bronze_streamline',
+            'pool_balances_api'
+        ) }} A
+
+{% if is_incremental() %}
+WHERE
+    0 = 1
+{% endif %}
+),
+sl2 AS (
+    SELECT
+        VALUE :metadata :request :headers :"x-cosmos-block-height" :: INT AS block_id,
+        DATA :pools AS pools,
+        _INSERTED_TIMESTAMP
+    FROM
+
+{% if is_incremental() %}
+{{ ref('bronze__streamline_pool_balances') }}
+{% else %}
+    {{ ref('bronze__streamline_FR_pool_balances') }}
+{% endif %}
+
+{% if is_incremental() %}
+WHERE
+    _inserted_timestamp >= (
+        SELECT
+            MAX(_inserted_timestamp)
+        FROM
+            {{ this }}
+    )
+{% endif %}
+),
+combo AS (
+    SELECT
+        block_id,
+        pools,
+        _INSERTED_TIMESTAMP
+    FROM
+        sl2
+    UNION ALL
+    SELECT
+        block_id,
+        pools,
+        _INSERTED_TIMESTAMP
+    FROM
+        base
+)
 SELECT
     A.block_id,
     C.block_timestamp,
@@ -96,7 +151,7 @@ SELECT
     ) :: bigint AS total_weight,
     b.value :scaling_factor_controller :: STRING AS scaling_factor_controller,
     b.value :scaling_factors AS scaling_factors,
-    _INSERTED_DATE AS _inserted_timestamp,
+    A._inserted_timestamp,
     {{ dbt_utils.generate_surrogate_key(
         ['pool_id','a.block_id']
     ) }} AS pool_balances_id,
@@ -104,28 +159,11 @@ SELECT
     SYSDATE() AS modified_timestamp,
     '{{ invocation_id }}' AS _invocation_id
 FROM
-    {{ source(
-        'bronze_streamline',
-        'pool_balances_api'
-    ) }} A
+    combo A
     JOIN LATERAL FLATTEN(
         A.pools
     ) b
     JOIN {{ ref('silver__blocks') }} C
-    ON A.block_id = C.block_id
-
-{% if is_incremental() %}
-WHERE
-    _INSERTED_DATE >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            {{ this }}
-    )
-{% endif %}
-
-qualify (ROW_NUMBER() over (PARTITION BY A.block_id, pool_id
+    ON A.block_id = C.block_id qualify (ROW_NUMBER() over (PARTITION BY A.block_id, pool_id
 ORDER BY
-    _inserted_timestamp DESC) = 1)
+    A._inserted_timestamp DESC) = 1)

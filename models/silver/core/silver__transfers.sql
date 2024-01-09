@@ -9,51 +9,16 @@
 ) }}
 
 {% if execute %}
-    {% set query = """
-        CREATE OR REPLACE TEMPORARY TABLE silver.transfers__intermediate_tmp AS
-        SELECT
-            block_id,
-            block_timestamp,
-            tx_id,
-            tx_succeeded,
-            msg_group,
-            msg_sub_group,
-            msg_index,
-            msg_type,
-            attribute_key,
-            attribute_value,
-            _inserted_timestamp
-        FROM
-            """ ~ ref('silver__msg_attributes') ~ """
-        WHERE
-            (
-                attribute_key IN (
-                    'acc_seq',
-                    'amount'
-                )
-                OR msg_type IN (
-                    'coin_spent',
-                    'transfer',
-                    'message',
-                    'claim',
-                    'ibc_transfer',
-                    'write_acknowledgement'
-                )
-            )"""
-    %}
+    {% set query = """ CREATE OR REPLACE TEMPORARY TABLE silver.transfers__intermediate_tmp AS SELECT block_id, block_timestamp, tx_id, tx_succeeded, msg_group, msg_sub_group, msg_index, msg_type, attribute_key, attribute_value, _inserted_timestamp FROM """ ~ ref('silver__msg_attributes') ~ """ WHERE ( attribute_key IN ( 'acc_seq', 'amount' ) OR msg_type IN ( 'coin_spent', 'transfer', 'message', 'claim', 'ibc_transfer', 'write_acknowledgement' ) )""" %}
     {% set incr = "" %}
-    {% if is_incremental() %}
-        {% set incr = """
-        AND _inserted_timestamp >= (
-            SELECT
-                MAX(
-                    _inserted_timestamp
-                )
-            FROM
-                """ ~ this ~ """
-        ) - INTERVAL '24 HOURS'""" %}
-    {% endif %}
-    {% do run_query(query ~ incr) %}
+
+{% if is_incremental() %}
+{% set incr = """ AND _inserted_timestamp >= ( SELECT MAX( _inserted_timestamp ) FROM """ ~ this ~ """ ) - INTERVAL '24 HOURS'""" %}
+{% endif %}
+
+{% do run_query(
+    query ~ incr
+) %}
 {% endif %}
 
 WITH base_atts AS (
@@ -62,7 +27,6 @@ WITH base_atts AS (
         *
     FROM
         silver.transfers__intermediate_tmp
-        
 ),
 sender AS (
     SELECT
@@ -315,7 +279,9 @@ fin AS (
         'OSMOSIS' AS transfer_type,
         r.msg_index,
         sender,
-        amount,
+        TRY_CAST(
+            amount AS NUMBER
+        ) AS amount,
         currency,
         DECIMAL,
         receiver,
@@ -345,10 +311,9 @@ fin AS (
         ) t
         ON r.tx_id = t.tx_id
     WHERE
-        (
-            amount IS NOT NULL
-            OR currency IS NOT NULL
-        )
+        TRY_CAST(
+            amount AS NUMBER
+        ) IS NOT NULL
     UNION ALL
     SELECT
         m.block_id,
@@ -358,7 +323,9 @@ fin AS (
         'IBC_TRANSFER_IN' AS transfer_type,
         m.msg_index,
         TRY_PARSE_JSON(attribute_value) :sender :: STRING AS sender,
-        C.amount :: NUMBER AS amount,
+        TRY_CAST(
+            C.amount AS NUMBER
+        ) AS amount,
         C.currency,
         A.decimal,
         COALESCE(TRY_PARSE_JSON(attribute_value) :receiver, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :staking :delegate :validator, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :bank :send :to_address, TRY_PARSE_JSON(attribute_value) :msg :execute :msgs [0] :wasm :execute :contract_addr, TRY_PARSE_JSON(attribute_value) :execute :Ok :executed_by) :: STRING AS receiver,
@@ -382,10 +349,9 @@ fin AS (
         TRY_PARSE_JSON(attribute_value) :sender :: STRING IS NOT NULL
         AND m.msg_type = 'write_acknowledgement'
         AND m.attribute_key = 'packet_data'
-        AND (
-            amount IS NOT NULL
-            OR currency IS NOT NULL
-        )
+        AND TRY_CAST(
+            C.amount AS NUMBER
+        ) IS NOT NULL
         AND receiver IS NOT NULL
 ),
 links AS (
@@ -436,7 +402,7 @@ axl_tran AS (
         foreign_address IS NOT NULL
 
 {% if is_incremental() %}
-AND _inserted_timestamp >= (
+AND A._inserted_timestamp >= (
     SELECT
         MAX(
             _inserted_timestamp
@@ -468,12 +434,12 @@ SELECT
     ) AS foreign_chain,
     A._inserted_timestamp,
     A._unique_key,
-  {{ dbt_utils.generate_surrogate_key(
-    ['a._unique_key']
-  ) }} AS transfers_id,
-  SYSDATE() AS inserted_timestamp,
-  SYSDATE() AS modified_timestamp,
-  '{{ invocation_id }}' AS _invocation_id
+    {{ dbt_utils.generate_surrogate_key(
+        ['a._unique_key']
+    ) }} AS transfers_id,
+    SYSDATE() AS inserted_timestamp,
+    SYSDATE() AS modified_timestamp,
+    '{{ invocation_id }}' AS _invocation_id
 FROM
     fin A
     LEFT JOIN links b

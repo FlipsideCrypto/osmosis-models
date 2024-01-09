@@ -60,10 +60,10 @@ tests:
 on-run-start:
   - '{{create_sps()}}'
   - '{{create_udfs()}}'
-  - '{{sp_bulk_get_asset_metadata()}}'
-  - '{{sp_create_bulk_get_balances()}}'
-  - '{{sp_create_bulk_get_validator_metadata()}}'
-  - '{{sp_create_bulk_get_pool_balances()}}'
+  # - '{{sp_bulk_get_asset_metadata()}}'
+  # - '{{sp_create_bulk_get_balances()}}'
+  # - '{{sp_create_bulk_get_validator_metadata()}}'
+  # - '{{sp_create_bulk_get_pool_balances()}}'
 
 on-run-end:
   - '{{ apply_meta_as_tags(results) }}'

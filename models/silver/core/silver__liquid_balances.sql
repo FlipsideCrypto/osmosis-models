@@ -12,22 +12,15 @@ WITH base AS (
         bal.block_id,
         bl.block_timestamp,
         bal.address,
-        b.value :denom :: STRING AS currency,
-        b.value :amount :: INT AS balance,
-        TO_TIMESTAMP_NTZ(
-            SUBSTR(SPLIT_PART(metadata$filename, '/', 4), 1, 10) :: NUMBER,
-            0
-        ) AS _inserted_timestamp
+        bal.currency,
+        bal.amount AS balance,
+        bal._inserted_timestamp
     FROM
-        {{ source(
-            'bronze_streamline',
-            'balances_api'
-        ) }}
+        {{ ref('silver__balances') }}
         bal
         LEFT OUTER JOIN {{ ref('silver__blocks') }}
         bl
         ON bal.block_id = bl.block_id
-        LEFT OUTER JOIN TABLE(FLATTEN (input => balances, outer => TRUE)) b
 
 {% if is_incremental() %}
 WHERE
@@ -43,7 +36,7 @@ WHERE
         FROM
             {{ this }}
     )
-    OR b.value :denom :: STRING IN (
+    OR currency IN (
         SELECT
             currency
         FROM
@@ -57,7 +50,7 @@ WHERE
 
 qualify(ROW_NUMBER() over(PARTITION BY bal.block_id, bal.address, currency
 ORDER BY
-    _inserted_timestamp DESC)) = 1
+    bal._inserted_timestamp DESC)) = 1
 ),
 tbl AS (
 

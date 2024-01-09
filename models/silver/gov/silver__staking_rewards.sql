@@ -479,7 +479,9 @@ prefinal AS (
                 )
                 WHEN A.split_amount LIKE '%pool%' THEN LEFT(A.split_amount, CHARINDEX('g', A.split_amount) -1)
                 WHEN A.split_amount LIKE '%ibc%' THEN LEFT(A.split_amount, CHARINDEX('i', A.split_amount) -1)
-                ELSE A.split_amount
+                ELSE TRY_CAST(
+                    A.split_amount AS INT
+                )
             END :: INT
         ) AS amount,CASE
             WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'

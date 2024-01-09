@@ -29,6 +29,8 @@ sources:
       - name: blocks
       - name: transactions
       - name: txcount
+      - name: pool_balances
+      - name: balances
   - name: crosschain_silver
     database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
     schema: silver

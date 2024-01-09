@@ -263,7 +263,7 @@ adjust AS (
             ),
             token_3_amount
         ) AS token_3_amount,
-        _inserted_timestamp
+        A._inserted_timestamp
     FROM
         {{ ref('silver__pool_balances') }} A
         LEFT JOIN {{ ref('silver__asset_metadata') }}

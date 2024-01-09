@@ -69,7 +69,7 @@ deposit_value AS (
         AND attribute_value IS NOT NULL
 
 {% if is_incremental() %}
-AND _inserted_timestamp >= (
+AND m._inserted_timestamp >= (
     SELECT
         MAX(
             _inserted_timestamp
