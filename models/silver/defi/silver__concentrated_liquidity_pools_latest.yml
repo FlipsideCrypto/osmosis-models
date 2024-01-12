@@ -1,11 +1,10 @@
 version: 2
 models:
-  - name: silver__concentrated_liquidity_pools
+  - name: silver__concentrated_liquidity_pools_latest
     tests:
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - POOL_ID
-            - _INSERTED_TIMESTAMP
     columns:
       - name: TYPE
         tests:
