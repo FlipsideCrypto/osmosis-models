@@ -15,20 +15,20 @@ WITH swaps AS (
             block_timestamp
         ) AS block_hour,
         from_currency,
-        TRY_TO_NUMBER(from_amount) / pow(
+        from_amount / pow(
             10,
             f.raw_metadata [1] :exponent
         ) AS from_amount,
         f.project_name AS from_project_name,
         to_currency,
-        TRY_TO_NUMBER(to_amount) / pow(
+        to_amount / pow(
             10,
             t.raw_metadata [1] :exponent
         ) AS to_amount,
         t.project_name AS to_project_name,
         'osmosis' AS dex
     FROM
-        {{ ref('silver__swaps') }}
+        {{ ref('silver__token_swapped') }}
         s
         INNER JOIN {{ ref('silver__asset_metadata') }}
         f
@@ -37,9 +37,7 @@ WITH swaps AS (
         t
         ON to_currency = t.address
     WHERE
-        TRY_TO_NUMBER(from_amount) > 0
-        AND TRY_TO_NUMBER(to_amount) > 0
-        AND f.raw_metadata [1] :exponent IS NOT NULL
+        f.raw_metadata [1] :exponent IS NOT NULL
         AND t.raw_metadata [1] :exponent IS NOT NULL
 
 {% if is_incremental() %}
