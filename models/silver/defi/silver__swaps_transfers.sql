@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = ['tx_id','msg_index'],
     incremental_strategy = 'delete+insert',
-    cluster_by = ['block_timestamp::DATE'] tags = ['noncore']
+    cluster_by = ['block_timestamp::DATE'],
+    tags = ['noncore']
 ) }}
 
 WITH xfer AS (
