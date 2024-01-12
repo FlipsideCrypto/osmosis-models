@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: defi__fact_swaps
-    description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. The columns blockchain, chain_id, and tx_status will be deprecating soon. 
+    description: Records of all swaps that have occurred on Osmosis, dating back to the genesis block. The granularity of this table is one record for each pool a swap uses. For example, if a swap uses 3 pools, there will be 3 records in this table for that swap.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
@@ -44,6 +44,10 @@ models:
       - name: TO_DECIMAL
         description: "{{ doc('to_decimal') }}"
       - name: POOL_IDS
+        description: "Deprecating soon! This is an array value not an integer. Use pool_id instead. {{ doc('pool_id') }}"
+        tests: 
+          - dbt_expectations.expect_column_to_exist
+      - name: POOL_ID
         description: "{{ doc('pool_id') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist

@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_airdrop
-    description: Record of the OSMO airdrop to ATOM stakers. The columns blockchain, chain_id, and tx_status will be deprecating soon.
+    description: Record of the OSMO airdrop to ATOM stakers.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

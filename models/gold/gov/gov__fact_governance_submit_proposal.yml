@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: gov__fact_governance_submit_proposal
-    description: Records of all proposal submissions on Osmosis, dating back to the Genesis block. The columns blockchain, chain_id, and tx_status will be deprecating soon.
+    description: Records of all proposal submissions on Osmosis, dating back to the Genesis block.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

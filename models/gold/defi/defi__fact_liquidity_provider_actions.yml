@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: defi__fact_liquidity_provider_actions
-    description: Includes all actions entering and exiting liquidity pools. The columns blockchain, chain_id, and tx_status will be deprecating soon.  
+    description: Includes all actions entering and exiting liquidity pools.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
