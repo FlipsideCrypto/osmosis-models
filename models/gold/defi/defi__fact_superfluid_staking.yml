@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: defi__fact_superfluid_staking
-    description: Records of all staking related transactions that have occurred on Osmosis, dating back to the genesis block. These actions include delegate, undelegate, and redelegate. The columns blockchain, chain_id, and tx_status will be deprecating soon.
+    description: Records of all staking related transactions that have occurred on Osmosis, dating back to the genesis block. These actions include delegate, undelegate, and redelegate.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"

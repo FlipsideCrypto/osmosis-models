@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_msgs
-    description: Records of all message attributes associated to messages that have occurred on Osmosis, dating back to the genesis block. The columns blockchain, chain_id, and tx_status will be deprecating soon. 
+    description: Records of all message attributes associated to messages that have occurred on Osmosis, dating back to the genesis block.
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
