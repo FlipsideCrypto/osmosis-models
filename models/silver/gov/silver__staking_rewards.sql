@@ -4,24 +4,11 @@
     incremental_strategy = 'merge',
     merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE'],
-    tags = ['noncore']
+    tags = ['disabled']
 ) }}
 
-WITH
+WITH msg_attributes_cte AS (
 
-{% if is_incremental() %}
-max_date AS (
-
-    SELECT
-        MAX(
-            _inserted_timestamp
-        ) _inserted_timestamp
-    FROM
-        {{ this }}
-),
-{% endif %}
-
-msg_attributes_cte AS (
     SELECT
         tx_id,
         msg_type,
@@ -32,7 +19,9 @@ msg_attributes_cte AS (
     FROM
         {{ ref('silver__msg_attributes') }} A
     WHERE
-        msg_type IN (
+        block_id <= 12834101
+        AND block_timestamp :: DATE <= '2023-12-18'
+        AND msg_type IN (
             'withdraw_rewards',
             'claim',
             'transfer',
@@ -245,18 +234,9 @@ tran_base AS (
         delegator_address
     FROM
         {{ ref('silver__staking') }} A
-
-{% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            max_date
-    )
-{% endif %}
+    WHERE
+        block_id <= 12834101
+        AND block_timestamp :: DATE <= '2023-12-18'
 ),
 tran_tran AS (
     SELECT
@@ -517,39 +497,30 @@ prefinal AS (
                 _inserted_timestamp
             FROM
                 {{ ref('silver__transactions') }} A
-
-{% if is_incremental() %}
-WHERE
-    _inserted_timestamp >= (
-        SELECT
-            MAX(
-                _inserted_timestamp
-            )
-        FROM
-            max_date
-    )
-{% endif %}
-) b
-ON A.tx_Id = b.tx_ID
-JOIN tx_address C
-ON A.tx_id = C.tx_id
-GROUP BY
-    b.block_id,
-    b.block_timestamp,
-    A.tx_id,
-    b.tx_succeeded,
-    C.tx_caller_address,
-    A.action,
-    A.msg_group,
-    A.delegator_address,CASE
-        WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'
-        WHEN A.split_amount LIKE '%uion' THEN 'uion'
-        WHEN A.split_amount LIKE '%pool%' THEN SUBSTRING(A.split_amount, CHARINDEX('g', A.split_amount), 99)
-        WHEN A.split_amount LIKE '%ibc%' THEN SUBSTRING(A.split_amount, CHARINDEX('i', A.split_amount), 99)
-        ELSE 'uosmo'
-    END,
-    A.validator_address,
-    b._inserted_timestamp
+            WHERE
+                block_id <= 12834101
+                AND block_timestamp :: DATE <= '2023-12-18'
+        ) b
+        ON A.tx_Id = b.tx_ID
+        JOIN tx_address C
+        ON A.tx_id = C.tx_id
+    GROUP BY
+        b.block_id,
+        b.block_timestamp,
+        A.tx_id,
+        b.tx_succeeded,
+        C.tx_caller_address,
+        A.action,
+        A.msg_group,
+        A.delegator_address,CASE
+            WHEN A.split_amount LIKE '%uosmo' THEN 'uosmo'
+            WHEN A.split_amount LIKE '%uion' THEN 'uion'
+            WHEN A.split_amount LIKE '%pool%' THEN SUBSTRING(A.split_amount, CHARINDEX('g', A.split_amount), 99)
+            WHEN A.split_amount LIKE '%ibc%' THEN SUBSTRING(A.split_amount, CHARINDEX('i', A.split_amount), 99)
+            ELSE 'uosmo'
+        END,
+        A.validator_address,
+        b._inserted_timestamp
 ),
 tx_body_del AS (
     SELECT
@@ -559,21 +530,10 @@ tx_body_del AS (
         {{ ref('silver__tx_body_msgs') }} A
     WHERE
         delegator_address IS NOT NULL
-
-{% if is_incremental() %}
-AND _inserted_timestamp >= (
-    SELECT
-        MAX(
-            _inserted_timestamp
-        )
-    FROM
-        max_date
-)
-{% endif %}
-
-qualify(ROW_NUMBER() over (PARTITION BY tx_id
-ORDER BY
-    msg_group) = 1)
+        AND block_id < 12834101
+        AND block_timestamp :: DATE <= '2023-12-18' qualify(ROW_NUMBER() over (PARTITION BY tx_id
+    ORDER BY
+        msg_group) = 1)
 )
 SELECT
     block_id,

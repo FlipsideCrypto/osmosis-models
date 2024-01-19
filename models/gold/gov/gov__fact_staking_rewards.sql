@@ -32,3 +32,21 @@ SELECT
     ) AS modified_timestamp
 FROM
     {{ ref('silver__staking_rewards') }}
+UNION ALL
+SELECT
+    block_id,
+    block_timestamp,
+    tx_id,
+    tx_succeeded,
+    tx_caller_address,
+    action,
+    delegator_address,
+    validator_address,
+    amount,
+    currency,
+    DECIMAL,
+    staking_rewards_2_id AS fact_staking_rewards_id,
+    inserted_timestamp,
+    modified_timestamp
+FROM
+    {{ ref('silver__staking_rewards_2') }}
