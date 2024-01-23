@@ -404,3 +404,5 @@ SELECT
     '{{ invocation_id }}' AS _invocation_id
 FROM
     fin
+WHERE
+    lock_id IS NOT NULL
