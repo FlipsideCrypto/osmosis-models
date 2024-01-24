@@ -68,7 +68,8 @@ models:
       - name: _PATH
         description: Internal use for unique key. Path recursive lateral flatten pulls info from. 
         tests:
-          - not_null
+          - not_null::
+                name: not_null_silver__gov_votes_path
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
