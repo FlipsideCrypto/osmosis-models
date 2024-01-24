@@ -22,7 +22,7 @@ env:
 concurrency:
   group: ${{ github.workflow }}
 
-obs:
+jobs:
   run_dbt_jobs:
     runs-on: ubuntu-latest
     environment: 
