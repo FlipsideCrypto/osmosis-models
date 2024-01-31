@@ -29,6 +29,7 @@ sources:
       - name: blocks
       - name: transactions
       - name: txcount
+      - name: tx_search
       - name: pool_balances
       - name: balances
   - name: crosschain_silver
