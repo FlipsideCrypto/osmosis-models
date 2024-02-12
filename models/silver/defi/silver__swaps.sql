@@ -36,3 +36,15 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
     as_t
     ON A.to_currency = as_t.address
+
+{% if is_incremental() %}
+WHERE
+    A._inserted_timestamp >= (
+        SELECT
+            MAX(
+                _inserted_timestamp
+            )
+        FROM
+            {{ this }}
+    )
+{% endif %}
