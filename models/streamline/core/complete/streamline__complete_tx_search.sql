@@ -1,4 +1,4 @@
--- depends_on: {{ ref('bronze__streamline_transactions') }}
+-- depends_on: {{ ref('bronze__streamline_tx_search') }}
 {{ config (
     materialized = "incremental",
     unique_key = "id",
