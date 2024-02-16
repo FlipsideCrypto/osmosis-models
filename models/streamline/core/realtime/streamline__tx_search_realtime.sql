@@ -13,7 +13,7 @@ WITH blocks AS (
     FROM
         {{ ref("streamline__complete_txcount") }}
     WHERE
-        block_number >= 12834102
+        block_number >= 11975572
 ),
 transactions_counts_by_block AS (
     SELECT
@@ -87,5 +87,3 @@ FROM
     blocks_with_page_numbers
 ORDER BY
     block_number ASC
-LIMIT
-    1000
