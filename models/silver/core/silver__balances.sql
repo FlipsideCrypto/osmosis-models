@@ -37,11 +37,16 @@ sl2 AS (
     SELECT
         A.metadata :request :headers :"x-cosmos-block-height" :: INT AS block_id,
         REPLACE(
-            REPLACE(
-                A.metadata :request :url,
-                '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
-            ),
-            '?pagination.limit=1000'
+            VALUE :metadata :request :url,
+            '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
+        ) AS url,
+        CHARINDEX(
+            '?',
+            url
+        ) ch_url,
+        LEFT(
+            url,
+            ch_url - 1
         ) AS address,
         b.value :denom :: STRING AS currency,
         b.value :amount :: INT AS amount,
