@@ -37,7 +37,7 @@ sl2 AS (
     SELECT
         A.metadata :request :headers :"x-cosmos-block-height" :: INT AS block_id,
         REPLACE(
-            VALUE :metadata :request :url,
+            metadata :request :url,
             '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
         ) AS url,
         CHARINDEX(

@@ -10,11 +10,16 @@ WITH base AS (
 
     SELECT
         REPLACE(
-            REPLACE(
-                VALUE :metadata :request :url,
-                '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
-            ),
-            '?pagination.limit=1000'
+            VALUE :metadata :request :url,
+            '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
+        ) AS url,
+        CHARINDEX(
+            '?',
+            url
+        ) ch_url,
+        LEFT(
+            url,
+            ch_url - 1
         ) AS address,
         VALUE :metadata :request :headers :"x-cosmos-block-height" :: INT AS block_number,
         _inserted_timestamp
