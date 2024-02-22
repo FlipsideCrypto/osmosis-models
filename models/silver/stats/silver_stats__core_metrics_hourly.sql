@@ -28,18 +28,23 @@ SELECT
         DISTINCT tx_from
     ) AS unique_from_count,
     SUM(
-        TRY_CAST(
-            SPLIT_PART(
-                TRIM(
-                    REGEXP_REPLACE(
-                        fee,
-                        '[^[:digit:]]',
-                        ' '
-                    )
-                ),
-                ' ',
-                0
-            ) AS INT
+        CASE
+            WHEN fee ILIKE '%uosmo' THEN TRY_CAST(
+                SPLIT_PART(
+                    TRIM(
+                        REGEXP_REPLACE(
+                            fee,
+                            '[^[:digit:]]',
+                            ' '
+                        )
+                    ),
+                    ' ',
+                    0
+                ) AS INT
+            )
+        END / pow(
+            10,
+            6
         )
     ) AS total_fees,
     MAX(inserted_timestamp) AS _inserted_timestamp,
