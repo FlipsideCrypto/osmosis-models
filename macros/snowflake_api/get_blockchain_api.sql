@@ -39,7 +39,7 @@ INSERT INTO
               *,
               MOD(ROW_NUMBER() over(
             ORDER BY
-              min_block), 200) rn_mod_out
+              min_block), 100) rn_mod_out
             FROM
               (
                 SELECT
@@ -114,10 +114,7 @@ SELECT
         osmosis._internal.api_keys
       WHERE
         provider = 'allthatnode'
-    ),
-    {
-      'Content-Type': 'application/json'
-    },
+    ),{ 'Content-Type': 'application/json' },
     call
   ) AS DATA,
   SYSDATE()
