@@ -6,24 +6,14 @@
     )
 ) }}
 -- depends_on: {{ ref('streamline__complete_tx_search') }}
-WITH blocks AS (
+WITH transactions_counts_by_block AS (
 
-    SELECT
-        block_number
-    FROM
-        {{ ref("streamline__complete_txcount") }}
-    WHERE
-        block_number >= 11975572
-),
-transactions_counts_by_block AS (
     SELECT
         tc.block_number,
         tc.txcount
     FROM
         {{ ref("streamline__complete_txcount") }}
         tc
-        INNER JOIN blocks b
-        ON tc.block_number = b.block_number
 ),
 numbers AS (
     -- Recursive CTE to generate numbers. We'll use the maximum txcount value to limit our recursion.
