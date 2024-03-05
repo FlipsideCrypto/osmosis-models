@@ -38,9 +38,9 @@ jobs:
 
       - name: install dependencies
         run: |
-          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click
+          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click workstream-dbt-core
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt run-operation stage_external_sources --vars "ext_full_refresh: true"
-          dbt run -s "osmosis_models,tag:balances" "osmosis_models,tag:daily"
+          dbt run -s "osmosis_models,tag:balances" "osmosis_models,tag:daily" || true
+          workstream report --exit-nonzero

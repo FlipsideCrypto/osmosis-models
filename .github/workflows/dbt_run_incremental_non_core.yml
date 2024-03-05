@@ -38,13 +38,10 @@ jobs:
 
       - name: install dependencies
         run: |
-          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click
+          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click workstream-dbt-core
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt run -s "osmosis_models,tag:noncore" 
-          dbt run-operation get_blockchain_api;
-          dbt run -m models/silver/core/silver__blockchain.sql;
-          dbt run-operation get_blockchain_api;
-          dbt run -m models/silver/core/silver__blockchain.sql;
+          dbt run -s "osmosis_models,tag:noncore"  || true
+          workstream report --exit-nonzero
 

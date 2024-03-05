@@ -38,21 +38,35 @@ jobs:
 
       - name: install dependencies
         run: |
-          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click
+          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click workstream-dbt-core
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
-          dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero
+          dbt run-operation get_blockchain_api || true
+          workstream report --exit-nonzero
+          dbt run -m models/silver/silver__blockchain.sql || true
+          workstream report --exit-nonzero

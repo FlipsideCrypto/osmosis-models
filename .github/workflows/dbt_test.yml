@@ -38,8 +38,9 @@ jobs:
 
       - name: install dependencies
         run: |
-          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click
+          pip3 install dbt-snowflake==${{ vars.DBT_VERSION }} cli_passthrough requests click workstream-dbt-core
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt test -m "osmosis_models,./models"
+          dbt test -m "osmosis_models,./models" || true
+          workstream report --exit-nonzero

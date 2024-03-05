@@ -2,6 +2,7 @@
     materialized = 'incremental',
     unique_key = "CONCAT_WS('-', date, address, balance_type, currency)",
     incremental_strategy = 'delete+insert',
+    post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(address)",
     cluster_by = ['date'],
     tags = ['balances']
 ) }}

@@ -106,16 +106,15 @@ INSERT INTO
   )
 SELECT
   call,
-  ethereum.streamline.udf_json_rpc_call(
-    (
-      SELECT
-        rpc_url
-      FROM
-        osmosis._internal.api_keys
-      WHERE
-        provider = 'allthatnode'
-    ),{ 'Content-Type': 'application/json' },
-    call
+  {{ target.database }}.live.udf_api (
+    'POST',
+    '{service}/{Authentication}',
+    OBJECT_CONSTRUCT(
+      'Content-Type',
+      'application/json'
+    ),
+    call,
+    'Vault/prod/osmosis/allthatnode/mainnet-archive/rpc'
   ) AS DATA,
   SYSDATE()
 FROM
