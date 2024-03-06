@@ -73,7 +73,10 @@ SELECT
   label,
   project_name,
   alias,
-  DECIMAL,
+  CASE
+    WHEN address = 'ibc/9A76CDF0CBCEF37923F32518FA15E5DC92B9F56128292BC4D63C4AEA76CBB110' THEN 18
+    ELSE DECIMAL
+  END AS DECIMAL,
   raw_metadata,
   denom,
   _unique_key,
