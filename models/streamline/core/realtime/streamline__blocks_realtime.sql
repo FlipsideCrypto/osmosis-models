@@ -1,35 +1,84 @@
 {{ config (
     materialized = "view",
     post_hook = if_data_call_function(
-        func = "{{this.schema}}.udf_bulk_json_rpc(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'blocks', 'sql_limit', {{var('sql_limit','2000000')}}, 'producer_batch_size', {{var('producer_batch_size','1000')}}, 'worker_batch_size', {{var('worker_batch_size','100')}}, 'batch_call_limit', {{var('batch_call_limit','10')}}, 'call_type', 'batch'))",
+        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'blocks', 'sql_limit', {{var('sql_limit','100000')}}, 'producer_batch_size', {{var('producer_batch_size','100000')}}, 'worker_batch_size', {{var('worker_batch_size','50000')}}, 'sm_secret_name','prod/osmosis/allthatnode/mainnet-archive/rpc'))",
         target = "{{this.schema}}.{{this.identifier}}"
-    )
+    ),
+    tags = ['streamline_core_realtime']
 ) }}
 
-WITH blocks AS (
+WITH last_3_days AS (
 
     SELECT
+        block_number
+    FROM
+        {{ ref("_block_lookback") }}
+),
+to_do AS (
+    SELECT
+        MD5(
+            CAST(
+                COALESCE(CAST(block_number AS text), '' :: STRING) AS text
+            )
+        ) AS id,
         block_number
     FROM
         {{ ref("streamline__blocks") }}
+    WHERE
+        (
+            block_number >= (
+                SELECT
+                    block_number
+                FROM
+                    last_3_days
+            )
+        )
+        AND block_number IS NOT NULL
     EXCEPT
     SELECT
+        id,
         block_number
     FROM
         {{ ref("streamline__complete_blocks") }}
+    WHERE
+        block_number >= (
+            SELECT
+                block_number
+            FROM
+                last_3_days
+        )
+        AND _inserted_timestamp >= DATEADD(
+            'day',
+            -4,
+            SYSDATE()
+        )
 )
 SELECT
-    PARSE_JSON(
-        CONCAT(
-            '{"jsonrpc": "2.0",',
-            '"method": "block", "params":["',
+    block_number AS partition_key,
+    OBJECT_CONSTRUCT(
+        'method',
+        'POST',
+        'url',
+        '{service}/{Authentication}',
+        'headers',
+        OBJECT_CONSTRUCT(
+            'Content-Type',
+            'application/json'
+        ),
+        'params',
+        PARSE_JSON('{}'),
+        'data',
+        OBJECT_CONSTRUCT(
+            'id',
             block_number :: STRING,
-            '"],"id":"',
-            block_number :: STRING,
-            '"}'
-        )
-    ) AS request
-FROM
-    blocks
-ORDER BY
-    block_number
+            'jsonrpc',
+            '2.0',
+            'method',
+            'block',
+            'params',
+            block_number :: STRING) :: STRING
+        ) AS request
+        FROM
+            to_do
+        ORDER BY
+            partition_key ASC
