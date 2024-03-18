@@ -76,7 +76,7 @@ SELECT
             'method',
             'block',
             'params',
-            block_number :: STRING) :: STRING
+            ARRAY_CONSTRUCT(block_number :: STRING)) :: STRING
         ) AS request
         FROM
             to_do

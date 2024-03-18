@@ -1,9 +1,10 @@
 {{ config (
     materialized = "view",
     post_hook = if_data_call_function(
-        func = "{{this.schema}}.udf_bulk_json_rpc(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'tx_search', 'sql_limit', {{var('sql_limit','20000')}}, 'producer_batch_size', {{var('producer_batch_size','200')}}, 'worker_batch_size', {{var('worker_batch_size','10')}}, 'batch_call_limit', {{var('batch_call_limit','10')}}, 'exploded_key', '[\"result\", \"txs\"]', 'call_type', 'non_batch'))",
+        func = "{{this.schema}}.udf_bulk_rest_api(object_construct('sql_source', '{{this.identifier}}', 'external_table', 'tx_search', 'sql_limit', {{var('sql_limit','20000')}}, 'producer_batch_size', {{var('producer_batch_size','200')}}, 'worker_batch_size', {{var('worker_batch_size','10')}}, 'batch_call_limit', {{var('batch_call_limit','10')}}, 'exploded_key', '[\"result\", \"txs\"]', 'call_type', 'non_batch', 'sm_secret_name','prod/osmosis/allthatnode/mainnet-archive/rpc'))",
         target = "{{this.schema}}.{{this.identifier}}"
-    )
+    ),
+    tags = ['streamline_core_realtime']
 ) }}
 -- depends_on: {{ ref('streamline__complete_tx_search') }}
 WITH transactions_counts_by_block AS (
@@ -55,25 +56,38 @@ FROM
 {% endif %}
 )
 SELECT
-    PARSE_JSON(
-        CONCAT(
-            '{"jsonrpc": "2.0",',
-            '"method": "tx_search", "params":["',
-            'tx.height=',
+    block_number AS partition_key,
+    OBJECT_CONSTRUCT(
+        'method',
+        'POST',
+        'url',
+        '{service}/{Authentication}',
+        'headers',
+        OBJECT_CONSTRUCT(
+            'Content-Type',
+            'application/json'
+        ),
+        'params',
+        PARSE_JSON('{}'),
+        'data',
+        OBJECT_CONSTRUCT(
+            'id',
             block_number :: STRING,
-            '",',
-            TRUE,
-            ',"',
-            page_number :: STRING,
-            '",',
-            '"100",',
-            '"asc"',
-            '],"id":"',
-            block_number :: STRING,
-            '"}'
-        )
+            'jsonrpc',
+            '2.0',
+            'method',
+            'tx_search',
+            'params',
+            ARRAY_CONSTRUCT(
+                'tx.height=' || block_number :: STRING,
+                TRUE,
+                page_number :: STRING,
+                '100',
+                'asc'
+            )
+        ) :: STRING
     ) AS request
 FROM
     blocks_with_page_numbers
 ORDER BY
-    block_number ASC
+    partition_key ASC
