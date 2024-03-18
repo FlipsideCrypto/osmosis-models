@@ -51,7 +51,7 @@ ORDER BY
 ),
 call AS (
   SELECT
-    top 50 ethereum.streamline.udf_api(
+    top 50 {{ target.database }}.live.udf_api(
       'GET',
       'https://lcd-osmosis.keplr.app/cosmos/gov/v1beta1/proposals/' || proposal_id :: INT :: STRING,{},{}
     ) AS resp,

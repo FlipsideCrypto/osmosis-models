@@ -51,7 +51,7 @@ ORDER BY
 ),
 call AS (
   SELECT
-    top 50 ethereum.streamline.udf_api(
+    top 50 {{ target.database }}.live.udf_api(
       'GET',
       'https://api-indexer.keplr.app/v2/validator/proposal/memos?proposalId=' || proposal_id :: STRING || '&chainId=osmosis-1&filter=latest',{},{ 'proposal_id' :proposal_id }
     ) AS resp,
