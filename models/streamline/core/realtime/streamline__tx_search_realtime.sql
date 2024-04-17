@@ -56,23 +56,20 @@ FROM
 {% endif %}
 )
 SELECT
-    block_number AS partition_key,
-    OBJECT_CONSTRUCT(
-        'method',
+    ROUND(
+        block_number,
+        -3
+    ) AS partition_key,
+    {{ target.database }}.live.udf_api(
         'POST',
-        'url',
         '{service}/{Authentication}',
-        'headers',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json'
         ),
-        'params',
-        PARSE_JSON('{}'),
-        'data',
         OBJECT_CONSTRUCT(
             'id',
-            block_number :: STRING,
+            block_number,
             'jsonrpc',
             '2.0',
             'method',
@@ -85,7 +82,8 @@ SELECT
                 '100',
                 'asc'
             )
-        ) :: STRING
+        ),
+        'vault/prod/osmosis/allthatnode/mainnet-archive/rpc'
     ) AS request
 FROM
     blocks_with_page_numbers
