@@ -1,7 +1,7 @@
 version: 2
 models:
   - name: core__fact_tx_body_msgs
-    description: Records of all messages within the transaction body from transactions that have occurred on Osmosis, dating back to the genesis block
+    description: Deprecating soon! This table will be deprecated on 5/13. Records of all messages within the transaction body from transactions that have occurred on Osmosis, dating back to the genesis block
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
