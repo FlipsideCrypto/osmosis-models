@@ -6,7 +6,7 @@
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION",
   tags = ['core']
 ) }}
--- depends_on: {{ ref('bronze__streamline_txcount') }}
+-- depends_on: {{ ref('bronze__streamline_tx_counts') }}
 
 SELECT
   id,
@@ -16,9 +16,9 @@ SELECT
 FROM
 
 {% if is_incremental() %}
-{{ ref('bronze__streamline_txcount') }}
+{{ ref('bronze__streamline_tx_counts') }}
 {% else %}
-  {{ ref('bronze__streamline_FR_txcount') }}
+  {{ ref('bronze__streamline_FR_tx_counts') }}
 {% endif %}
 
 {% if is_incremental() %}
