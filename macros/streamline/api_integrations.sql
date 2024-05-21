@@ -1,4 +1,4 @@
-{% macro create_aws_sei_api() %}
+{% macro create_aws_osmosis_api() %}
     {{ log(
         "Creating integration for target:" ~ target
     ) }}
