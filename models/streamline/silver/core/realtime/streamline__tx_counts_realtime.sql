@@ -27,7 +27,7 @@ SELECT
     ROUND(
         block_number,
         -3
-    ) AS partition_key,
+    ) :: INT AS partition_key,
     {{ target.database }}.live.udf_api(
         'POST',
         '{service}/{Authentication}',
