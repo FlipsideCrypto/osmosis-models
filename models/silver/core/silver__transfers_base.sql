@@ -61,6 +61,7 @@ all_transfers AS (
         base_atts
     WHERE
         msg_type = 'transfer'
+        AND attribute_key <> 'authz_msg_index'
     GROUP BY
         block_id,
         block_timestamp,

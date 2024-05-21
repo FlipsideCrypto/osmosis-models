@@ -35,22 +35,28 @@ WHERE
 ),
 sl2 AS (
     SELECT
-        A.metadata :request :headers :"x-cosmos-block-height" :: INT AS block_id,
         REPLACE(
-            metadata :request :url,
+            A.value :metadata :request :url,
             '{service}/{Authentication}/cosmos/bank/v1beta1/balances/'
         ) AS url,
         CHARINDEX(
             '?',
             url
         ) ch_url,
-        LEFT(
-            url,
-            ch_url - 1
+        COALESCE(
+            A.value :ADDRESS :: STRING,
+            LEFT(
+                url,
+                ch_url - 1
+            )
         ) AS address,
+        COALESCE(
+            A.value :BLOCK_NUMBER :: INT,
+            A.value :metadata :request :headers :"x-cosmos-block-height" :: INT
+        ) AS block_id,
         b.value :denom :: STRING AS currency,
         b.value :amount :: INT AS amount,
-        _inserted_timestamp
+        inserted_timestamp AS _inserted_timestamp
     FROM
 
 {% if is_incremental() %}

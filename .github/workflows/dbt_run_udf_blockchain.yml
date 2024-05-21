@@ -38,38 +38,21 @@ jobs:
 
       - name: install dependencies
         run: |
-          pip install -r requirements.txt workstream-dbt-core
+          pip install -r requirements.txt
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-          dbt run-operation get_blockchain_api || true
-          workstream report --exit-nonzero
-          dbt run -m models/silver/silver__blockchain.sql || true
-          workstream report --exit-nonzero
-        env:
-          WORKSTREAM_DBT_CLIENT_ID: ${{ secrets.WORKSTREAM_DBT_CLIENT_ID }}
-          WORKSTREAM_DBT_CLIENT_SECRET: ${{ secrets.WORKSTREAM_DBT_CLIENT_SECRET }}
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/silver__blockchain.sql

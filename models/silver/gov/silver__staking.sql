@@ -112,6 +112,7 @@ valid AS (
             'unbond',
             'create_validator'
         )
+        AND attribute_key <> 'authz_msg_index'
     GROUP BY
         block_id,
         A.block_timestamp,

@@ -60,7 +60,10 @@ FROM
     {{ ref('silver__msg_attributes') }}
 WHERE
     block_timestamp :: DATE >= '2021-09-24'
-    AND msg_type ILIKE '%apollo%'
+    AND (
+        msg_type ILIKE '%apollo%'
+        OR attribute_key = 'authz_msg_index'
+    )
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
