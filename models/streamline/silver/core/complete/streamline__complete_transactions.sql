@@ -31,9 +31,9 @@ WHERE
     DATA <> '[]'
 
 {% if is_incremental() %}
-AND _inserted_timestamp >= (
+AND inserted_timestamp >= (
     SELECT
-        MAX(_inserted_timestamp) _inserted_timestamp
+        MAX(modified_timestamp) modified_timestamp
     FROM
         {{ this }}
 )
@@ -41,4 +41,4 @@ AND _inserted_timestamp >= (
 
 qualify(ROW_NUMBER() over (PARTITION BY complete_transactions_id
 ORDER BY
-    _inserted_timestamp DESC)) = 1
+    inserted_timestamp DESC)) = 1

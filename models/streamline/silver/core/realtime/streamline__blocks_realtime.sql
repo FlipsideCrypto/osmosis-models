@@ -22,10 +22,6 @@ WITH blocks AS (
         block_number
     FROM
         {{ ref("streamline__complete_blocks") }}
-    ORDER BY
-        1
-    LIMIT
-        100
 )
 SELECT
     ROUND(

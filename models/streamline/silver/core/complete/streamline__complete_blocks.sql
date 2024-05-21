@@ -20,9 +20,9 @@ FROM
 {% if is_incremental() %}
 {{ ref('bronze__streamline_blocks') }}
 WHERE
-    _inserted_timestamp >= (
+    inserted_timestamp >= (
         SELECT
-            MAX(_inserted_timestamp) _inserted_timestamp
+            MAX(modified_timestamp) modified_timestamp
         FROM
             {{ this }}
     )
@@ -32,4 +32,4 @@ WHERE
 
 qualify(ROW_NUMBER() over (PARTITION BY block_number
 ORDER BY
-    _inserted_timestamp DESC)) = 1
+    inserted_timestamp DESC)) = 1

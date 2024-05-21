@@ -52,13 +52,13 @@ numbers AS (
                     ELSE FLOOR(
                         tt.tx_count / 100
                     ) + 1
-                END {# EXCEPT
+                END
+            EXCEPT
             SELECT
                 block_number,
                 page_number
             FROM
                 {{ ref("streamline__complete_transactions") }}
-                #}
             ORDER BY
                 1 DESC
             LIMIT

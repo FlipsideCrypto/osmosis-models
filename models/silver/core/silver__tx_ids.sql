@@ -1,23 +1,42 @@
 {{ config(
     materialized = 'incremental',
-    incremental_predicates = ['DBT_INTERNAL_DEST.partition_key >= (select min(partition_key) from ' ~ generate_tmp_view_name(this) ~ ')'],
     unique_key = "tx_id",
     incremental_strategy = 'merge',
     merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['modified_timestamp::DATE','partition_key'],
     tags = ['core','full_test']
 ) }}
+{# incremental_predicates = ['DBT_INTERNAL_DEST.partition_key >= (select min(partition_key) from ' ~ generate_tmp_view_name(this) ~ ')'], #}
 -- depends_on: {{ ref('bronze__streamline_transactions') }}
 WITH base_table AS (
 
     SELECT
-        DATA :height :: INT AS block_id,
-        DATA :hash :: STRING AS tx_id,
+        COALESCE(
+            DATA :height,
+            VALUE :block_number,
+            DATA: tx_responses :height
+        ) :: INT AS block_id,
+        COALESCE(
+            DATA :hash,
+            DATA :tx_responses :txhash
+        ) :: STRING AS tx_id,
         DATA :index AS tx_index,
-        DATA :tx_result :codespace :: STRING AS codespace,
-        DATA :tx_result :gas_used :: NUMBER AS gas_used,
-        DATA :tx_result :gas_wanted :: NUMBER AS gas_wanted,
-        DATA :tx_result :code :: INT AS tx_code,
+        COALESCE(
+            DATA :tx_result :codespace,
+            DATA :tx_responses :codespace
+        ) :: STRING AS codespace,
+        COALESCE(
+            DATA :tx_result :gas_used,
+            DATA :tx_responses :gas_used
+        ) :: INT AS gas_used,
+        COALESCE(
+            DATA :tx_result :gas_wanted,
+            DATA :tx_responses :gas_wanted
+        ) :: INT AS gas_wanted,
+        COALESCE(
+            DATA :tx_result :code,
+            DATA :tx_responses :code
+        ) :: STRING AS tx_code,
         CASE
             WHEN NULLIF(
                 tx_code,

@@ -5,7 +5,7 @@
         target = "{{this.schema}}.{{this.identifier}}",
         params ={ "external_table" :"pool_balances_v2",
         "sql_limit" :"10000",
-        "producer_batch_size" :"1000",
+        "producer_batch_size" :"100",
         "worker_batch_size" :"100",
         "exploded_key": "[\"pools\"]",
         "sql_source" :"{{this.identifier}}" }
@@ -31,12 +31,12 @@ blocks_to_call AS(
     SELECT
         block_number
     FROM
-        last_block_of_hour {# EXCEPT
+        last_block_of_hour
+    EXCEPT
     SELECT
         block_number
     FROM
         {{ ref('streamline__complete_pool_balances') }}
-        #}
     ORDER BY
         1 DESC
     LIMIT

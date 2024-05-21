@@ -18,17 +18,12 @@ WITH blocks_to_call AS(
         address
     FROM
         {{ ref('streamline__balances') }}
-        {# EXCEPT
+    EXCEPT
     SELECT
         block_number,
         address
     FROM
         {{ ref('streamline__complete_balances') }}
-        #}
-    ORDER BY
-        1 DESC
-    LIMIT
-        100
 )
 SELECT
     ROUND(

@@ -9,13 +9,13 @@
 -- depends_on: {{ ref('bronze__streamline_blocks') }}
 
 SELECT
-  block_number AS block_id,
+  DATA :result :block :header :height :: INT AS block_id,
   DATA :result :block :header :time :: datetime AS block_timestamp,
   DATA :result :block :header :chain_id :: STRING AS chain_id,
   COALESCE(ARRAY_SIZE(DATA :result :block :data :txs) :: NUMBER, 0) AS tx_count,
   DATA :result :block :header: proposer_address :: STRING AS proposer_address,
   DATA :result :block :header: validators_hash :: STRING AS validator_hash,
-  _inserted_timestamp,
+  inserted_timestamp AS _inserted_timestamp,
   {{ dbt_utils.generate_surrogate_key(
     ['block_id']
   ) }} AS blocks_id,
