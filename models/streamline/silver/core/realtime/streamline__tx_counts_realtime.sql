@@ -22,10 +22,6 @@ WITH blocks AS (
         block_number
     FROM
         {{ ref("streamline__complete_tx_counts") }}
-    ORDER BY
-        1 DESC
-    LIMIT
-        100
 )
 SELECT
     ROUND(

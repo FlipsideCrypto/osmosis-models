@@ -28,6 +28,7 @@ WITH base AS (
             VALUE :BLOCK_NUMBER :: INT,
             VALUE :metadata :request :headers :"x-cosmos-block-height" :: INT
         ) AS block_number,
+        file_name,
         inserted_timestamp
     FROM
 

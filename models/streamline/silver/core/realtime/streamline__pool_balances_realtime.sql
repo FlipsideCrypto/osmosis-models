@@ -37,10 +37,6 @@ blocks_to_call AS(
         block_number
     FROM
         {{ ref('streamline__complete_pool_balances') }}
-    ORDER BY
-        1 DESC
-    LIMIT
-        100
 )
 SELECT
     ROUND(

@@ -59,10 +59,6 @@ numbers AS (
                 page_number
             FROM
                 {{ ref("streamline__complete_transactions") }}
-            ORDER BY
-                1 DESC
-            LIMIT
-                100
         )
     SELECT
         ROUND(
