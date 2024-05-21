@@ -31,7 +31,3 @@ models:
         description: "{{ doc('vote_option') }}"
         tests: 
           - dbt_expectations.expect_column_to_exist
-      - name: MEMO
-        description: "Deprecating soon! This column will be deprecated on 5/13. {{ doc('memo') }}"
-        tests: 
-          - dbt_expectations.expect_column_to_exist

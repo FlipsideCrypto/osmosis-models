@@ -13,7 +13,7 @@ SELECT
     proposal_id,
     vote_option,
     vote_weight,
-    memo,
+    {# memo, #}
     COALESCE(
         governance_votes_id,
         {{ dbt_utils.generate_surrogate_key(
