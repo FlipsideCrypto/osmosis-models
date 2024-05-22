@@ -1,6 +1,7 @@
 {{ config(
   materialized = 'incremental',
-  incremental_strategy = 'delete+insert',
+  incremental_strategy = 'merge',
+  incremental_predicates = ["dynamic_range_predicate", "block_id"],
   unique_key = ['block_id','tx_id'],
   cluster_by = ['_inserted_timestamp::date'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION",
