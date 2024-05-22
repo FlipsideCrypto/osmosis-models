@@ -2,29 +2,44 @@
     materialized = 'incremental',
     unique_key = "tx_id",
     incremental_strategy = 'merge',
-    incremental_predicates = ['DBT_INTERNAL_DEST.block_timestamp::DATE >= (select min(block_timestamp::DATE) from ' ~ generate_tmp_view_name(this) ~ ')'],
+    incremental_predicates = ["dynamic_range_predicate", "block_timestamp::date"],
     merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE'],
     tags = ['core']
 ) }}
 
-WITH fee AS (
+WITH msg_atts AS (
 
+    SELECT
+        tx_id,
+        msg_index,
+        attribute_key,
+        attribute_value
+    FROM
+        {{ ref('silver__msg_attributes') }}
+
+{% if is_incremental() %}
+WHERE
+    _inserted_timestamp >= (
+        SELECT
+            MAX(
+                modified_timestamp
+            )
+        FROM
+            {{ this }}
+    )
+{% endif %}
+),
+fee AS (
     SELECT
         tx_id,
         attribute_value AS fee
     FROM
-        {{ ref('silver__msg_attributes') }}
+        msg_atts
     WHERE
-        attribute_key = 'fee'
-
-{% if is_incremental() %}
-AND _inserted_timestamp :: DATE >= CURRENT_DATE -2
-{% endif %}
-
-qualify(ROW_NUMBER() over(PARTITION BY tx_id
-ORDER BY
-    msg_index)) = 1
+        attribute_key = 'fee' qualify(ROW_NUMBER() over(PARTITION BY tx_id
+    ORDER BY
+        msg_index)) = 1
 ),
 spender AS (
     SELECT
@@ -35,17 +50,11 @@ spender AS (
             0
         ) AS tx_from
     FROM
-        {{ ref('silver__msg_attributes') }}
+        msg_atts
     WHERE
-        attribute_key = 'acc_seq'
-
-{% if is_incremental() %}
-AND _inserted_timestamp :: DATE >= CURRENT_DATE -2
-{% endif %}
-
-qualify(ROW_NUMBER() over(PARTITION BY tx_id
-ORDER BY
-    msg_index)) = 1
+        attribute_key = 'acc_seq' qualify(ROW_NUMBER() over(PARTITION BY tx_id
+    ORDER BY
+        msg_index)) = 1
 )
 SELECT
     t.block_id,
@@ -78,5 +87,12 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-    _inserted_timestamp :: DATE >= CURRENT_DATE -2
+    t._inserted_timestamp >= (
+        SELECT
+            MAX(
+                modified_timestamp
+            )
+        FROM
+            {{ this }}
+    )
 {% endif %}

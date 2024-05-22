@@ -2,7 +2,7 @@
   materialized = 'incremental',
   incremental_strategy = 'delete+insert',
   unique_key = ['block_id','tx_id'],
-  cluster_by = ['_inserted_timestamp::date','block_timestamp::date'],
+  cluster_by = ['_inserted_timestamp::date'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION",
   tags = ['core']
 ) }}
@@ -73,7 +73,7 @@ A
 )
 SELECT
   A.block_id,
-  b.block_timestamp,
+  {# b.block_timestamp, #}
   A.codespace,
   A.gas_used,
   A.gas_wanted,
@@ -87,16 +87,10 @@ SELECT
   A._inserted_timestamp,
 FROM
   base A
-  LEFT JOIN {{ ref('silver__blocks') }}
-  b
-  ON A.block_id = b.block_id
 
 {% if is_incremental() %}
 WHERE
-  GREATEST(
-    A._inserted_timestamp,
-    b._inserted_timestamp
-  ) >= (
+  A._inserted_timestamp >= (
     SELECT
       MAX(
         _inserted_timestamp

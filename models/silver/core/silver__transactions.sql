@@ -2,6 +2,7 @@
   materialized = 'incremental',
   unique_key = "tx_id",
   incremental_strategy = 'merge',
+  incremental_predicates = ["dynamic_range_predicate", "block_timestamp::date"],
   merge_exclude_columns = ["inserted_timestamp"],
   cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(tx_id)",
@@ -11,8 +12,8 @@
 WITH sl AS (
 
   SELECT
-    block_id,
-    block_timestamp,
+    A.block_id,
+    b.block_timestamp,
     codespace,
     gas_used,
     gas_wanted,
@@ -22,13 +23,19 @@ WITH sl AS (
     msgs,
     auth_info,
     tx_body,
-    _inserted_timestamp
+    A._inserted_timestamp
   FROM
-    {{ ref('bronze__transactions_2') }}
+    {{ ref('bronze__transactions_2') }} A
+    LEFT JOIN {{ ref('silver__blocks') }}
+    b
+    ON A.block_id = b.block_id
 
 {% if is_incremental() %}
 WHERE
-  _inserted_timestamp >= (
+  GREATEST(
+    A._inserted_timestamp,
+    b._inserted_timestamp
+  ) >= (
     SELECT
       MAX(
         _inserted_timestamp
