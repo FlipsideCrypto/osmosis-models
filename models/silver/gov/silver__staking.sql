@@ -282,7 +282,9 @@ SELECT
         d_amount.spender,
         b.tx_caller_address
     ) AS delegator_address,
-    A.amount :: INT AS amount,
+    TRY_CAST(
+        A.amount AS INT
+    ) AS amount,
     A.currency,
     A.validator_address,
     A.redelegate_source_validator_address,
@@ -364,3 +366,7 @@ FROM
     LEFT OUTER JOIN {{ ref('silver__asset_metadata') }}
     amd
     ON A.currency = amd.address
+WHERE
+    TRY_CAST(
+        A.amount AS INT
+    ) IS NOT NULL
