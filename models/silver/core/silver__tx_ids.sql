@@ -4,7 +4,8 @@
     incremental_strategy = 'merge',
     merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['modified_timestamp::DATE','partition_key'],
-    tags = ['core','full_test']
+    tags = ['core','full_test'],
+    enabled = false
 ) }}
 {# incremental_predicates = ['DBT_INTERNAL_DEST.partition_key >= (select min(partition_key) from ' ~ generate_tmp_view_name(this) ~ ')'], #}
 -- depends_on: {{ ref('bronze__streamline_transactions') }}
