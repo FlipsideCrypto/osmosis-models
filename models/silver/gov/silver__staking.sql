@@ -33,6 +33,7 @@ WITH base AS (
             'coin_spent',
             'message'
         )
+        AND attribute_key <> 'authz_msg_index'
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -112,7 +113,6 @@ valid AS (
             'unbond',
             'create_validator'
         )
-        AND attribute_key <> 'authz_msg_index'
     GROUP BY
         block_id,
         A.block_timestamp,
