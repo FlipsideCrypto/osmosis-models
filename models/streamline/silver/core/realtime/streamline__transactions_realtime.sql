@@ -25,91 +25,90 @@ WITH blocks AS (
         AND (
             block_number > 15932031
             OR block_number IN (
-                (
-                    SELECT
-                        VALUE
-                    FROM
-                        (
-                            SELECT
-                                top 1 *
-                            FROM
-                                osmosis.silver_observability.transactions_completeness
-                            ORDER BY
-                                test_timestamp DESC
-                        ),
-                        LATERAL FLATTEN(blocks_impacted_array)
-                )
+                SELECT
+                    VALUE
+                FROM
+                    (
+                        SELECT
+                            top 1 *
+                        FROM
+                            osmosis.silver_observability.transactions_completeness
+                        ORDER BY
+                            test_timestamp DESC
+                    ),
+                    LATERAL FLATTEN(blocks_impacted_array)
             )
+        )
+),
+numbers AS (
+    -- Recursive CTE to generate numbers. We'll use the maximum txcount value to limit our recursion.
+    SELECT
+        1 AS n
+    UNION ALL
+    SELECT
+        n + 1
+    FROM
+        numbers
+    WHERE
+        n < (
+            SELECT
+                CEIL(MAX(tx_count) / 100.0)
+            FROM
+                blocks)
         ),
-        numbers AS (
-            -- Recursive CTE to generate numbers. We'll use the maximum txcount value to limit our recursion.
+        blocks_with_page_numbers AS (
             SELECT
-                1 AS n
-            UNION ALL
-            SELECT
-                n + 1
+                tt.block_number :: INT AS block_number,
+                n.n AS page_number
             FROM
-                numbers
-            WHERE
-                n < (
-                    SELECT
-                        CEIL(MAX(tx_count) / 100.0)
-                    FROM
-                        blocks)
-                ),
-                blocks_with_page_numbers AS (
-                    SELECT
-                        tt.block_number :: INT AS block_number,
-                        n.n AS page_number
-                    FROM
-                        blocks tt
-                        JOIN numbers n
-                        ON n.n <= CASE
-                            WHEN tt.tx_count % 100 = 0 THEN tt.tx_count / 100
-                            ELSE FLOOR(
-                                tt.tx_count / 100
-                            ) + 1
-                        END
-                    EXCEPT
-                    SELECT
-                        block_number,
-                        page_number
-                    FROM
-                        {{ ref("streamline__complete_transactions") }}
+                blocks tt
+                JOIN numbers n
+                ON n.n <= CASE
+                    WHEN tt.tx_count % 100 = 0 THEN tt.tx_count / 100
+                    ELSE FLOOR(
+                        tt.tx_count / 100
+                    ) + 1
+                END
+            EXCEPT
+            SELECT
+                block_number,
+                page_number
+            FROM
+                {{ ref("streamline__complete_transactions") }}
+        )
+    SELECT
+        ROUND(
+            block_number,
+            -3
+        ) :: INT AS partition_key,
+        live.udf_api(
+            'POST',
+            '{service}/{Authentication}',
+            OBJECT_CONSTRUCT(
+                'Content-Type',
+                'application/json'
+            ),
+            OBJECT_CONSTRUCT(
+                'id',
+                block_number,
+                'jsonrpc',
+                '2.0',
+                'method',
+                'tx_search',
+                'params',
+                ARRAY_CONSTRUCT(
+                    'tx.height=' || block_number :: STRING,
+                    TRUE,
+                    page_number :: STRING,
+                    '100',
+                    'asc'
                 )
-            SELECT
-                ROUND(
-                    block_number,
-                    -3
-                ) :: INT AS partition_key,
-                live.udf_api(
-                    'POST',
-                    '{service}/{Authentication}',
-                    OBJECT_CONSTRUCT(
-                        'Content-Type',
-                        'application/json'
-                    ),
-                    OBJECT_CONSTRUCT(
-                        'id',
-                        block_number,
-                        'jsonrpc',
-                        '2.0',
-                        'method',
-                        'tx_search',
-                        'params',
-                        ARRAY_CONSTRUCT(
-                            'tx.height=' || block_number :: STRING,
-                            TRUE,
-                            page_number :: STRING,
-                            '100',
-                            'asc'
-                        )
-                    ),
-                    'vault/prod/osmosis/allthatnode/mainnet-archive/rpc'
-                ) AS request,
-                page_number,
-                block_number AS block_number_requested
-            FROM
-                blocks_with_page_numbers
-            ORDER BY
-                block_number
+            ),
+            'vault/prod/osmosis/allthatnode/mainnet-archive/rpc'
+        ) AS request,
+        page_number,
+        block_number AS block_number_requested
+    FROM
+        blocks_with_page_numbers
+    ORDER BY
+        block_number
