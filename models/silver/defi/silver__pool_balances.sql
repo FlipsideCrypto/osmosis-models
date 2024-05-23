@@ -39,13 +39,13 @@ sl2 AS (
 {% endif %}
 
 {% if is_incremental() %}
-{# WHERE
-inserted_timestamp >= (
-    SELECT
-        MAX(_inserted_timestamp)
-    FROM
-        {{ this }}
-) #}
+WHERE
+    inserted_timestamp >= (
+        SELECT
+            MAX(_inserted_timestamp)
+        FROM
+            {{ this }}
+    )
 {% endif %}
 ),
 combo AS (
