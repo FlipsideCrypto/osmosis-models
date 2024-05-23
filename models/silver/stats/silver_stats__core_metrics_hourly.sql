@@ -18,7 +18,7 @@ FROM
 WHERE
     modified_timestamp >= DATEADD(
         HOUR,
-        -1,(
+        -6,(
             SELECT
                 MAX(modified_timestamp)
             FROM
