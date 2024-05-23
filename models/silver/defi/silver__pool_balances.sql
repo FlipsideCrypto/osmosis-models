@@ -39,25 +39,25 @@ sl2 AS (
 {% endif %}
 
 {% if is_incremental() %}
-WHERE
-    inserted_timestamp >= (
-        SELECT
-            MAX(_inserted_timestamp)
-        FROM
-            {{ this }}
-    )
+{# WHERE
+inserted_timestamp >= (
+    SELECT
+        MAX(_inserted_timestamp)
+    FROM
+        {{ this }}
+) #}
 {% endif %}
 ),
 combo AS (
     SELECT
         block_id,
         {# pools, #}
-        value_raw VALUE,
+        value_raw :data AS VALUE,
         _INSERTED_TIMESTAMP
     FROM
         sl2 A
     WHERE
-        VALUE :BLOCK_NUMBER IS NOT NULL
+        value_raw :BLOCK_NUMBER IS NOT NULL
     UNION ALL
     SELECT
         block_id,
@@ -70,7 +70,7 @@ combo AS (
             A.pools
         ) b
     WHERE
-        VALUE :BLOCK_NUMBER IS NULL
+        value_raw :BLOCK_NUMBER IS NULL
     UNION ALL
     SELECT
         block_id,
