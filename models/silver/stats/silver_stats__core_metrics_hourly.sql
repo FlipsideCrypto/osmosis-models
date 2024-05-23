@@ -16,11 +16,14 @@ SELECT
 FROM
     {{ ref('silver__transactions_final') }}
 WHERE
-    modified_timestamp >= (
-        SELECT
-            MAX(modified_timestamp)
-        FROM
-            {{ this }}
+    modified_timestamp >= DATEADD(
+        HOUR,
+        -1,(
+            SELECT
+                MAX(modified_timestamp)
+            FROM
+                {{ this }}
+        )
     ) {% endset %}
     {% set min_block_timestamp_hour = run_query(query).columns [0].values() [0] %}
 {% endif %}
