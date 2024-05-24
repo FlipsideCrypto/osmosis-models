@@ -24,19 +24,22 @@ WITH blocks AS (
         tx_count > 0
         AND (
             block_number > 15932031
-            OR block_number IN (
-                SELECT
-                    VALUE
-                FROM
-                    (
-                        SELECT
-                            top 1 *
-                        FROM
-                            osmosis.silver_observability.transactions_completeness
-                        ORDER BY
-                            test_timestamp DESC
-                    ),
-                    LATERAL FLATTEN(blocks_impacted_array)
+            OR (
+                block_number IN (
+                    SELECT
+                        VALUE
+                    FROM
+                        (
+                            SELECT
+                                top 1 *
+                            FROM
+                                osmosis.silver_observability.transactions_completeness
+                            ORDER BY
+                                test_timestamp DESC
+                        ),
+                        LATERAL FLATTEN(blocks_impacted_array)
+                )
+                AND block_number > 15932031
             )
         )
 ),
