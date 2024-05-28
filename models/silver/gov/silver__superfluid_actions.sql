@@ -73,7 +73,12 @@ WHERE
         '/osmosis.superfluid.MsgLockAndSuperfluidDelegate',
         '/osmosis.superfluid.MsgSuperfluidUndelegate',
         '/osmosis.superfluid.MsgSuperfluidDelegate',
-        '/osmosis.superfluid.MsgUnPoolWhitelistedPool'
+        '/osmosis.superfluid.MsgUnPoolWhitelistedPool',
+        'add_to_concentrated_liquidity_superfluid_position',
+        'superfluid_delegate',
+        'superfluid_increase_delegation',
+        'superfluid_unbond_lock',
+        'superfluid_undelegate'
     )
     AND tx_succeeded = TRUE
 
