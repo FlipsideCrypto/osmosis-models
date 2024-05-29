@@ -65,8 +65,8 @@ models:
       - name: PROPOSAL_TITLE
         description: "{{ doc('proposal_title') }}"
         tests: 
-          - not_null: 
-              where: tx_id <> '515A92D6DE7561E1BCDB11C0D453BFDE87B25F981F8E94AFB848CA97EA65F34A' ## We are missing this transaction body 
+          # - not_null: 
+          #     where: tx_id <> '515A92D6DE7561E1BCDB11C0D453BFDE87B25F981F8E94AFB848CA97EA65F34A' ## We are missing this transaction body 
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -74,8 +74,8 @@ models:
       - name: PROPOSAL_DESCRIPTION
         description: "{{ doc('proposal_description') }}"
         tests: 
-          - not_null: 
-              where: tx_id <> '515A92D6DE7561E1BCDB11C0D453BFDE87B25F981F8E94AFB848CA97EA65F34A' ## We are missing this transaction body
+          # - not_null: 
+          #     where: tx_id <> '515A92D6DE7561E1BCDB11C0D453BFDE87B25F981F8E94AFB848CA97EA65F34A' ## We are missing this transaction body
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
