@@ -108,13 +108,13 @@ SELECT
   call,
   {{ target.database }}.live.udf_api (
     'POST',
-    '{service}/{Authentication}',
+    '{Service}/{Authentication}',
     OBJECT_CONSTRUCT(
       'Content-Type',
       'application/json'
     ),
     call,
-    'Vault/prod/osmosis/allthatnode/mainnet-archive/rpc'
+    'Vault/prod/osmosis/allthatnode/mainnet'
   ) AS DATA,
   SYSDATE()
 FROM
