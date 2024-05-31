@@ -32,11 +32,7 @@ SELECT
     ) AS partition_key,
     {{ target.database }}.live.udf_api(
         'GET',
-        REPLACE(
-            '{Service}/{Authentication}/cosmos/bank/v1beta1/balances/',
-            'tendermint',
-            'rest'
-        ) || address || '?pagination.limit=10000',
+        '{service}/{Authentication}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=10000',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
@@ -44,7 +40,7 @@ SELECT
             block_number :: STRING
         ),
         PARSE_JSON('{}'),
-        'vault/prod/osmosis/allthatnode/mainnet'
+        'vault/prod/osmosis/allthatnode/mainnet-archive/rest'
     ) AS request,
     block_number,
     address
