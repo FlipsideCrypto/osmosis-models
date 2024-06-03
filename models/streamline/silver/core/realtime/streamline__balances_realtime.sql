@@ -5,7 +5,7 @@
         target = "{{this.schema}}.{{this.identifier}}",
         params ={ "external_table" :"balances_v2",
         "sql_limit" :"100000",
-        "producer_batch_size" :"400",
+        "producer_batch_size" :"200",
         "worker_batch_size" :"100",
         "sql_source" :"{{this.identifier}}" }
     )
@@ -32,7 +32,7 @@ SELECT
     ) AS partition_key,
     {{ target.database }}.live.udf_api(
         'GET',
-        '{service}/{Authentication}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=10000',
+        'https://osmosis-mainnet.g.allthatnode.com/archive/rest/{Authentication}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=10000',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
@@ -40,7 +40,7 @@ SELECT
             block_number :: STRING
         ),
         PARSE_JSON('{}'),
-        'vault/prod/osmosis/allthatnode/mainnet-archive/rest'
+        'vault/prod/osmosis/atn/mainnet'
     ) AS request,
     block_number,
     address

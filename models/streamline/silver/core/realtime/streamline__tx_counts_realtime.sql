@@ -5,8 +5,8 @@
         target = "{{this.schema}}.{{this.identifier}}",
         params ={ "external_table" :"txcount_v2",
         "sql_limit" :"100000",
-        "producer_batch_size" :"1000",
-        "worker_batch_size" :"500",
+        "producer_batch_size" :"300",
+        "worker_batch_size" :"100",
         "sql_source" :"{{this.identifier}}" }
     )
 ) }}
@@ -30,7 +30,7 @@ SELECT
     ) :: INT AS partition_key,
     {{ target.database }}.live.udf_api(
         'POST',
-        '{service}/{Authentication}',
+        '{Service}/{Authentication}',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json'
@@ -51,7 +51,7 @@ SELECT
                 'asc'
             )
         ),
-        'vault/prod/osmosis/allthatnode/mainnet-archive/rpc'
+        'vault/prod/osmosis/atn/mainnet'
     ) AS request
 FROM
     blocks
