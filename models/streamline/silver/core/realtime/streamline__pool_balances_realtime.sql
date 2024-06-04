@@ -6,7 +6,7 @@
         params ={ "external_table" :"pool_balances_v2",
         "sql_limit" :"10000",
         "producer_batch_size" :"200",
-        "worker_batch_size" :"100",
+        "worker_batch_size" :"50",
         "exploded_key": "[\"pools\"]",
         "sql_source" :"{{this.identifier}}" }
     )
