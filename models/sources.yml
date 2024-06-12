@@ -48,6 +48,10 @@ sources:
       - name: hourly_prices_coin_gecko
       - name: number_sequence
       - name: labels_combined
+      - name: token_prices_coingecko
+      - name: token_prices_coinmarketcap
+      - name: token_asset_metadata_coingecko
+      - name: token_asset_metadata_coinmarketcap
   - name: crosschain
     database: "{{ 'crosschain' if target.database == 'OSMOSIS' else 'crosschain_dev' }}"
     schema: core
