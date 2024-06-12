@@ -24,7 +24,7 @@ WITH date_hours AS (
             FROM
                 {{ source(
                     'crosschain_silver',
-                    'hourly_prices_coin_gecko'
+                    'token_prices_coingecko'
                 ) }}
         )
 
@@ -44,7 +44,7 @@ asset_metadata AS (
     FROM
         {{ source(
             'crosschain_silver',
-            'asset_metadata_coin_gecko'
+            'token_asset_metadata_coingecko'
         ) }}
     WHERE
         id IN (
@@ -227,7 +227,7 @@ base_prices AS (
     FROM
         {{ source(
             'crosschain_silver',
-            'hourly_prices_coin_gecko'
+            'token_prices_coingecko'
         ) }}
         p
         LEFT OUTER JOIN asset_metadata m

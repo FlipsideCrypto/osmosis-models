@@ -24,7 +24,7 @@ WITH date_hours AS (
             FROM
                 {{ source(
                     'crosschain_silver',
-                    'hourly_prices_coin_market_cap'
+                    'token_prices_coinmarketcap'
                 ) }}
         )
 
@@ -44,7 +44,7 @@ asset_metadata AS (
     FROM
         {{ source(
             'crosschain_silver',
-            'asset_metadata_coin_market_cap'
+            'token_asset_metadata_coinmarketcap'
         ) }}
     WHERE
         id IN (
@@ -219,7 +219,7 @@ base_prices AS (
     FROM
         {{ source(
             'crosschain_silver',
-            'hourly_prices_coin_market_cap'
+            'token_prices_coinmarketcap'
         ) }}
         p
         LEFT OUTER JOIN asset_metadata m
