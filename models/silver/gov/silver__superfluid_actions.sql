@@ -77,7 +77,6 @@ WHERE
         'add_to_concentrated_liquidity_superfluid_position',
         'superfluid_delegate',
         'superfluid_increase_delegation',
-        'superfluid_unbond_lock',
         'superfluid_undelegate'
     )
     AND tx_succeeded = TRUE
