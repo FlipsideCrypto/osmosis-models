@@ -27,7 +27,7 @@ WITH blocks AS (
             OR (
                 block_number IN (
                     SELECT
-                        VALUE
+                        VALUE :block
                     FROM
                         (
                             SELECT
@@ -37,9 +37,11 @@ WITH blocks AS (
                             ORDER BY
                                 test_timestamp DESC
                         ),
-                        LATERAL FLATTEN(blocks_impacted_array)
+                        LATERAL FLATTEN(test_failure_details)
+                    WHERE
+                        VALUE :bronze_num_txs = 0
                 )
-                AND block_number > 15932031
+                AND block_number > 12951075
             )
         )
 ),
