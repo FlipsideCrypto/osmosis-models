@@ -46,7 +46,7 @@ SELECT
     {{ target.database }}.live.udf_api(
         'GET',
         REPLACE(
-            'https://osmosis-mainnet.g.allthatnode.com/archive/rest/{Authentication}/osmosis/gamm/v1beta1/pools?pagination.limit=10000',
+            '{Service}/osmosis/gamm/v1beta1/pools?pagination.limit=10000',
             'tendermint',
             'rest'
         ),
@@ -57,7 +57,7 @@ SELECT
             block_number :: STRING
         ),
         PARSE_JSON('{}'),
-        'vault/prod/osmosis/atn/mainnet'
+        'Vault/prod/osmosis/blockjoy/mainnet'
     ) AS request,
     block_number
 FROM

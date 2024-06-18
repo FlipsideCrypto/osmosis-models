@@ -32,7 +32,7 @@ SELECT
     ) AS partition_key,
     {{ target.database }}.live.udf_api(
         'GET',
-        'https://osmosis-mainnet.g.allthatnode.com/archive/rest/{Authentication}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=10000',
+        '{Service}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=10000',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
@@ -40,7 +40,7 @@ SELECT
             block_number :: STRING
         ),
         PARSE_JSON('{}'),
-        'vault/prod/osmosis/atn/mainnet'
+        'Vault/prod/osmosis/blockjoy/mainnet'
     ) AS request,
     block_number,
     address

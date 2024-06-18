@@ -6,7 +6,7 @@
 SELECT
     {{ target.database }}.live.udf_api(
         'POST',
-        '{Service}/{Authentication}',
+        '{Service}/rpc',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
@@ -23,5 +23,5 @@ SELECT
             'params',
             []
         ),
-        'vault/prod/osmosis/atn/mainnet'
+        'Vault/prod/osmosis/blockjoy/mainnet'
     ) :data :result :sync_info :latest_block_height :: INT AS block_number

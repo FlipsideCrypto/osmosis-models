@@ -88,7 +88,7 @@ numbers AS (
         ) :: INT AS partition_key,
         live.udf_api(
             'POST',
-            '{Service}/{Authentication}',
+            '{Service}/rpc',
             OBJECT_CONSTRUCT(
                 'Content-Type',
                 'application/json'
@@ -109,7 +109,7 @@ numbers AS (
                     'asc'
                 )
             ),
-            'vault/prod/osmosis/atn/mainnet'
+            'Vault/prod/osmosis/blockjoy/mainnet'
         ) AS request,
         page_number,
         block_number AS block_number_requested
