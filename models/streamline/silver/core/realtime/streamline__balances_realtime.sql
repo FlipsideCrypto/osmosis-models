@@ -32,7 +32,7 @@ SELECT
     ) AS partition_key,
     {{ target.database }}.live.udf_api(
         'GET',
-        '{Service}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=10000',
+        '{Service}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=1000',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
