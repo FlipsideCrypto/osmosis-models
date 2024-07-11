@@ -3,6 +3,7 @@
     unique_key = ['tx_id','_body_index'],
     incremental_strategy = 'delete+insert',
     cluster_by = ['block_timestamp::DATE'],
+    post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(tx_id,trader)",
     tags = ['noncore']
 ) }}
 

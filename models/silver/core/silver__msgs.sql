@@ -5,7 +5,7 @@
   incremental_predicates = ["dynamic_range_predicate", "block_timestamp::date"],
   merge_exclude_columns = ["inserted_timestamp"],
   cluster_by = ['block_timestamp::DATE','_inserted_timestamp::DATE'],
-  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION",
+  post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION ON EQUALITY(tx_id,msg_type);",
   tags = ['core']
 ) }}
 
