@@ -46,16 +46,16 @@ jobs:
       - name: Run DBT Jobs
         run: |
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
-          dbt run -m models/silver/silver__blockchain.sql
+          dbt run -m models/silver/core/silver__blockchain.sql
