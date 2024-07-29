@@ -39,7 +39,7 @@ INSERT INTO
               *,
               MOD(ROW_NUMBER() over(
             ORDER BY
-              min_block), 100) rn_mod_out
+              min_block), 1) rn_mod_out
             FROM
               (
                 SELECT
@@ -92,7 +92,7 @@ INSERT INTO
   ),
   calls AS (
     SELECT
-      groupid_out,
+      min_block,
       ARRAY_AGG(
         { 'jsonrpc': '2.0',
         'id': min_block :: INT,
@@ -102,7 +102,9 @@ INSERT INTO
     FROM
       base
     GROUP BY
-      groupid_out
+      min_block
+    LIMIT
+      500
   )
 SELECT
   call,
