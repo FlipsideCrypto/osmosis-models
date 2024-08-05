@@ -34,7 +34,7 @@ combo AS (
     raw_metadata,
     COALESCE(
       raw_metadata [0] :aliases [0] :: STRING,
-      raw_metadata [0] :denom :: STRING
+      raw_metadata [0] :denom [0] :: STRING
     ) AS denom,
     address AS _unique_key,
     _inserted_timestamp
