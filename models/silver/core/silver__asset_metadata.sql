@@ -43,17 +43,17 @@ combo AS (
   UNION ALL
   SELECT
     COALESCE(
-      VALUE :denom :: STRING,
+      VALUE :denom [0] :: STRING,
       base
     ) AS address,
     NAME AS label,
     symbol AS project_name,
-    VALUE :aliases :: STRING AS alias,
-    VALUE :exponent :: INT AS DECIMAL,
+    VALUE :aliases [0] :: STRING AS alias,
+    VALUE :exponent [0] :: INT AS DECIMAL,
     denom_units AS raw_metadata,
     COALESCE(
       VALUE :aliases [0] :: STRING,
-      VALUE :denom :: STRING
+      VALUE :denom [0] :: STRING
     ) AS denom,
     address AS _unique_key,
     _inserted_timestamp
