@@ -9,8 +9,20 @@
     tags = ['core']
 ) }}
 
-WITH msg_atts AS (
+WITH MOD AS (
 
+    SELECT
+        DATEADD(
+            HOUR,
+            -1,
+            MAX(
+                modified_timestamp
+            )
+        ) modified_timestamp
+    FROM
+        {{ this }}
+),
+msg_atts AS (
     SELECT
         tx_id,
         msg_index,
@@ -27,7 +39,7 @@ WHERE
                 modified_timestamp
             )
         FROM
-            {{ this }}
+            MOD
     )
 {% endif %}
 ),
@@ -94,6 +106,6 @@ WHERE
                 modified_timestamp
             )
         FROM
-            {{ this }}
+            MOD
     )
 {% endif %}
