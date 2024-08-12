@@ -55,10 +55,15 @@ FROM
 
 {% if is_incremental() %}
 WHERE
-  _inserted_timestamp >= (
-    SELECT
-      MAX(_inserted_timestamp)
-    FROM
-      {{ this }}
+  _inserted_timestamp >= DATEADD(
+    'minute',
+    -30,(
+      SELECT
+        MAX(
+          _inserted_timestamp
+        )
+      FROM
+        {{ this }}
+    )
   )
 {% endif %}
