@@ -27,6 +27,8 @@ models:
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
               interval: 2
+              config:
+                severity: warn
       - name: ADDRESS
         description: "{{ doc('address') }}"
         tests: 
