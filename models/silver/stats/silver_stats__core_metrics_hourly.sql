@@ -16,7 +16,8 @@ SELECT
 FROM
     {{ ref('silver__transactions_final') }}
 WHERE
-    modified_timestamp >= DATEADD(
+    block_timestamp IS NOT NULL
+    AND modified_timestamp >= DATEADD(
         HOUR,
         -6,(
             SELECT
