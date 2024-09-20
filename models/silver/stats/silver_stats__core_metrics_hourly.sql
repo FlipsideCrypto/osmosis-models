@@ -27,6 +27,9 @@ WHERE
         )
     ) {% endset %}
     {% set min_block_timestamp_hour = run_query(query).columns [0].values() [0] %}
+    {% if not min_block_timestamp_hour or min_block_timestamp_hour == 'None' %}
+        {% set min_block_timestamp_hour = '2099-01-01' %}
+    {% endif %}
 {% endif %}
 {% endif %}
 SELECT
