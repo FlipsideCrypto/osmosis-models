@@ -5,7 +5,7 @@
         target = "{{this.schema}}.{{this.identifier}}",
         params ={ "external_table" :"pool_balances_v2",
         "sql_limit" :"2000",
-        "producer_batch_size" :"200",
+        "producer_batch_size" :"50",
         "worker_batch_size" :"50",
         "exploded_key": "[\"pools\"]",
         "sql_source" :"{{this.identifier}}" }
