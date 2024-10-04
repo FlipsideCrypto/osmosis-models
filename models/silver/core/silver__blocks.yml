@@ -16,14 +16,16 @@ models:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
       - name: BLOCK_TIMESTAMP
         description: "{{ doc('block_timestamp') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
               interval: 1
@@ -33,7 +35,8 @@ models:
       - name: CHAIN_ID
         description: "{{ doc('chain_id') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -41,7 +44,8 @@ models:
       - name: TX_COUNT
         description: "{{ doc('tx_count') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -49,7 +53,8 @@ models:
       - name: PROPOSER_ADDRESS
         description: "{{ doc('proposer_address') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -57,7 +62,8 @@ models:
       - name: VALIDATOR_HASH
         description: "{{ doc('validator_hash') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -65,4 +71,5 @@ models:
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7

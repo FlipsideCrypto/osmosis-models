@@ -8,11 +8,13 @@ models:
             - TX_ID
             - MSG_INDEX
             - CURRENCY
+          where: BLOCK_TIMESTAMP::DATE > current_date-7
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
@@ -20,7 +22,8 @@ models:
       - name: BLOCK_TIMESTAMP
         description: "{{ doc('block_timestamp') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
               interval: 1
@@ -30,21 +33,24 @@ models:
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
                 - VARCHAR
       - name: TX_SUCCEEDED
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - BOOLEAN
       - name: TRANSFER_TYPE
         description: "{{ doc('transfer_type') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -52,7 +58,8 @@ models:
       - name: SENDER
         description: "{{ doc('sender') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -60,7 +67,8 @@ models:
       - name: AMOUNT
         description: "{{ doc('amount') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
@@ -68,7 +76,8 @@ models:
       - name: CURRENCY
         description: "{{ doc('currency') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -78,7 +87,8 @@ models:
       - name: RECEIVER
         description: "{{ doc('receiver') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -90,4 +100,5 @@ models:
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7

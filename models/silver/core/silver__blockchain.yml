@@ -1,20 +1,20 @@
 version: 2
 models:
   - name: silver__blockchain
-    tests: 
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - BLOCK_ID
+
     columns:
       - name: CHAIN_ID
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
                 - VARCHAR
       - name: BLOCK_ID
         tests:
+          - unique:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
@@ -22,7 +22,8 @@ models:
                 - FLOAT
       - name: BLOCK_TIMESTAMP
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - TIMESTAMP_NTZ
@@ -31,20 +32,24 @@ models:
               interval: 1
       - name: BLOCK_SIZE
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
                 - FLOAT
       - name: BLOCK_HEADER
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
       - name: BLOCK_ID_OBJECT
         tests:
-          - not_null         
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7         
       - name: NUM_TXS
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER

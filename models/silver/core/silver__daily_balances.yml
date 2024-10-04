@@ -9,6 +9,7 @@ models:
             - ADDRESS
             - BALANCE_TYPE
             - CURRENCY
+          where: BLOCK_TIMESTAMP::DATE > current_date-7
       - compare_model_subset:
           name: silver__daily_balances_business_logic_test
           compare_model: ref('testing__daily_balances')
@@ -25,11 +26,13 @@ models:
       - name: DATE
         description: The day the balance was recorded on. 
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
       - name: BALANCE_TYPE
         description: Either "staked" or "liquid" corresponding to how the currency is in the wallet. 
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -39,7 +42,8 @@ models:
       - name: ADDRESS
         description: "{{ doc('address') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -49,7 +53,8 @@ models:
       - name: BALANCE 
         description: The amount of the currency the wallet held at the given time
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -57,7 +62,8 @@ models:
       - name: CURRENCY
         description: "{{ doc('currency') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING

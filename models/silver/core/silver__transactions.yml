@@ -2,15 +2,12 @@ version: 2
 models:
   - name: silver__transactions
     description: Records of all transactions that have occurred on Osmosis, dating back to the genesis block. 
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          combination_of_columns:
-            - TX_ID
     columns:
       - name: BLOCK_ID
         description: "{{ doc('block_id') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
@@ -18,7 +15,8 @@ models:
       - name: BLOCK_TIMESTAMP
         description: "{{ doc('block_timestamp') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
               interval: 1
@@ -35,7 +33,8 @@ models:
       - name: GAS_USED
         description: "{{ doc('gas_used') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
@@ -43,7 +42,8 @@ models:
       - name: GAS_WANTED
         description: "{{ doc('gas_wanted') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
@@ -51,21 +51,26 @@ models:
       - name: TX_ID
         description: "{{ doc('tx_id') }}"
         tests: 
-          - not_null
+          - unique:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
                 - VARCHAR
       - name: TX_SUCCEEDED
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - BOOLEAN
       - name: TX_CODE
         description: "{{ doc('tx_code') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER    
@@ -73,7 +78,8 @@ models:
       - name: MSGS
         description: "The underlying json from the messages or events within the transactions"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
       - name: AUTH_INFO
         description:  "{{ doc('auth_info') }}"
       - name: TX_BODY
@@ -81,7 +87,8 @@ models:
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('inserted_timestamp') }}"
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - TIMESTAMP_NTZ

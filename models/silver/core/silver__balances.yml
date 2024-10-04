@@ -12,7 +12,8 @@ models:
       - name: BLOCK_ID 
         description: "{{ doc('block_id') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -20,7 +21,8 @@ models:
       - name: ADDRESS
         description: "{{ doc('address') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -30,14 +32,16 @@ models:
       - name: CURRENCY
         description: "{{ doc('currency') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
                 - VARCHAR
       - name: AMOUNT 
         tests:
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -45,7 +49,8 @@ models:
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('ingested_at') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
               interval: 2

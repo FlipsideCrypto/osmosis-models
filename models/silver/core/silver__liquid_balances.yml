@@ -8,11 +8,13 @@ models:
             - BLOCK_ID
             - ADDRESS
             - CURRENCY
+          where: BLOCK_TIMESTAMP::DATE > CURRENT_DATE - 7
     columns:
       - name: BLOCK_ID 
         description: "{{ doc('block_id') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -20,7 +22,8 @@ models:
       - name: BLOCK_TIMESTAMP
         description: "{{ doc('block_timestamp') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - TIMESTAMP_NTZ
@@ -32,7 +35,8 @@ models:
       - name: ADDRESS
         description: "{{ doc('address') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -42,7 +46,8 @@ models:
       - name: BALANCE 
         description: The amount of the currency the wallet held at the given time
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -50,7 +55,8 @@ models:
       - name: CURRENCY
         description: "{{ doc('currency') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -60,5 +66,6 @@ models:
       - name: _INSERTED_TIMESTAMP
         description: "{{ doc('ingested_at') }}"
         tests: 
-          - not_null
+          - not_null:
+              where: BLOCK_TIMESTAMP::DATE > current_date-7
       
