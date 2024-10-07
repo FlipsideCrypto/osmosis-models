@@ -8,9 +8,45 @@
   post_hook = "ALTER TABLE {{ this }} ADD SEARCH OPTIMIZATION on equality(tx_id)",
   tags = ['core']
 ) }}
--- depends_on: {{ ref('bronze__streamline_transactions') }}
-WITH sl AS (
+-- depends_on: {{ ref('bronze__streamline_transactions') }}+
+{% if execute %}
 
+{% if is_incremental() %}
+{% set max_its_query %}
+
+SELECT
+  MAX(_inserted_timestamp)
+FROM
+  {{ this }}
+
+  {% endset %}
+  {% set max_its = run_query(max_its_query) [0] [0] %}
+  {% set min_bd_query %}
+SELECT
+  MIN(
+    block_id
+  )
+FROM
+  (
+    SELECT
+      block_id
+    FROM
+      {{ ref('bronze__transactions_2') }}
+    WHERE
+      _inserted_timestamp >= '{{max_its}}'
+    UNION ALL
+    SELECT
+      block_id
+    FROM
+      {{ ref('silver__blocks') }}
+    WHERE
+      _inserted_timestamp >= '{{max_its}}'
+  ) {% endset %}
+  {% set min_bd = run_query(min_bd_query) [0] [0] %}
+{% endif %}
+{% endif %}
+
+WITH sl AS (
   SELECT
     A.block_id,
     b.block_timestamp,
@@ -32,7 +68,12 @@ WITH sl AS (
 
 {% if is_incremental() %}
 WHERE
-  GREATEST(
+  A.block_id >= '{{min_bd}}'
+  AND COALESCE(
+    A.block_id,
+    99999999999
+  ) >= '{{min_bd}}'
+  AND GREATEST(
     A._inserted_timestamp,
     b._inserted_timestamp
   ) >= (
