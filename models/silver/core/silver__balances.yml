@@ -13,7 +13,7 @@ models:
         description: "{{ doc('block_id') }}"
         tests: 
           - not_null:
-              where: BLOCK_TIMESTAMP::DATE > current_date-7
+              where: _INSERTED_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -22,7 +22,7 @@ models:
         description: "{{ doc('address') }}"
         tests: 
           - not_null:
-              where: BLOCK_TIMESTAMP::DATE > current_date-7
+              where: _INSERTED_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -33,7 +33,7 @@ models:
         description: "{{ doc('currency') }}"
         tests: 
           - not_null:
-              where: BLOCK_TIMESTAMP::DATE > current_date-7
+              where: _INSERTED_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - STRING
@@ -41,7 +41,7 @@ models:
       - name: AMOUNT 
         tests:
           - not_null:
-              where: BLOCK_TIMESTAMP::DATE > current_date-7
+              where: _INSERTED_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_column_values_to_be_in_type_list:
               column_type_list:
                 - NUMBER
@@ -50,7 +50,7 @@ models:
         description: "{{ doc('ingested_at') }}"
         tests: 
           - not_null:
-              where: BLOCK_TIMESTAMP::DATE > current_date-7
+              where: _INSERTED_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
               interval: 2
