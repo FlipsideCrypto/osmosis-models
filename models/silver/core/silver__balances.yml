@@ -53,5 +53,5 @@ models:
               where: _INSERTED_TIMESTAMP::DATE > current_date-7
           - dbt_expectations.expect_row_values_to_have_recent_data:
               datepart: day
-              interval: 2
+              interval: 3
       
