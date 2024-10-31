@@ -3,8 +3,8 @@ run-name: dbt_run_incremental_non_core
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '25,55 * * * *'
+  schedule:
+    - cron: '45 6,12 * * *'
 
 env:
   USE_VARS: "${{ vars.USE_VARS }}"
