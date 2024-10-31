@@ -30,7 +30,7 @@ SELECT
     ) :: INT AS partition_key,
     {{ target.database }}.live.udf_api(
         'POST',
-        '{Service}/rpc',
+        '{Service}/{Authentication}',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json'
@@ -47,7 +47,7 @@ SELECT
                 block_number :: STRING
             )
         ),
-        'Vault/prod/osmosis/blockjoy/mainnet'
+        'Vault/prod/osmosis/quicknode/mainnet_new'
     ) AS request
 FROM
     blocks

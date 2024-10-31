@@ -32,19 +32,20 @@ SELECT
     ) AS partition_key,
     {{ target.database }}.live.udf_api(
         'GET',
-        '{Service}/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=1000',
+        'https://osmosis-api.lavenderfive.com/cosmos/bank/v1beta1/balances/' || address || '?pagination.limit=1000',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
             'x-cosmos-block-height',
             block_number :: STRING
         ),
-        PARSE_JSON('{}'),
-        'Vault/prod/osmosis/blockjoy/mainnet'
+        PARSE_JSON('{}')
     ) AS request,
     block_number,
     address
 FROM
     blocks_to_call
 ORDER BY
-    block_number
+    block_number DESC
+LIMIT
+    10000

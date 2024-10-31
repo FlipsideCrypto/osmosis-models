@@ -46,7 +46,7 @@ SELECT
     {{ target.database }}.live.udf_api(
         'GET',
         REPLACE(
-            '{Service}/osmosis/gamm/v1beta1/pools?pagination.limit=10000',
+            'https://osmosis-api.lavenderfive.com/osmosis/gamm/v1beta1/pools?pagination.limit=10000',
             'tendermint',
             'rest'
         ),
@@ -56,8 +56,7 @@ SELECT
             'x-cosmos-block-height',
             block_number :: STRING
         ),
-        PARSE_JSON('{}'),
-        'Vault/prod/osmosis/blockjoy/mainnet'
+        PARSE_JSON('{}')
     ) AS request,
     block_number
 FROM
