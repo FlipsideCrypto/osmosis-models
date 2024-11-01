@@ -48,4 +48,4 @@ FROM
 ORDER BY
     block_number DESC
 LIMIT
-    10000
+    1
