@@ -3,7 +3,8 @@
     incremental_strategy = 'delete+insert',
     unique_key = ['block_id', 'address', 'currency'],
     cluster_by = ['block_timestamp'],
-    tags = ['noncore']
+    tags = ['noncore'],
+    enabled = false
 ) }}
 
 WITH all_staked AS (

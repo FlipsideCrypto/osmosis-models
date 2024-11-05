@@ -3,7 +3,8 @@
   unique_key = "proposal_id",
   incremental_strategy = 'delete+insert',
   full_refresh = false,
-  tags = ['daily']
+  tags = ['daily'],
+  enabled = false
 ) }}
 
 WITH valid_props AS (

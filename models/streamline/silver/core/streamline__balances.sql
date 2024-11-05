@@ -1,7 +1,8 @@
 {{ config (
     materialized = "incremental",
     unique_key = ["block_id","address"],
-    tags = ['streamline_view']
+    tags = ['streamline_view'],
+    enabled = false
 ) }}
 -- depends_on: {{ ref('silver__blocks') }}
 WITH base AS (

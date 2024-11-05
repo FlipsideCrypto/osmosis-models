@@ -1,6 +1,7 @@
 {{ config (
     materialized = 'view',
-    tags = ['core']
+    tags = ['core'],
+    enabled = false
 ) }}
 {{ streamline_external_table_FR_query(
     model = 'balances',

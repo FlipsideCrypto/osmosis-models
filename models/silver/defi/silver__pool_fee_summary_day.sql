@@ -114,47 +114,6 @@ AND b.block_date >= (
         {{ this }}
 ) - INTERVAL '7 days'
 {% endif %}
-UNION ALL
-SELECT
-    A.pool_id,
-    b.block_date,
-    b.block_id,
-    A.currency,
-    amount / pow(
-        10,
-        18
-    ) * COALESCE(
-        fees.exit_fee,
-        0
-    ) AS fees,
-    NULL AS fees_usd,
-    'exit' AS fee_type,
-    A._inserted_timestamp
-FROM
-    {{ ref('silver__liquidity_provider_actions') }} A
-    JOIN fees
-    ON A.pool_id = fees.pool_id
-    AND A.block_timestamp :: DATE = fees.block_date
-    JOIN last_block_of_day b
-    ON A.block_timestamp :: DATE = b.block_date
-WHERE
-    A.action = 'lp_tokens_burned'
-    AND COALESCE(
-        fees.exit_fee,
-        0
-    ) <> 0
-    AND A.block_id >= 2300000
-
-{% if is_incremental() %}
-AND b.block_date >= (
-    SELECT
-        MAX(
-            block_date
-        )
-    FROM
-        {{ this }}
-) - INTERVAL '7 days'
-{% endif %}
 )
 SELECT
     pool_id,
