@@ -4,7 +4,8 @@
     incremental_strategy = 'merge',
     merge_exclude_columns = ["inserted_timestamp"],
     cluster_by = ['block_timestamp::DATE','action'],
-    tags = ['noncore']
+    tags = ['noncore'],
+    enabled = false
 ) }}
 
 WITH mars_contracts AS (

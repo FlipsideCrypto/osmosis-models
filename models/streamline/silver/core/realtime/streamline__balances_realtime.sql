@@ -8,7 +8,8 @@
         "producer_batch_size" :"40",
         "worker_batch_size" :"40",
         "sql_source" :"{{this.identifier}}" }
-    )
+    ),
+    enabled = false
 ) }}
 
 WITH blocks_to_call AS(

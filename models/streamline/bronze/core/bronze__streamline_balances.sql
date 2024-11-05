@@ -1,5 +1,6 @@
 {{ config (
-    materialized = 'view'
+    materialized = 'view',
+    enabled = false
 ) }}
 {{ streamline_external_table_query_v2(
     model = "balances_v2",

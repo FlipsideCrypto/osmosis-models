@@ -2,7 +2,8 @@
     materialized = 'incremental',
     unique_key = 'proposal_id',
     incremental_strategy = 'delete+insert',
-    tags = ['noncore']
+    tags = ['noncore'],
+    enabled = false
 ) }}
 
 WITH base AS (

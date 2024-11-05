@@ -1,7 +1,8 @@
 {{ config(
     materialized = 'view',
     meta ={ 'database_tags':{ 'table':{ 'PURPOSE': 'BALANCES' }} },
-    tags = ['noncore']
+    tags = ['noncore'],
+    enabled = false
 ) }}
 
 SELECT

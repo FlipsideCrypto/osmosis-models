@@ -45,4 +45,4 @@ jobs:
           dbt deps
       - name: Run DBT Jobs
         run: |
-          dbt run --vars '{"STREAMLINE_INVOKE_STREAMS":True}' -m 1+models/streamline/silver/core/realtime/streamline__balances_realtime.sql 1+models/streamline/silver/core/realtime/streamline__pool_balances_realtime.sql -t prod
+          dbt run --vars '{"STREAMLINE_INVOKE_STREAMS":True}' -m 1+models/streamline/silver/core/realtime/streamline__pool_balances_realtime.sql -t prod

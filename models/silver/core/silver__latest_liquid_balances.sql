@@ -3,7 +3,8 @@
   unique_key = "address",
   incremental_strategy = 'delete+insert',
   cluster_by = ['block_timestamp::date'],
-  tags = ['balances']
+  tags = ['balances'],
+  enabled = false
 ) }}
 
 WITH max_bn AS (

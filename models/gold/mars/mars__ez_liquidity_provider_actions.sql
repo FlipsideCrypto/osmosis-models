@@ -1,6 +1,7 @@
 {{ config(
     materialized = 'view',
-    tags = ['noncore']
+    tags = ['noncore'],
+    enabled = false
 ) }}
 
 WITH pools AS (

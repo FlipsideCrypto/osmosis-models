@@ -1,6 +1,7 @@
 {{ config(
     materialized = 'table',
-    tags = ['daily']
+    tags = ['daily'],
+    enabled = false
 ) }}
 
 SELECT

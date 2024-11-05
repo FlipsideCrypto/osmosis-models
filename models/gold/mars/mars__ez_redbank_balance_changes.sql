@@ -2,7 +2,8 @@
     materialized = 'view',
     meta ={ 'database_tags':{ 'table':{ 'PROTOCOL': 'MARS',
     'PURPOSE': 'DEFI' }} },
-    tags = ['noncore']
+    tags = ['noncore'],
+    enabled = false
 ) }}
 
 SELECT

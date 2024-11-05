@@ -3,7 +3,8 @@
     unique_key = ['block_id', 'address', 'currency'],
     incremental_strategy = 'delete+insert',
     cluster_by = ['_inserted_timestamp::DATE'],
-    tags = ['balances']
+    tags = ['balances'],
+    enabled = false
 ) }}
 -- depends_on: {{ ref('bronze__streamline_balances') }}
 WITH base AS (
@@ -14,7 +15,7 @@ WITH base AS (
         b.value :denom :: STRING AS currency,
         b.value :amount :: INT AS amount,
         TO_TIMESTAMP_NTZ(
-            SUBSTR(SPLIT_PART(metadata$filename, '/', 4), 1, 10) :: NUMBER,
+            SUBSTR(SPLIT_PART(metadata $ filename, '/', 4), 1, 10) :: NUMBER,
             0
         ) AS _inserted_timestamp
     FROM
