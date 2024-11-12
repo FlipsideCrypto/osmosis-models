@@ -67,3 +67,11 @@ jobs:
           dbt run -m models/silver/core/silver__blockchain.sql
           dbt run-operation get_blockchain_api
           dbt run -m models/silver/core/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/core/silver__blockchain.sql+
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/core/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/core/silver__blockchain.sql
+          dbt run-operation get_blockchain_api
+          dbt run -m models/silver/core/silver__blockchain.sql

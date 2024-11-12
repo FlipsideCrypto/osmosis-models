@@ -104,7 +104,7 @@ INSERT INTO
     GROUP BY
       min_block
     LIMIT
-      200
+      50
   )
 SELECT
   call,
