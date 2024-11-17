@@ -1,10 +1,10 @@
 {% macro get_blockchain_api() %}
   {% set query %}
-  CREATE schema if NOT EXISTS bronze_api;
+  CREATE schema if NOT EXISTS {{ target.database }}.bronze_api;
 {% endset %}
   {% do run_query(query) %}
   {% set query %}
-  CREATE TABLE if NOT EXISTS bronze_api.blockchain(
+  CREATE TABLE if NOT EXISTS {{ target.database }}.bronze_api.blockchain(
     call ARRAY,
     DATA variant,
     _inserted_timestamp timestamp_ntz
@@ -13,7 +13,7 @@
   {% do run_query(query) %}
   {% set query %}
 INSERT INTO
-  bronze_api.blockchain(
+  {{ target.database }}.bronze_api.blockchain(
     call,
     DATA,
     _inserted_timestamp
@@ -31,7 +31,7 @@ INSERT INTO
             END
           ) over (
             ORDER BY
-              min_block
+              min_block DESC
           ) groupID_out
         FROM
           (
@@ -71,15 +71,15 @@ INSERT INTO
                             SELECT
                               DISTINCT block_id
                             FROM
-                              silver.blocks
+                              {{ target.database }}.silver.blocks
                             EXCEPT
                             SELECT
                               block_id
                             FROM
-                              silver.blockchain
+                              {{ target.database }}.silver.blockchain
                           )
                         ORDER BY
-                          block_id
+                          block_id DESC
                       )
                   )
                 GROUP BY
