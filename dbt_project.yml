@@ -79,7 +79,7 @@ vars:
     'silver/core',
     'gold/core',
     'bronze/core',  
-    'models/streamline'
+    'streamline'
   ]
 
 

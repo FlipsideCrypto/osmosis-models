@@ -19,8 +19,8 @@
     {% set tag_dict = {
         "project": project_name,
         "model": model.name,
-        "type": "core" if ns.is_core else "non_core",
-         "invocation_id": invocation_id
+        "model_type": "core" if ns.is_core else "non_core",
+        "invocation_id": invocation_id
     } %}
     
     {% set query_tag = tojson(tag_dict) %}
