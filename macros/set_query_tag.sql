@@ -20,7 +20,8 @@
         "project": project_name,
         "model": model.name,
         "model_type": "core" if ns.is_core else "non_core",
-        "invocation_id": invocation_id
+        "invocation_id": invocation_id,
+        "dbt_tags": config.get('tags', [])
     } %}
     
     {% set query_tag = tojson(tag_dict) %}
