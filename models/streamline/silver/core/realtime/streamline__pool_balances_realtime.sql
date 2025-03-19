@@ -62,4 +62,4 @@ SELECT
 FROM
     blocks_to_call
 ORDER BY
-    block_number
+    block_number DESC
