@@ -4,7 +4,7 @@
         func = 'streamline.udf_bulk_rest_api_v2',
         target = "{{this.schema}}.{{this.identifier}}",
         params ={ "external_table" :"pool_balances_v2",
-        "sql_limit" :"2000",
+        "sql_limit" :"100",
         "producer_batch_size" :"10",
         "worker_batch_size" :"10",
         "exploded_key": "[\"pools\"]",
@@ -45,18 +45,13 @@ SELECT
     ) AS partition_key,
     {{ target.database }}.live.udf_api(
         'GET',
-        REPLACE(
-            'https://osmosis-api.lavenderfive.com/osmosis/gamm/v1beta1/pools?pagination.limit=10000',
-            'tendermint',
-            'rest'
-        ),
+        'https://sqsprod.osmosis.zone//pools?pagination.limit=10000',
         OBJECT_CONSTRUCT(
             'Content-Type',
             'application/json',
             'x-cosmos-block-height',
             block_number :: STRING
-        ),
-        PARSE_JSON('{}')
+        ),{}
     ) AS request,
     block_number
 FROM
