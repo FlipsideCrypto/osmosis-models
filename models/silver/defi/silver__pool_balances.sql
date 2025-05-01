@@ -27,7 +27,7 @@ WHERE
 sl2 AS (
     SELECT
         VALUE :metadata :request :headers :"x-cosmos-block-height" :: INT AS block_id,
-        DATA :pools AS pools,
+        DATA :data AS pools,
         VALUE AS value_raw,
         inserted_timestamp AS _INSERTED_TIMESTAMP
     FROM
@@ -55,9 +55,8 @@ combo AS (
         value_raw :data AS VALUE,
         _INSERTED_TIMESTAMP
     FROM
-        sl2 A
-    WHERE
-        value_raw :BLOCK_NUMBER IS NOT NULL
+        sl2 A {# WHERE
+        value_raw :BLOCK_NUMBER IS NOT NULL #}
     UNION ALL
     SELECT
         block_id,
@@ -68,9 +67,8 @@ combo AS (
         sl2 A
         JOIN LATERAL FLATTEN(
             A.pools
-        ) b
-    WHERE
-        value_raw :BLOCK_NUMBER IS NULL
+        ) b {# WHERE
+        value_raw :BLOCK_NUMBER IS NULL #}
     UNION ALL
     SELECT
         block_id,
@@ -85,92 +83,101 @@ combo AS (
 SELECT
     A.block_id,
     C.block_timestamp,
-    VALUE :"@type" :: STRING AS pool_type,
-    VALUE :address :: STRING AS pool_address,
-    VALUE :future_pool_governor :: STRING AS future_pool_governor,
-    VALUE :id :: INT AS pool_id,
     COALESCE(
-        VALUE :pool_assets [0] :token :amount,
-        VALUE :poolAssets [0] :token :amount,
-        VALUE :pool_liquidity [0] :amount
+        VALUE :"@type",
+        VALUE :"type"
+    ) :: STRING AS pool_type,
+    COALESCE(
+        VALUE :address,
+        VALUE :chain_model :address
+    ) :: STRING AS pool_address,
+    COALESCE(
+        VALUE :future_pool_governor,
+        VALUE :chain_model :future_pool_governor
+    ) :: STRING AS future_pool_governor,
+    COALESCE(
+        VALUE :id,
+        VALUE :chain_model :id
+    ) :: INT AS pool_id,
+    COALESCE(
+        VALUE :pool_assets,
+        VALUE :poolAssets,
+        VALUE :chain_model :pool_assets
+    ) AS pool_assets,
+    COALESCE(
+        VALUE :pool_liquidity,
+        VALUE :balances
+    ) AS pool_liquidity,
+    COALESCE(
+        pool_assets [0] :token :amount,
+        pool_liquidity [0] :amount
     ) :: bigint AS token_0_amount,
     COALESCE(
-        VALUE :pool_assets [0] :token :denom,
-        VALUE :poolAssets [0] :token :denom,
-        VALUE :pool_liquidity [0] :denom
+        pool_assets [0] :token :denom,
+        pool_liquidity [0] :denom
     ) :: STRING AS token_0_denom,
+    pool_assets [0] :weight :: bigint AS token_0_weight,
     COALESCE(
-        VALUE :pool_assets [0] :weight,
-        VALUE :poolAssets [0] :weight
-    ) :: bigint AS token_0_weight,
-    COALESCE(
-        VALUE :pool_assets [1] :token :amount,
-        VALUE :poolAssets [1] :token :amount,
-        VALUE :pool_liquidity [1] :amount
+        pool_assets [1] :token :amount,
+        pool_liquidity [1] :amount
     ) :: bigint AS token_1_amount,
     COALESCE(
-        VALUE :pool_assets [1] :token :denom,
-        VALUE :poolAssets [1] :token :denom,
-        VALUE :pool_liquidity [1] :denom
+        pool_assets [1] :token :denom,
+        pool_liquidity [1] :denom
     ) :: STRING AS token_1_denom,
+    pool_assets [1] :weight :: bigint AS token_1_weight,
     COALESCE(
-        VALUE :pool_assets [1] :weight,
-        VALUE :poolAssets [1] :weight
-    ) :: bigint AS token_1_weight,
-    COALESCE(
-        VALUE :pool_assets [2] :token :amount,
-        VALUE :poolAssets [2] :token :amount,
-        VALUE :pool_liquidity [2] :amount
+        pool_assets [2] :token :amount,
+        pool_liquidity [2] :amount
     ) :: bigint AS token_2_amount,
     COALESCE(
-        VALUE :pool_assets [2] :token :denom,
-        VALUE :poolAssets [2] :token :denom,
-        VALUE :pool_liquidity [2] :denom
+        pool_assets [2] :token :denom,
+        pool_liquidity [2] :denom
     ) :: STRING AS token_2_denom,
+    pool_assets [2] :weight :: bigint AS token_2_weight,
     COALESCE(
-        VALUE :pool_assets [2] :weight,
-        VALUE :poolAssets [2] :weight
-    ) :: bigint AS token_2_weight,
-    COALESCE(
-        VALUE :pool_assets [3] :token :amount,
-        VALUE :poolAssets [3] :token :amount,
-        VALUE :pool_liquidity [3] :amount
+        pool_assets [3] :token :amount,
+        pool_liquidity [3] :amount
     ) :: bigint AS token_3_amount,
     COALESCE(
-        VALUE :pool_assets [3] :token :denom,
-        VALUE :poolAssets [3] :token :denom,
-        VALUE :pool_liquidity [3] :denom
+        pool_assets [3] :token :denom,
+        pool_liquidity [3] :denom
     ) :: STRING AS token_3_denom,
-    COALESCE(
-        VALUE :pool_assets [3] :weight,
-        VALUE :poolAssets [3] :weight
-    ) :: bigint AS token_3_weight,
+    pool_assets [3] :weight :: bigint AS token_3_weight,
     COALESCE(
         VALUE :pool_params :exit_fee,
-        VALUE :poolParams :exitFee
+        VALUE :poolParams :exitFee,
+        VALUE :chain_model :pool_params :exitFee
     ) :: FLOAT AS exit_fee,
     COALESCE(
         VALUE :pool_params :smooth_weight_change_params,
-        VALUE :poolParams :smoothWeightChangeParams
+        VALUE :poolParams :smoothWeightChangeParams,
+        VALUE :chain_model :pool_params :smooth_weight_change_params
     ) :: STRING AS smooth_weight_change_params,
     COALESCE(
         VALUE :pool_params :swap_fee,
-        VALUE :poolParams :swapFee
+        VALUE :poolParams :swapFee,
+        VALUE :chain_model :pool_params :swap_fee
     ) :: FLOAT AS swap_fee,
     COALESCE(
         VALUE :total_shares :amount,
-        VALUE :totalShares :amount
+        VALUE :totalShares :amount,
+        VALUE :chain_model :total_shares :amount
     ) :: bigint AS total_shares_amount,
     COALESCE(
         VALUE :total_shares :denom,
-        VALUE :totalShares :denom
+        VALUE :totalShares :denom,
+        VALUE :chain_model :total_shares :denom
     ) :: STRING AS total_shares_denom,
     COALESCE(
         VALUE :total_weight,
-        VALUE :totalWeight
+        VALUE :totalWeight,
+        VALUE :chain_model :totalWeight
     ) :: bigint AS total_weight,
     VALUE :scaling_factor_controller :: STRING AS scaling_factor_controller,
     VALUE :scaling_factors AS scaling_factors,
+    VALUE :apr_data AS apr_data,
+    VALUE :fees_data AS fees_data,
     A._inserted_timestamp,
     {{ dbt_utils.generate_surrogate_key(
         ['pool_id','a.block_id']
