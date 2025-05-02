@@ -19,8 +19,7 @@ WITH osmo_price AS (
     FROM
         {{ ref('silver__pool_token_prices') }} A
     WHERE
-        price_denom = 'uosmo'
-        AND token_address = 'ibc/D189335C6E4A68B513C10AB227BF1C1D38C746766278BA3EEB4FB14124F1D858' --axUSDC
+        pool_id = 1464
 
 {% if is_incremental() %}
 AND _inserted_timestamp >= (
@@ -330,4 +329,9 @@ SELECT
     SYSDATE() AS modified_timestamp,
     '{{ invocation_id }}' AS _invocation_id
 FROM
-    fin
+    fin qualify ROW_NUMBER() over(
+        PARTITION BY block_id,
+        token_address
+        ORDER BY
+            pool_id DESC
+    ) = 1

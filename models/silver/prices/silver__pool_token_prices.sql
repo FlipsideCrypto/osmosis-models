@@ -83,6 +83,9 @@ fin AS (
         _inserted_timestamp
     FROM
         top_pools
+    WHERE
+        token_0_denom IS NOT NULL
+        AND token_1_denom IS NOT NULL
     UNION ALL
     SELECT
         block_id,
@@ -96,6 +99,9 @@ fin AS (
         _inserted_timestamp
     FROM
         top_pools
+    WHERE
+        token_0_denom IS NOT NULL
+        AND token_1_denom IS NOT NULL
 )
 SELECT
     block_id,
@@ -122,3 +128,10 @@ SELECT
     '{{ invocation_id }}' AS _invocation_id
 FROM
     fin
+WHERE
+    price IS NOT NULL qualify ROW_NUMBER() over(
+        PARTITION BY block_id,
+        token_address
+        ORDER BY
+            pool_total DESC
+    ) = 1
