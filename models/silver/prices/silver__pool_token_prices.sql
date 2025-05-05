@@ -82,10 +82,9 @@ fin AS (
         pool_type,
         _inserted_timestamp
     FROM
-        top_pools
-    WHERE
+        top_pools {# WHERE
         token_0_denom IS NOT NULL
-        AND token_1_denom IS NOT NULL
+        AND token_1_denom IS NOT NULL #}
     UNION ALL
     SELECT
         block_id,
@@ -98,10 +97,9 @@ fin AS (
         pool_type,
         _inserted_timestamp
     FROM
-        top_pools
-    WHERE
+        top_pools {# WHERE
         token_0_denom IS NOT NULL
-        AND token_1_denom IS NOT NULL
+        AND token_1_denom IS NOT NULL #}
 )
 SELECT
     block_id,
@@ -129,9 +127,4 @@ SELECT
 FROM
     fin
 WHERE
-    price IS NOT NULL qualify ROW_NUMBER() over(
-        PARTITION BY block_id,
-        token_address
-        ORDER BY
-            pool_total DESC
-    ) = 1
+    price IS NOT NULL

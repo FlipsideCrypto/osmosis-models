@@ -329,9 +329,4 @@ SELECT
     SYSDATE() AS modified_timestamp,
     '{{ invocation_id }}' AS _invocation_id
 FROM
-    fin qualify ROW_NUMBER() over(
-        PARTITION BY block_id,
-        token_address
-        ORDER BY
-            pool_id DESC
-    ) = 1
+    fin
