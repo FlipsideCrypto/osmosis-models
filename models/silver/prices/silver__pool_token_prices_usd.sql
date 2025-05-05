@@ -59,6 +59,10 @@ AND A._inserted_timestamp >= (
         {{ this }}
 )
 {% endif %}
+
+qualify(ROW_NUMBER() over(PARTITION BY A.block_id, A.token_address
+ORDER BY
+    A.pool_total DESC) = 1)
 ),
 non_osomo_price AS (
     SELECT
@@ -102,7 +106,7 @@ AND A._inserted_timestamp >= (
 )
 {% endif %}
 
-qualify(ROW_NUMBER() over(PARTITION BY A.token_address
+qualify(ROW_NUMBER() over(PARTITION BY A.block_id, A.token_address
 ORDER BY
     A.pool_total DESC) = 1)
 ),
@@ -329,4 +333,9 @@ SELECT
     SYSDATE() AS modified_timestamp,
     '{{ invocation_id }}' AS _invocation_id
 FROM
-    fin
+    fin qualify ROW_NUMBER() over(
+        PARTITION BY block_id,
+        token_address
+        ORDER BY
+            pool_id DESC
+    ) = 1
