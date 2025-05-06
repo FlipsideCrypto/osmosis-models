@@ -190,6 +190,7 @@ FROM
     JOIN {{ ref('silver__blocks') }} C
     ON A.block_id = C.block_id
 WHERE
-    pool_id IS NOT NULL qualify (ROW_NUMBER() over (PARTITION BY A.block_id, pool_id
+    pool_id IS NOT NULL
+    AND token_0_denom IS NOT NULL qualify (ROW_NUMBER() over (PARTITION BY A.block_id, pool_id
 ORDER BY
     A._inserted_timestamp DESC) = 1)
