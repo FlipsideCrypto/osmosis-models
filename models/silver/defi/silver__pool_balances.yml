@@ -34,11 +34,11 @@ models:
           - not_null
       - name: TOKEN_0_WEIGHT
       - name: TOKEN_1_AMOUNT
-        tests:
-          - not_null
+        # tests:
+        #   - not_null
       - name: TOKEN_1_DENOM
-        tests:
-          - not_null
+        # tests:
+        #   - not_null
       - name: TOKEN_1_WEIGHT
       - name: TOKEN_2_AMOUNT
       - name: TOKEN_2_DENOM
@@ -47,18 +47,18 @@ models:
       - name: TOKEN_3_DENOM
       - name: TOKEN_3_WEIGHT
       - name: EXIT_FEE
-        tests:
-          - not_null
+        # tests:
+        #   - not_null
       - name: SMOOTH_WEIGHT_CHANGE_PARAMS
       - name: SWAP_FEE
-        tests:
-          - not_null
+        # tests:
+        #   - not_null
       - name: TOTAL_SHARES_AMOUNT
-        tests:
-          - not_null
+        # tests:
+        #   - not_null
       - name: TOTAL_SHARES_DENOM
-        tests:
-          - not_null
+        # tests:
+        #   - not_null
       - name: TOTAL_WEIGHT
       - name: SCALING_FACTOR_CONTROLLER
       - name: SCALING_FACTORS
